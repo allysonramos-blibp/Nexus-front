@@ -1,0 +1,115 @@
+@import "tailwindcss" source(none);
+@source "./";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Nexus — Deep focus slate design system.
+ * Dark ergonomic base, per-module accents, low-glare contrast for long focus sessions.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+
+  --color-dash: var(--dash);
+  --color-fin: var(--fin);
+  --color-study: var(--study);
+  --color-gym: var(--gym);
+
+  --shadow-focus: 0 24px 60px -30px oklch(0.02 0 0 / 0.9);
+}
+
+:root {
+  --radius: 0.875rem;
+  --background: #121214;
+  --foreground: #f4f4f5;
+  --surface: #18181b;
+  --surface-raised: #1f1f23;
+  --card: #18181b;
+  --card-foreground: #f4f4f5;
+  --popover: #18181b;
+  --popover-foreground: #f4f4f5;
+  --primary: #3b82f6;
+  --primary-foreground: #0a0a0c;
+  --secondary: #232328;
+  --secondary-foreground: #e4e4e7;
+  --muted: #232328;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272c;
+  --accent-foreground: #f4f4f5;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+  --border: #2a2a30;
+  --input: #2a2a30;
+  --ring: #3b82f6;
+
+  --dash: #3b82f6;
+  --fin: #34d399;
+  --study: #a78bfa;
+  --gym: #fb923c;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+}
+
+@utility glow-field {
+  background-image:
+    radial-gradient(60rem 40rem at 12% -10%, color-mix(in oklch, var(--dash) 16%, transparent), transparent 60%),
+    radial-gradient(48rem 36rem at 92% 0%, color-mix(in oklch, var(--fin) 9%, transparent), transparent 60%),
+    radial-gradient(52rem 40rem at 50% 110%, color-mix(in oklch, var(--study) 9%, transparent), transparent 60%);
+}
+
+@utility panel {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-focus);
+}
