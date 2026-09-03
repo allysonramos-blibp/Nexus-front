@@ -391,11 +391,11 @@ export interface TopicPerformance {
 
 export const api = {
   login: (email: string, password: string) =>
-    request<AuthResponse>("/auth/login", {
+    request<AuthResponse>(`${DEFAULT_API_URL}/auth/login`, {
       method: "POST",
       body: JSON.stringify({ email, password }),
     }),
-
+};
   // O backend não emite token no cadastro — só cria o usuário. O login deve ser chamado
   // logo em seguida para obter o AuthResponse (ver `submit` em pages/login.tsx).
   register: (email: string, password: string) =>
