@@ -19,7 +19,7 @@ export const UNAUTHORIZED_EVENT = "nexus:unauthorized";
  */
 export const DEFAULT_API_URL =
   (import.meta.env["VITE_API_URL"] as string | undefined)?.trim().replace(/\/+$/, "") ||
-  "https://nexus-api-bgsf.onrender.com/api";
+  "https://nexus-api-bgsf.onrender.com";
 
 /**
  * Retorna a URL base da API.
