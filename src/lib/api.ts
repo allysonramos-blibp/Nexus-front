@@ -1,32 +1,45 @@
+/**
+ * Cliente HTTP do Nexus — fala com a API Spring Boot.
+ * Todas as chamadas rodam no browser.
+ */
 
 const STORAGE_KEY = "nexus.apiUrl";
 const TOKEN_STORAGE_KEY = "nexus.token";
 
 /**
  * Evento disparado quando a API responde 401.
- * O AuthProvider escuta isso para deslogar.
+ * O AuthProvider escuta esse evento para deslogar.
  */
 export const UNAUTHORIZED_EVENT = "nexus:unauthorized";
 
-// URL padrão da API no Render
+/**
+ * URL padrão da API em produção.
+ *
+ * Pode ser sobrescrita pela variável:
+ * VITE_API_URL
+ */
 export const DEFAULT_API_URL =
   (import.meta.env["VITE_API_URL"] as string | undefined) ??
   "https://nexus-api-bgsf.onrender.com";
 
-/** URL base atual — pode ser trocada em tempo de execução. */
+/**
+ * Retorna a URL base atual da API.
+ */
 export function getApiBaseUrl(): string {
   if (typeof window === "undefined") {
     return DEFAULT_API_URL;
   }
 
   return (
-    window.localStorage.getItem(STORAGE_KEY) ||
+    window.localStorage.getItem(STORAGE_KEY) ??
     DEFAULT_API_URL
   );
 }
 
-/** Define a URL base da API. */
-export function setApiBaseUrl(url: string) {
+/**
+ * Define uma nova URL base para a API.
+ */
+export function setApiBaseUrl(url: string): void {
   const clean = url.trim().replace(/\/+$/, "");
 
   if (clean) {
@@ -37,8 +50,7 @@ export function setApiBaseUrl(url: string) {
 }
 
 /**
- * Token JWT atual (Bearer).
- * auth.tsx é o dono da sessão; isto é apenas o storage cru.
+ * Retorna o token JWT armazenado.
  */
 export function getAuthToken(): string | null {
   if (typeof window === "undefined") {
@@ -48,25 +60,42 @@ export function getAuthToken(): string | null {
   return window.localStorage.getItem(TOKEN_STORAGE_KEY);
 }
 
-export function setAuthToken(token: string) {
-  window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
-}
-
-export function clearAuthToken() {
-  window.localStorage.removeItem(TOKEN_STORAGE_KEY);
-}
-
-export function buildAssetUrl(path: string): string {
-  const root = getApiBaseUrl();
-
-  return `${root}${path}`;
+/**
+ * Armazena o token JWT.
+ */
+export function setAuthToken(token: string): void {
+  window.localStorage.setItem(
+    TOKEN_STORAGE_KEY,
+    token,
+  );
 }
 
 /**
- * true quando a página é HTTPS e a API é HTTP.
- * O browser bloqueia esse tipo de chamada (mixed content).
+ * Remove o token JWT.
  */
-export function isMixedContent(url = getApiBaseUrl()): boolean {
+export function clearAuthToken(): void {
+  window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+}
+
+/**
+ * Monta uma URL absoluta para um asset da API.
+ */
+export function buildAssetUrl(path: string): string {
+  const root = getApiBaseUrl().replace(/\/+$/, "");
+  const cleanPath = path.startsWith("/")
+    ? path
+    : `/${path}`;
+
+  return `${root}${cleanPath}`;
+}
+
+/**
+ * Verifica se existe tentativa de acessar HTTP
+ * a partir de uma página HTTPS.
+ */
+export function isMixedContent(
+  url = getApiBaseUrl(),
+): boolean {
   if (typeof window === "undefined") {
     return false;
   }
@@ -77,65 +106,70 @@ export function isMixedContent(url = getApiBaseUrl()): boolean {
   );
 }
 
+/**
+ * Erro padrão da API.
+ */
 export class ApiError extends Error {
   status: number;
 
-  constructor(status: number, message: string) {
+  constructor(
+    status: number,
+    message: string,
+  ) {
     super(message);
+
     this.status = status;
     this.name = "ApiError";
   }
 }
 
+/**
+ * Testa a comunicação com a API.
+ */
 export async function pingApi(
   url = getApiBaseUrl(),
 ): Promise<string> {
-  if (isMixedContent(url)) {
+  const base = url.replace(/\/+$/, "");
+
+  if (isMixedContent(base)) {
     throw new ApiError(
       0,
       "Esta página roda em HTTPS e a API está em HTTP — o navegador bloqueia a chamada (mixed content).",
     );
   }
 
-  const res = await fetch(`${url}/auth`, {
-    method: "GET",
-  }).catch(() => {
+  const response = await fetch(
+    `${base}/auth`,
+    {
+      method: "GET",
+    },
+  ).catch(() => {
     throw new ApiError(
       0,
-      `Não respondeu em ${url}. Verifique se a API está rodando e se o CORS libera este domínio.`,
+      `Não foi possível conectar à API em ${base}. Verifique se a API está online e se o CORS está configurado.`,
     );
   });
 
-  return `API respondeu (HTTP ${res.status}).`;
+  return `API respondeu (HTTP ${response.status}).`;
 }
 
 /**
- * Executa uma requisição HTTP para a API.
+ * Cliente HTTP genérico.
+ *
+ * O tipo T representa o JSON retornado pelo backend.
  */
 async function request<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  let res: Response;
-
-  const base = getApiBaseUrl().replace(/\/+$/, "");
+  const base = getApiBaseUrl().replace(
+    /\/+$/,
+    "",
+  );
 
   const cleanPath = path.startsWith("/")
     ? path
     : `/${path}`;
-
-  const headers: Record<string, string> =
-    init?.body instanceof FormData
-      ? {}
-      : {
-          "Content-Type": "application/json",
-        };
-
-  const token = getAuthToken();
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
 
   if (isMixedContent(base)) {
     throw new ApiError(
@@ -144,47 +178,120 @@ async function request<T>(
     );
   }
 
+  const headers = new Headers(
+    init?.headers,
+  );
+
+  /**
+   * FormData não deve receber Content-Type manualmente.
+   * O navegador adiciona automaticamente o boundary.
+   */
+  if (!(init?.body instanceof FormData)) {
+    if (!headers.has("Content-Type")) {
+      headers.set(
+        "Content-Type",
+        "application/json",
+      );
+    }
+  }
+
+  const token = getAuthToken();
+
+  if (token && !headers.has("Authorization")) {
+    headers.set(
+      "Authorization",
+      `Bearer ${token}`,
+    );
+  }
+
+  let response: Response;
+
   try {
-    res = await fetch(`${base}${cleanPath}`, {
-      ...init,
-      headers,
-    });
+    response = await fetch(
+      `${base}${cleanPath}`,
+      {
+        ...init,
+        headers,
+      },
+    );
   } catch {
     throw new ApiError(
       0,
-      `Não consegui falar com a API em ${base}. Ela está rodando e com CORS liberado?`,
+      `Não consegui falar com a API em ${base}. Verifique se ela está online e se o CORS está liberado.`,
     );
   }
 
+  /**
+   * Token expirado ou inválido.
+   */
   if (
-    res.status === 401 &&
+    response.status === 401 &&
     typeof window !== "undefined"
   ) {
     window.dispatchEvent(
-      new CustomEvent(UNAUTHORIZED_EVENT),
+      new CustomEvent(
+        UNAUTHORIZED_EVENT,
+      ),
     );
   }
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
+  /**
+   * Tratamento de erros HTTP.
+   */
+  if (!response.ok) {
+    const text = await response
+      .text()
+      .catch(() => "");
+
+    let message = text;
+
+    /**
+     * Tenta extrair mensagens comuns
+     * retornadas pelo Spring Boot.
+     */
+    if (text) {
+      try {
+        const json = JSON.parse(text);
+
+        message =
+          json.message ??
+          json.error ??
+          json.detail ??
+          text;
+      } catch {
+        // Mantém o texto original.
+      }
+    }
 
     throw new ApiError(
-      res.status,
-      text || `Erro ${res.status} em ${path}`,
+      response.status,
+      message ||
+        `Erro ${response.status} em ${cleanPath}`,
     );
   }
 
-  if (res.status === 204) {
+  /**
+   * No Content.
+   */
+  if (response.status === 204) {
     return undefined as T;
   }
 
-  const text = await res.text();
+  const text = await response.text();
 
-  return (text ? JSON.parse(text) : undefined) as T;
+  if (!text) {
+    return undefined as T;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return text as T;
+  }
 }
 
 /* =========================================================
- * Tipos
+ * TIPOS
  * ========================================================= */
 
 export type TransactionType =
@@ -276,7 +383,7 @@ export interface ChatMessage {
 }
 
 /* =========================================================
- * Estudos — Planos / Matérias / Assuntos
+ * ESTUDOS — PLANOS
  * ========================================================= */
 
 export type StudyPlanStatus =
@@ -311,6 +418,10 @@ export interface StudyPlanRequest {
   status?: StudyPlanStatus | null;
 }
 
+/* =========================================================
+ * ESTUDOS — MATÉRIAS
+ * ========================================================= */
+
 export interface Subject {
   id: number;
   nome: string;
@@ -322,6 +433,10 @@ export interface SubjectRequest {
   nome: string;
   pesoNoEdital?: number | null;
 }
+
+/* =========================================================
+ * ESTUDOS — ASSUNTOS
+ * ========================================================= */
 
 export interface Topic {
   id: number;
@@ -336,7 +451,7 @@ export interface TopicRequest {
 }
 
 /* =========================================================
- * Estudos — Questões e Respostas
+ * ESTUDOS — QUESTÕES
  * ========================================================= */
 
 export type QuestionDifficulty =
@@ -370,6 +485,10 @@ export interface QuestionRequest {
   ano?: number | null;
 }
 
+/* =========================================================
+ * ESTUDOS — RESPOSTAS
+ * ========================================================= */
+
 export interface Answer {
   id: number;
   questionId: number;
@@ -389,7 +508,7 @@ export interface AnswerRequest {
 }
 
 /* =========================================================
- * Estudos — Caderno de Erros
+ * ESTUDOS — CADERNO DE ERROS
  * ========================================================= */
 
 export type ErrorReason =
@@ -425,7 +544,7 @@ export interface PendingReviewResponse {
 }
 
 /* =========================================================
- * Estudos — Simulados
+ * ESTUDOS — SIMULADOS
  * ========================================================= */
 
 export type MockExamStatus =
@@ -463,7 +582,7 @@ export interface MockExamRequest {
 }
 
 /* =========================================================
- * Estudos — Estatísticas
+ * ESTUDOS — ESTATÍSTICAS
  * ========================================================= */
 
 export interface OverallStats {
@@ -492,92 +611,147 @@ export interface TopicPerformance {
  * ========================================================= */
 
 export const api = {
-  /* ---------- Auth ---------- */
+  /* =======================================================
+   * AUTH
+   * ======================================================= */
 
-  login: (email: string, password: string) =>
-    request<AuthResponse>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({
-        email,
-        password,
-      }),
-    }),
+  login: (
+    email: string,
+    password: string,
+  ) =>
+    request<AuthResponse>(
+      "/auth/login",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      },
+    ),
 
-  register: (email: string, password: string) =>
-    request<UserResponse>("/users/register", {
-      method: "POST",
-      body: JSON.stringify({
-        email,
-        password,
-      }),
-    }),
+  register: (
+    email: string,
+    password: string,
+  ) =>
+    request<UserResponse>(
+      "/users/register",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      },
+    ),
 
-  /* ---------- Financeiro ---------- */
+  /* =======================================================
+   * FINANCEIRO
+   * ======================================================= */
 
-  listTransactions: (userId: number) =>
+  listTransactions: (
+    userId: number,
+  ) =>
     request<FinancialTransaction[]>(
       `/transactions/user/${userId}`,
     ),
 
   createTransaction: (
     userId: number,
-    body: Omit<FinancialTransaction, "id">,
+    body: Omit<
+      FinancialTransaction,
+      "id"
+    >,
   ) =>
-    request(`/transactions/user/${userId}`, {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+    request<FinancialTransaction>(
+      `/transactions/user/${userId}`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
 
   updateTransaction: (
     id: number,
-    body: Omit<FinancialTransaction, "id">,
+    body: Omit<
+      FinancialTransaction,
+      "id"
+    >,
   ) =>
-    request(`/transactions/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(body),
-    }),
+    request<FinancialTransaction>(
+      `/transactions/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
+      },
+    ),
 
-  deleteTransaction: (id: number) =>
-    request(`/transactions/${id}`, {
-      method: "DELETE",
-    }),
+  deleteTransaction: (
+    id: number,
+  ) =>
+    request<void>(
+      `/transactions/${id}`,
+      {
+        method: "DELETE",
+      },
+    ),
 
-  /* ---------- Tarefas ---------- */
+  /* =======================================================
+   * TAREFAS
+   * ======================================================= */
 
-  listTasks: (userId: number) =>
-    request<Task[]>(`/tasks/user/${userId}`),
+  listTasks: (
+    userId: number,
+  ) =>
+    request<Task[]>(
+      `/tasks/user/${userId}`,
+    ),
 
-  listEdital: (userId: number) =>
-    request<Task[]>(`/tasks/user/${userId}/edital`),
+  listEdital: (
+    userId: number,
+  ) =>
+    request<Task[]>(
+      `/tasks/user/${userId}/edital`,
+    ),
 
   createTask: (
     userId: number,
     body: Omit<Task, "id">,
   ) =>
-    request("/tasks", {
-      method: "POST",
-      body: JSON.stringify({
-        ...body,
-        user: {
-          id: userId,
-        },
-      }),
-    }),
+    request<Task>(
+      "/tasks",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ...body,
+          user: {
+            id: userId,
+          },
+        }),
+      },
+    ),
 
   updateTaskStatus: (
     id: number,
     status: TaskStatus,
   ) =>
-    request(`/tasks/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify({
-        status,
-      }),
-    }),
+    request<Task>(
+      `/tasks/${id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          status,
+        }),
+      },
+    ),
 
-  /* ---------- Estudos ---------- */
+  /* =======================================================
+   * ESTUDOS — ANOTAÇÕES
+   * ======================================================= */
 
-  listNotes: (userId: number) =>
+  listNotes: (
+    userId: number,
+  ) =>
     request<StudyNote[]>(
       `/study-notes/user/${userId}`,
     ),
@@ -587,19 +761,22 @@ export const api = {
     titulo: string,
     conteudo: string,
   ) =>
-    request("/study-notes", {
-      method: "POST",
-      body: JSON.stringify({
-        titulo,
-        conteudo,
-        atualizadoEm: new Date()
-          .toISOString()
-          .slice(0, 19),
-        user: {
-          id: userId,
-        },
-      }),
-    }),
+    request<StudyNote>(
+      "/study-notes",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          titulo,
+          conteudo,
+          atualizadoEm: new Date()
+            .toISOString()
+            .slice(0, 19),
+          user: {
+            id: userId,
+          },
+        }),
+      },
+    ),
 
   updateNote: (
     id: number,
@@ -607,36 +784,56 @@ export const api = {
     titulo: string,
     conteudo: string,
   ) =>
-    request(`/study-notes/${id}`, {
-      method: "PUT",
-      body: JSON.stringify({
-        titulo,
-        conteudo,
-        atualizadoEm: new Date()
-          .toISOString()
-          .slice(0, 19),
-        user: {
-          id: userId,
-        },
-      }),
-    }),
+    request<StudyNote>(
+      `/study-notes/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          titulo,
+          conteudo,
+          atualizadoEm: new Date()
+            .toISOString()
+            .slice(0, 19),
+          user: {
+            id: userId,
+          },
+        }),
+      },
+    ),
 
-  deleteNote: (id: number) =>
-    request(`/study-notes/${id}`, {
-      method: "DELETE",
-    }),
+  deleteNote: (
+    id: number,
+  ) =>
+    request<void>(
+      `/study-notes/${id}`,
+      {
+        method: "DELETE",
+      },
+    ),
 
-  listFiles: (userId: number) =>
+  /* =======================================================
+   * ESTUDOS — ARQUIVOS
+   * ======================================================= */
+
+  listFiles: (
+    userId: number,
+  ) =>
     request<StudyFile[]>(
       `/study-files/user/${userId}`,
     ),
 
-  uploadFile: (userId: number, file: File) => {
+  uploadFile: (
+    userId: number,
+    file: File,
+  ) => {
     const form = new FormData();
 
-    form.append("file", file);
+    form.append(
+      "file",
+      file,
+    );
 
-    return request(
+    return request<StudyFile>(
       `/study-files/upload/user/${userId}`,
       {
         method: "POST",
@@ -645,44 +842,67 @@ export const api = {
     );
   },
 
-  deleteFile: (id: number) =>
-    request(`/study-files/${id}`, {
-      method: "DELETE",
-    }),
+  deleteFile: (
+    id: number,
+  ) =>
+    request<void>(
+      `/study-files/${id}`,
+      {
+        method: "DELETE",
+      },
+    ),
 
-  fileDownloadUrl: (id: number) =>
+  fileDownloadUrl: (
+    id: number,
+  ) =>
     `${getApiBaseUrl()}/study-files/download/${id}`,
+
+  /* =======================================================
+   * ESTUDOS — CHAT IA
+   * ======================================================= */
 
   chat: (
     message: string,
     history: ChatMessage[],
   ) =>
-    request<{ reply: string }>("/study-chat", {
-      method: "POST",
-      body: JSON.stringify({
-        message,
-        history,
-      }),
-    }),
+    request<{ reply: string }>(
+      "/study-chat",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          message,
+          history,
+        }),
+      },
+    ),
 
-  /* ---------- Treinos ---------- */
+  /* =======================================================
+   * TREINOS
+   * ======================================================= */
 
-  listWorkouts: (userId: number) =>
+  listWorkouts: (
+    userId: number,
+  ) =>
     request<Workout[]>(
       `/workouts/user/${userId}`,
     ),
 
-  createWorkout: (body: {
-    grupoMuscular: string;
-    dataTreino: string;
-    concluido: boolean;
-    exerciciosExecutados?: string;
-    exercicios?: WorkoutExercise[];
-  }) =>
-    request("/workouts", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+  createWorkout: (
+    body: {
+      grupoMuscular: string;
+      dataTreino: string;
+      concluido: boolean;
+      exerciciosExecutados?: string;
+      exercicios?: WorkoutExercise[];
+    },
+  ) =>
+    request<Workout>(
+      "/workouts",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
 
   uploadWorkoutImage: (
     workoutId: number,
@@ -690,9 +910,12 @@ export const api = {
   ) => {
     const form = new FormData();
 
-    form.append("file", file);
+    form.append(
+      "file",
+      file,
+    );
 
-    return request(
+    return request<Workout>(
       `/workouts/${workoutId}/image`,
       {
         method: "POST",
@@ -701,8 +924,10 @@ export const api = {
     );
   },
 
-  getGoal: (userId: number) =>
-    request(
+  getGoal: (
+    userId: number,
+  ) =>
+    request<WorkoutGoal>(
       `/workout-goals/user/${userId}`,
     ),
 
@@ -710,7 +935,7 @@ export const api = {
     userId: number,
     metaTreinosPorSemana: number,
   ) =>
-    request(
+    request<WorkoutGoal>(
       `/workout-goals/user/${userId}`,
       {
         method: "PUT",
@@ -720,37 +945,62 @@ export const api = {
       },
     ),
 
-  /* ---------- Estudos: Planos ---------- */
+  /* =======================================================
+   * ESTUDOS — PLANOS
+   * ======================================================= */
 
   listStudyPlans: () =>
-    request<StudyPlan[]>("/study-plans"),
+    request<StudyPlan[]>(
+      "/study-plans",
+    ),
 
-  getStudyPlan: (id: number) =>
-    request(`/study-plans/${id}`),
+  getStudyPlan: (
+    id: number,
+  ) =>
+    request<StudyPlan>(
+      `/study-plans/${id}`,
+    ),
 
-  createStudyPlan: (body: StudyPlanRequest) =>
-    request("/study-plans", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+  createStudyPlan: (
+    body: StudyPlanRequest,
+  ) =>
+    request<StudyPlan>(
+      "/study-plans",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
 
   updateStudyPlan: (
     id: number,
     body: StudyPlanRequest,
   ) =>
-    request(`/study-plans/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(body),
-    }),
+    request<StudyPlan>(
+      `/study-plans/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
+      },
+    ),
 
-  deleteStudyPlan: (id: number) =>
-    request(`/study-plans/${id}`, {
-      method: "DELETE",
-    }),
+  deleteStudyPlan: (
+    id: number,
+  ) =>
+    request<void>(
+      `/study-plans/${id}`,
+      {
+        method: "DELETE",
+      },
+    ),
 
-  /* ---------- Estudos: Matérias ---------- */
+  /* =======================================================
+   * ESTUDOS — MATÉRIAS
+   * ======================================================= */
 
-  listSubjects: (studyPlanId: number) =>
+  listSubjects: (
+    studyPlanId: number,
+  ) =>
     request<Subject[]>(
       `/study-plans/${studyPlanId}/subjects`,
     ),
@@ -759,7 +1009,7 @@ export const api = {
     studyPlanId: number,
     body: SubjectRequest,
   ) =>
-    request(
+    request<Subject>(
       `/study-plans/${studyPlanId}/subjects`,
       {
         method: "POST",
@@ -771,19 +1021,31 @@ export const api = {
     id: number,
     body: SubjectRequest,
   ) =>
-    request(`/subjects/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(body),
-    }),
+    request<Subject>(
+      `/subjects/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
+      },
+    ),
 
-  deleteSubject: (id: number) =>
-    request(`/subjects/${id}`, {
-      method: "DELETE",
-    }),
+  deleteSubject: (
+    id: number,
+  ) =>
+    request<void>(
+      `/subjects/${id}`,
+      {
+        method: "DELETE",
+      },
+    ),
 
-  /* ---------- Estudos: Assuntos ---------- */
+  /* =======================================================
+   * ESTUDOS — ASSUNTOS
+   * ======================================================= */
 
-  listTopics: (subjectId: number) =>
+  listTopics: (
+    subjectId: number,
+  ) =>
     request<Topic[]>(
       `/subjects/${subjectId}/topics`,
     ),
@@ -792,137 +1054,217 @@ export const api = {
     subjectId: number,
     body: TopicRequest,
   ) =>
-    request(`/subjects/${subjectId}/topics`, {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+    request<Topic>(
+      `/subjects/${subjectId}/topics`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
 
   updateTopic: (
     id: number,
     body: TopicRequest,
   ) =>
-    request(`/topics/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(body),
-    }),
+    request<Topic>(
+      `/topics/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
+      },
+    ),
 
-  deleteTopic: (id: number) =>
-    request(`/topics/${id}`, {
-      method: "DELETE",
-    }),
+  deleteTopic: (
+    id: number,
+  ) =>
+    request<void>(
+      `/topics/${id}`,
+      {
+        method: "DELETE",
+      },
+    ),
 
-  /* ---------- Estudos: Questões ---------- */
+  /* =======================================================
+   * ESTUDOS — QUESTÕES
+   * ======================================================= */
 
-  listQuestions: (topicId: number) =>
+  listQuestions: (
+    topicId: number,
+  ) =>
     request<Question[]>(
       `/topics/${topicId}/questions`,
     ),
 
-  getQuestion: (id: number) =>
-    request(`/questions/${id}`),
+  getQuestion: (
+    id: number,
+  ) =>
+    request<Question>(
+      `/questions/${id}`,
+    ),
 
   createQuestion: (
     topicId: number,
     body: QuestionRequest,
   ) =>
-    request(`/topics/${topicId}/questions`, {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+    request<Question>(
+      `/topics/${topicId}/questions`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
 
   updateQuestion: (
     id: number,
     body: QuestionRequest,
   ) =>
-    request(`/questions/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(body),
-    }),
+    request<Question>(
+      `/questions/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
+      },
+    ),
 
-  deleteQuestion: (id: number) =>
-    request(`/questions/${id}`, {
-      method: "DELETE",
-    }),
+  deleteQuestion: (
+    id: number,
+  ) =>
+    request<void>(
+      `/questions/${id}`,
+      {
+        method: "DELETE",
+      },
+    ),
 
-  /* ---------- Estudos: Respostas ---------- */
+  /* =======================================================
+   * ESTUDOS — RESPOSTAS
+   * ======================================================= */
 
-  submitAnswer: (body: AnswerRequest) =>
-    request("/answers", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+  submitAnswer: (
+    body: AnswerRequest,
+  ) =>
+    request<Answer>(
+      "/answers",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
 
   listAnswers: () =>
-    request<Answer[]>("/answers"),
+    request<Answer[]>(
+      "/answers",
+    ),
 
-  /* ---------- Estudos: Caderno de Erros ---------- */
+  /* =======================================================
+   * ESTUDOS — CADERNO DE ERROS
+   * ======================================================= */
 
   listStudyErrors: () =>
-    request<StudyError[]>("/study-errors"),
+    request<StudyError[]>(
+      "/study-errors",
+    ),
 
   registerStudyError: (
     body: StudyErrorRequest,
   ) =>
-    request("/study-errors", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+    request<StudyError>(
+      "/study-errors",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
 
-  resolveStudyError: (id: number) =>
-    request(
+  resolveStudyError: (
+    id: number,
+  ) =>
+    request<StudyError>(
       `/study-errors/${id}/resolver`,
       {
         method: "PATCH",
       },
     ),
 
-  deleteStudyError: (id: number) =>
-    request(`/study-errors/${id}`, {
-      method: "DELETE",
-    }),
+  deleteStudyError: (
+    id: number,
+  ) =>
+    request<void>(
+      `/study-errors/${id}`,
+      {
+        method: "DELETE",
+      },
+    ),
 
-  /* ---------- Estudos: Revisões ---------- */
+  /* =======================================================
+   * ESTUDOS — REVISÕES
+   * ======================================================= */
 
   listPendingReviews: () =>
-    request(
+    request<PendingReviewResponse>(
       "/study-stats/pendentes-revisao",
     ),
 
-  /* ---------- Estudos: Simulados ---------- */
+  /* =======================================================
+   * ESTUDOS — SIMULADOS
+   * ======================================================= */
 
   listMockExams: () =>
-    request<MockExam[]>("/mock-exams"),
+    request<MockExam[]>(
+      "/mock-exams",
+    ),
 
-  getMockExam: (id: number) =>
-    request(`/mock-exams/${id}`),
+  getMockExam: (
+    id: number,
+  ) =>
+    request<MockExamDetail>(
+      `/mock-exams/${id}`,
+    ),
 
   createMockExam: (
     body: MockExamRequest,
   ) =>
-    request("/mock-exams", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+    request<MockExam>(
+      "/mock-exams",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
 
-  startMockExam: (id: number) =>
-    request(`/mock-exams/${id}/iniciar`, {
-      method: "POST",
-    }),
+  startMockExam: (
+    id: number,
+  ) =>
+    request<MockExam>(
+      `/mock-exams/${id}/iniciar`,
+      {
+        method: "POST",
+      },
+    ),
 
-  finishMockExam: (id: number) =>
-    request(
+  finishMockExam: (
+    id: number,
+  ) =>
+    request<MockExam>(
       `/mock-exams/${id}/finalizar`,
       {
         method: "POST",
       },
     ),
 
-  deleteMockExam: (id: number) =>
-    request(`/mock-exams/${id}`, {
-      method: "DELETE",
-    }),
+  deleteMockExam: (
+    id: number,
+  ) =>
+    request<void>(
+      `/mock-exams/${id}`,
+      {
+        method: "DELETE",
+      },
+    ),
 
-  /* ---------- Estudos: Estatísticas ---------- */
+  /* =======================================================
+   * ESTUDOS — ESTATÍSTICAS
+   * ======================================================= */
 
   statsGeral: () =>
     request<OverallStats>(
@@ -943,23 +1285,42 @@ export const api = {
     inicio: string,
     fim: string,
   ) =>
-    request(
-      `/study-stats/por-periodo?inicio=${inicio}&fim=${fim}`,
+    request<OverallStats>(
+      `/study-stats/por-periodo?inicio=${encodeURIComponent(
+        inicio,
+      )}&fim=${encodeURIComponent(fim)}`,
     ),
 };
 
 /* =========================================================
- * Helpers
+ * HELPERS
  * ========================================================= */
 
-export const brl = (v: number) =>
-  new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(v);
+/**
+ * Formata valores em Real brasileiro.
+ */
+export const brl = (
+  value: number,
+): string =>
+  new Intl.NumberFormat(
+    "pt-BR",
+    {
+      style: "currency",
+      currency: "BRL",
+    },
+  ).format(value);
 
-export const today = () =>
-  new Date().toISOString().slice(0, 10);
+/**
+ * Retorna a data atual no formato YYYY-MM-DD.
+ */
+export const today = (): string =>
+  new Date()
+    .toISOString()
+    .slice(0, 10);
+
+/* =========================================================
+ * LABELS
+ * ========================================================= */
 
 export const statusLabel: Record<
   TaskStatus,
@@ -1018,4 +1379,3 @@ export const mockExamStatusLabel: Record<
   EM_ANDAMENTO: "Em andamento",
   FINALIZADO: "Finalizado",
 };
-
