@@ -1,36 +1,50 @@
-/**
- * Cliente HTTP do Nexus — fala com a API Spring Boot.
- * Todas as chamadas rodam no browser (a API vive em localhost do usuário).
- */
 
 const STORAGE_KEY = "nexus.apiUrl";
 const TOKEN_STORAGE_KEY = "nexus.token";
 
-/** Evento disparado quando a API responde 401 — o AuthProvider escuta isso para deslogar. */
+/**
+ * Evento disparado quando a API responde 401.
+ * O AuthProvider escuta isso para deslogar.
+ */
 export const UNAUTHORIZED_EVENT = "nexus:unauthorized";
 
+// URL padrão da API no Render
 export const DEFAULT_API_URL =
-  (import.meta.env["VITE_API_URL"] as string | undefined) ?? "https://onrender.com";
+  (import.meta.env["VITE_API_URL"] as string | undefined) ??
+  "https://onrender.com";
 
-
-/** URL base atual — pode ser trocada em tempo de execução (ex.: túnel https do ngrok). */
+/** URL base atual — pode ser trocada em tempo de execução. */
 export function getApiBaseUrl(): string {
-  if (typeof window === "undefined") return DEFAULT_API_URL;
-  return window.localStorage.getItem(STORAGE_KEY) || DEFAULT_API_URL;
-}
-
-export function setApiBaseUrl(url: string) {
-  let clean = url.trim().replace(/\/+$/, "");
-  if (clean && !clean.endsWith("/api")) {
-    clean += "/api";
+  if (typeof window === "undefined") {
+    return DEFAULT_API_URL;
   }
-  if (clean) window.localStorage.setItem(STORAGE_KEY, clean);
-  else window.localStorage.removeItem(STORAGE_KEY);
+
+  return (
+    window.localStorage.getItem(STORAGE_KEY) ||
+    DEFAULT_API_URL
+  );
 }
 
-/** Token JWT atual (Bearer). `auth.tsx` é o dono da sessão; isto é só o storage cru. */
+/** Define a URL base da API. */
+export function setApiBaseUrl(url: string) {
+  const clean = url.trim().replace(/\/+$/, "");
+
+  if (clean) {
+    window.localStorage.setItem(STORAGE_KEY, clean);
+  } else {
+    window.localStorage.removeItem(STORAGE_KEY);
+  }
+}
+
+/**
+ * Token JWT atual (Bearer).
+ * auth.tsx é o dono da sessão; isto é apenas o storage cru.
+ */
 export function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === "undefined") {
+    return null;
+  }
+
   return window.localStorage.getItem(TOKEN_STORAGE_KEY);
 }
 
@@ -42,24 +56,30 @@ export function clearAuthToken() {
   window.localStorage.removeItem(TOKEN_STORAGE_KEY);
 }
 
-/**
- * `imagemUrl` do treino já vem como "/api/workouts/image/xyz.jpg" (path completo,
- * incluindo o /api). getApiBaseUrl() também termina em /api, então aqui tiramos esse
- * sufixo antes de concatenar, senão duplicaria "/api/api/...".
- */
 export function buildAssetUrl(path: string): string {
-  const root = getApiBaseUrl().replace(/\/api\/?$/, "");
+  const root = getApiBaseUrl();
+
   return `${root}${path}`;
 }
 
-/** true quando a página é https e a API é http — o browser bloqueia (mixed content). */
+/**
+ * true quando a página é HTTPS e a API é HTTP.
+ * O browser bloqueia esse tipo de chamada (mixed content).
+ */
 export function isMixedContent(url = getApiBaseUrl()): boolean {
-  if (typeof window === "undefined") return false;
-  return window.location.protocol === "https:" && url.startsWith("http://");
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return (
+    window.location.protocol === "https:" &&
+    url.startsWith("http://")
+  );
 }
 
 export class ApiError extends Error {
   status: number;
+
   constructor(status: number, message: string) {
     super(message);
     this.status = status;
@@ -67,64 +87,120 @@ export class ApiError extends Error {
   }
 }
 
-export async function pingApi(url = getApiBaseUrl()): Promise<string> {
+export async function pingApi(
+  url = getApiBaseUrl(),
+): Promise<string> {
   if (isMixedContent(url)) {
     throw new ApiError(
       0,
-      "Esta página roda em HTTPS e a API está em HTTP — o navegador bloqueia a chamada (mixed content). Exponha a API por HTTPS (ex.: ngrok) ou rode o front localmente.",
+      "Esta página roda em HTTPS e a API está em HTTP — o navegador bloqueia a chamada (mixed content).",
     );
   }
-  const res = await fetch(`${url}/auth`, { method: "GET" }).catch(() => {
+
+  const res = await fetch(`${url}/auth`, {
+    method: "GET",
+  }).catch(() => {
     throw new ApiError(
       0,
-      `Não respondeu em ${url}. Verifique se a API está rodando e se o CORS libera este domínio (${typeof window !== "undefined" ? window.location.origin : ""}).`,
+      `Não respondeu em ${url}. Verifique se a API está rodando e se o CORS libera este domínio.`,
     );
   });
+
   return `API respondeu (HTTP ${res.status}).`;
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+/**
+ * Executa uma requisição HTTP para a API.
+ */
+async function request<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
   let res: Response;
-  const base = getApiBaseUrl();
+
+  const base = getApiBaseUrl().replace(/\/+$/, "");
+
+  const cleanPath = path.startsWith("/")
+    ? path
+    : `/${path}`;
+
   const headers: Record<string, string> =
-    init?.body instanceof FormData ? {} : { "Content-Type": "application/json" };
+    init?.body instanceof FormData
+      ? {}
+      : {
+          "Content-Type": "application/json",
+        };
+
   const token = getAuthToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   if (isMixedContent(base)) {
     throw new ApiError(
       0,
-      "Página em HTTPS chamando API em HTTP: o navegador bloqueia. Configure uma URL https da API (ngrok) na tela de login.",
-    );
-  }
-  try {
-    res = await fetch(`${base}${path}`, { ...init, headers });
-  } catch {
-    throw new ApiError(
-      0,
-      `Não consegui falar com a API em ${base}. Ela está rodando e com CORS liberado para ${typeof window !== "undefined" ? window.location.origin : "este domínio"}?`,
+      "Página em HTTPS chamando API em HTTP: o navegador bloqueia.",
     );
   }
 
-  if (res.status === 401 && typeof window !== "undefined") {
-    // Token ausente/expirado/inválido — o AuthProvider escuta isto para encerrar a sessão.
-    window.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT));
+  try {
+    res = await fetch(`${base}${cleanPath}`, {
+      ...init,
+      headers,
+    });
+  } catch {
+    throw new ApiError(
+      0,
+      `Não consegui falar com a API em ${base}. Ela está rodando e com CORS liberado?`,
+    );
+  }
+
+  if (
+    res.status === 401 &&
+    typeof window !== "undefined"
+  ) {
+    window.dispatchEvent(
+      new CustomEvent(UNAUTHORIZED_EVENT),
+    );
   }
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new ApiError(res.status, text || `Erro ${res.status} em ${path}`);
+
+    throw new ApiError(
+      res.status,
+      text || `Erro ${res.status} em ${path}`,
+    );
   }
 
-  if (res.status === 204) return undefined as T;
+  if (res.status === 204) {
+    return undefined as T;
+  }
+
   const text = await res.text();
+
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
-/* ---------- Tipos ---------- */
+/* =========================================================
+ * Tipos
+ * ========================================================= */
 
-export type TransactionType = "RECEITA" | "DESPESA";
-export type TaskStatus = "PENDENTE" | "TEORIA_VISTA" | "QUESTOES_FEITAS" | "DOMINADO";
-export type TaskPriority = "BAIXA" | "MEDIA" | "ALTA";
+export type TransactionType =
+  | "RECEITA"
+  | "DESPESA";
+
+export type TaskStatus =
+  | "PENDENTE"
+  | "TEORIA_VISTA"
+  | "QUESTOES_FEITAS"
+  | "DOMINADO";
+
+export type TaskPriority =
+  | "BAIXA"
+  | "MEDIA"
+  | "ALTA";
 
 export interface UserResponse {
   id: number;
@@ -143,7 +219,7 @@ export interface FinancialTransaction {
   descricao: string;
   valor: number;
   tipo: TransactionType;
-  data: string; // yyyy-MM-dd
+  data: string;
 }
 
 export interface Task {
@@ -199,9 +275,15 @@ export interface ChatMessage {
   content: string;
 }
 
-/* ---------- Estudos (Planos / Matérias / Assuntos) ---------- */
+/* =========================================================
+ * Estudos — Planos / Matérias / Assuntos
+ * ========================================================= */
 
-export type StudyPlanStatus = "PLANEJADO" | "EM_ANDAMENTO" | "CONCLUIDO" | "PAUSADO";
+export type StudyPlanStatus =
+  | "PLANEJADO"
+  | "EM_ANDAMENTO"
+  | "CONCLUIDO"
+  | "PAUSADO";
 
 export interface StudyPlan {
   id: number;
@@ -253,9 +335,14 @@ export interface TopicRequest {
   ordem?: number | null;
 }
 
-/* ---------- Estudos: Questões e Respostas ---------- */
+/* =========================================================
+ * Estudos — Questões e Respostas
+ * ========================================================= */
 
-export type QuestionDifficulty = "FACIL" | "MEDIA" | "DIFICIL";
+export type QuestionDifficulty =
+  | "FACIL"
+  | "MEDIA"
+  | "DIFICIL";
 
 export interface Question {
   id: number;
@@ -263,7 +350,6 @@ export interface Question {
   enunciado: string;
   alternativas: string[];
   dificuldade?: QuestionDifficulty | null;
-  /** Só vem preenchido fora de um simulado em andamento. */
   gabarito?: string | null;
   explicacao?: string | null;
   banca?: string | null;
@@ -302,9 +388,16 @@ export interface AnswerRequest {
   mockExamId?: number | null;
 }
 
-/* ---------- Estudos: Caderno de Erros ---------- */
+/* =========================================================
+ * Estudos — Caderno de Erros
+ * ========================================================= */
 
-export type ErrorReason = "NAO_SABIA" | "INTERPRETACAO" | "DISTRACAO" | "CHUTE" | "ERRO_DE_CALCULO";
+export type ErrorReason =
+  | "NAO_SABIA"
+  | "INTERPRETACAO"
+  | "DISTRACAO"
+  | "CHUTE"
+  | "ERRO_DE_CALCULO";
 
 export interface StudyError {
   id: number;
@@ -331,9 +424,14 @@ export interface PendingReviewResponse {
   itens: StudyError[];
 }
 
-/* ---------- Estudos: Simulados ---------- */
+/* =========================================================
+ * Estudos — Simulados
+ * ========================================================= */
 
-export type MockExamStatus = "CRIADO" | "EM_ANDAMENTO" | "FINALIZADO";
+export type MockExamStatus =
+  | "CRIADO"
+  | "EM_ANDAMENTO"
+  | "FINALIZADO";
 
 export interface MockExam {
   id: number;
@@ -364,7 +462,9 @@ export interface MockExamRequest {
   duracaoMinutos?: number | null;
 }
 
-/* ---------- Estudos: Estatísticas ---------- */
+/* =========================================================
+ * Estudos — Estatísticas
+ * ========================================================= */
 
 export interface OverallStats {
   questoesRespondidas: number;
@@ -387,103 +487,191 @@ export interface TopicPerformance {
   acertos: number;
 }
 
-/* ---------- Auth ---------- */
+/* =========================================================
+ * API
+ * ========================================================= */
 
 export const api = {
+  /* ---------- Auth ---------- */
+
   login: (email: string, password: string) =>
-    request<AuthResponse>(`${DEFAULT_API_URL}/auth/login`, {
+    request<AuthResponse>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        email,
+        password,
+      }),
     }),
-};
-  // O backend não emite token no cadastro — só cria o usuário. O login deve ser chamado
-  // logo em seguida para obter o AuthResponse (ver `submit` em pages/login.tsx).
+
   register: (email: string, password: string) =>
     request<UserResponse>("/users/register", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        email,
+        password,
+      }),
     }),
 
-  /* Financeiro */
+  /* ---------- Financeiro ---------- */
+
   listTransactions: (userId: number) =>
-    request<FinancialTransaction[]>(`/transactions/user/${userId}`),
+    request<FinancialTransaction[]>(
+      `/transactions/user/${userId}`,
+    ),
+
   createTransaction: (
     userId: number,
     body: Omit<FinancialTransaction, "id">,
   ) =>
-    request<FinancialTransaction>(`/transactions/user/${userId}`, {
+    request(`/transactions/user/${userId}`, {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  updateTransaction: (id: number, body: Omit<FinancialTransaction, "id">) =>
-    request<FinancialTransaction>(`/transactions/${id}`, {
+
+  updateTransaction: (
+    id: number,
+    body: Omit<FinancialTransaction, "id">,
+  ) =>
+    request(`/transactions/${id}`, {
       method: "PUT",
       body: JSON.stringify(body),
     }),
-  deleteTransaction: (id: number) =>
-    request<void>(`/transactions/${id}`, { method: "DELETE" }),
 
-  /* Tarefas */
-  listTasks: (userId: number) => request<Task[]>(`/tasks/user/${userId}`),
-  listEdital: (userId: number) => request<Task[]>(`/tasks/user/${userId}/edital`),
+  deleteTransaction: (id: number) =>
+    request(`/transactions/${id}`, {
+      method: "DELETE",
+    }),
+
+  /* ---------- Tarefas ---------- */
+
+  listTasks: (userId: number) =>
+    request<Task[]>(`/tasks/user/${userId}`),
+
+  listEdital: (userId: number) =>
+    request<Task[]>(`/tasks/user/${userId}/edital`),
+
   createTask: (
     userId: number,
     body: Omit<Task, "id">,
   ) =>
-    request<Task>("/tasks", {
+    request("/tasks", {
       method: "POST",
-      body: JSON.stringify({ ...body, user: { id: userId } }),
-    }),
-  updateTaskStatus: (id: number, status: TaskStatus) =>
-    request<Task>(`/tasks/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({
+        ...body,
+        user: {
+          id: userId,
+        },
+      }),
     }),
 
-  /* Estudo */
-  listNotes: (userId: number) => request<StudyNote[]>(`/study-notes/user/${userId}`),
-  createNote: (userId: number, titulo: string, conteudo: string) =>
-    request<StudyNote>("/study-notes", {
+  updateTaskStatus: (
+    id: number,
+    status: TaskStatus,
+  ) =>
+    request(`/tasks/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        status,
+      }),
+    }),
+
+  /* ---------- Estudos ---------- */
+
+  listNotes: (userId: number) =>
+    request<StudyNote[]>(
+      `/study-notes/user/${userId}`,
+    ),
+
+  createNote: (
+    userId: number,
+    titulo: string,
+    conteudo: string,
+  ) =>
+    request("/study-notes", {
       method: "POST",
       body: JSON.stringify({
         titulo,
         conteudo,
-        atualizadoEm: new Date().toISOString().slice(0, 19),
-        user: { id: userId },
+        atualizadoEm: new Date()
+          .toISOString()
+          .slice(0, 19),
+        user: {
+          id: userId,
+        },
       }),
     }),
-  updateNote: (id: number, userId: number, titulo: string, conteudo: string) =>
-    request<StudyNote>(`/study-notes/${id}`, {
+
+  updateNote: (
+    id: number,
+    userId: number,
+    titulo: string,
+    conteudo: string,
+  ) =>
+    request(`/study-notes/${id}`, {
       method: "PUT",
       body: JSON.stringify({
         titulo,
         conteudo,
-        atualizadoEm: new Date().toISOString().slice(0, 19),
-        user: { id: userId },
+        atualizadoEm: new Date()
+          .toISOString()
+          .slice(0, 19),
+        user: {
+          id: userId,
+        },
       }),
     }),
-  deleteNote: (id: number) => request<void>(`/study-notes/${id}`, { method: "DELETE" }),
 
-  listFiles: (userId: number) => request<StudyFile[]>(`/study-files/user/${userId}`),
-  uploadFile: (userId: number, file: File) => {
-    const form = new FormData();
-    form.append("file", file);
-    return request<StudyFile>(`/study-files/upload/user/${userId}`, {
-      method: "POST",
-      body: form,
-    });
-  },
-  deleteFile: (id: number) => request<void>(`/study-files/${id}`, { method: "DELETE" }),
-  fileDownloadUrl: (id: number) => `${getApiBaseUrl()}/study-files/download/${id}`,
-
-  chat: (message: string, history: ChatMessage[]) =>
-    request<{ reply: string }>("/study-chat", {
-      method: "POST",
-      body: JSON.stringify({ message, history }),
+  deleteNote: (id: number) =>
+    request(`/study-notes/${id}`, {
+      method: "DELETE",
     }),
 
-  /* Treinos */
-  listWorkouts: (userId: number) => request<Workout[]>(`/workouts/user/${userId}`),
+  listFiles: (userId: number) =>
+    request<StudyFile[]>(
+      `/study-files/user/${userId}`,
+    ),
+
+  uploadFile: (userId: number, file: File) => {
+    const form = new FormData();
+
+    form.append("file", file);
+
+    return request(
+      `/study-files/upload/user/${userId}`,
+      {
+        method: "POST",
+        body: form,
+      },
+    );
+  },
+
+  deleteFile: (id: number) =>
+    request(`/study-files/${id}`, {
+      method: "DELETE",
+    }),
+
+  fileDownloadUrl: (id: number) =>
+    `${getApiBaseUrl()}/study-files/download/${id}`,
+
+  chat: (
+    message: string,
+    history: ChatMessage[],
+  ) =>
+    request<{ reply: string }>("/study-chat", {
+      method: "POST",
+      body: JSON.stringify({
+        message,
+        history,
+      }),
+    }),
+
+  /* ---------- Treinos ---------- */
+
+  listWorkouts: (userId: number) =>
+    request<Workout[]>(
+      `/workouts/user/${userId}`,
+    ),
+
   createWorkout: (body: {
     grupoMuscular: string;
     dataTreino: string;
@@ -491,136 +679,330 @@ export const api = {
     exerciciosExecutados?: string;
     exercicios?: WorkoutExercise[];
   }) =>
-    request<Workout>("/workouts", {
+    request("/workouts", {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  uploadWorkoutImage: (workoutId: number, file: File) => {
+
+  uploadWorkoutImage: (
+    workoutId: number,
+    file: File,
+  ) => {
     const form = new FormData();
+
     form.append("file", file);
-    return request<Workout>(`/workouts/${workoutId}/image`, { method: "POST", body: form });
+
+    return request(
+      `/workouts/${workoutId}/image`,
+      {
+        method: "POST",
+        body: form,
+      },
+    );
   },
-  getGoal: (userId: number) => request<WorkoutGoal>(`/workout-goals/user/${userId}`),
-  setGoal: (userId: number, metaTreinosPorSemana: number) =>
-    request<WorkoutGoal>(`/workout-goals/user/${userId}`, {
-      method: "PUT",
-      body: JSON.stringify({ metaTreinosPorSemana }),
-    }),
 
-  /* Estudos: Planos — dono resolvido pelo token, sem userId na URL */
-  listStudyPlans: () => request<StudyPlan[]>("/study-plans"),
-  getStudyPlan: (id: number) => request<StudyPlan>(`/study-plans/${id}`),
+  getGoal: (userId: number) =>
+    request(
+      `/workout-goals/user/${userId}`,
+    ),
+
+  setGoal: (
+    userId: number,
+    metaTreinosPorSemana: number,
+  ) =>
+    request(
+      `/workout-goals/user/${userId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          metaTreinosPorSemana,
+        }),
+      },
+    ),
+
+  /* ---------- Estudos: Planos ---------- */
+
+  listStudyPlans: () =>
+    request<StudyPlan[]>("/study-plans"),
+
+  getStudyPlan: (id: number) =>
+    request(`/study-plans/${id}`),
+
   createStudyPlan: (body: StudyPlanRequest) =>
-    request<StudyPlan>("/study-plans", { method: "POST", body: JSON.stringify(body) }),
-  updateStudyPlan: (id: number, body: StudyPlanRequest) =>
-    request<StudyPlan>(`/study-plans/${id}`, { method: "PUT", body: JSON.stringify(body) }),
-  deleteStudyPlan: (id: number) => request<void>(`/study-plans/${id}`, { method: "DELETE" }),
+    request("/study-plans", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 
-  /* Estudos: Matérias */
+  updateStudyPlan: (
+    id: number,
+    body: StudyPlanRequest,
+  ) =>
+    request(`/study-plans/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+
+  deleteStudyPlan: (id: number) =>
+    request(`/study-plans/${id}`, {
+      method: "DELETE",
+    }),
+
+  /* ---------- Estudos: Matérias ---------- */
+
   listSubjects: (studyPlanId: number) =>
-    request<Subject[]>(`/study-plans/${studyPlanId}/subjects`),
-  createSubject: (studyPlanId: number, body: SubjectRequest) =>
-    request<Subject>(`/study-plans/${studyPlanId}/subjects`, {
+    request<Subject[]>(
+      `/study-plans/${studyPlanId}/subjects`,
+    ),
+
+  createSubject: (
+    studyPlanId: number,
+    body: SubjectRequest,
+  ) =>
+    request(
+      `/study-plans/${studyPlanId}/subjects`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+
+  updateSubject: (
+    id: number,
+    body: SubjectRequest,
+  ) =>
+    request(`/subjects/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+
+  deleteSubject: (id: number) =>
+    request(`/subjects/${id}`, {
+      method: "DELETE",
+    }),
+
+  /* ---------- Estudos: Assuntos ---------- */
+
+  listTopics: (subjectId: number) =>
+    request<Topic[]>(
+      `/subjects/${subjectId}/topics`,
+    ),
+
+  createTopic: (
+    subjectId: number,
+    body: TopicRequest,
+  ) =>
+    request(`/subjects/${subjectId}/topics`, {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  updateSubject: (id: number, body: SubjectRequest) =>
-    request<Subject>(`/subjects/${id}`, { method: "PUT", body: JSON.stringify(body) }),
-  deleteSubject: (id: number) => request<void>(`/subjects/${id}`, { method: "DELETE" }),
 
-  /* Estudos: Assuntos */
-  listTopics: (subjectId: number) => request<Topic[]>(`/subjects/${subjectId}/topics`),
-  createTopic: (subjectId: number, body: TopicRequest) =>
-    request<Topic>(`/subjects/${subjectId}/topics`, {
+  updateTopic: (
+    id: number,
+    body: TopicRequest,
+  ) =>
+    request(`/topics/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+
+  deleteTopic: (id: number) =>
+    request(`/topics/${id}`, {
+      method: "DELETE",
+    }),
+
+  /* ---------- Estudos: Questões ---------- */
+
+  listQuestions: (topicId: number) =>
+    request<Question[]>(
+      `/topics/${topicId}/questions`,
+    ),
+
+  getQuestion: (id: number) =>
+    request(`/questions/${id}`),
+
+  createQuestion: (
+    topicId: number,
+    body: QuestionRequest,
+  ) =>
+    request(`/topics/${topicId}/questions`, {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  updateTopic: (id: number, body: TopicRequest) =>
-    request<Topic>(`/topics/${id}`, { method: "PUT", body: JSON.stringify(body) }),
-  deleteTopic: (id: number) => request<void>(`/topics/${id}`, { method: "DELETE" }),
 
-  /* Estudos: Questões */
-  listQuestions: (topicId: number) => request<Question[]>(`/topics/${topicId}/questions`),
-  getQuestion: (id: number) => request<Question>(`/questions/${id}`),
-  createQuestion: (topicId: number, body: QuestionRequest) =>
-    request<Question>(`/topics/${topicId}/questions`, {
-      method: "POST",
+  updateQuestion: (
+    id: number,
+    body: QuestionRequest,
+  ) =>
+    request(`/questions/${id}`, {
+      method: "PUT",
       body: JSON.stringify(body),
     }),
-  updateQuestion: (id: number, body: QuestionRequest) =>
-    request<Question>(`/questions/${id}`, { method: "PUT", body: JSON.stringify(body) }),
-  deleteQuestion: (id: number) => request<void>(`/questions/${id}`, { method: "DELETE" }),
 
-  /* Estudos: Respostas */
+  deleteQuestion: (id: number) =>
+    request(`/questions/${id}`, {
+      method: "DELETE",
+    }),
+
+  /* ---------- Estudos: Respostas ---------- */
+
   submitAnswer: (body: AnswerRequest) =>
-    request<Answer>("/answers", { method: "POST", body: JSON.stringify(body) }),
-  listAnswers: () => request<Answer[]>("/answers"),
+    request("/answers", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 
-  /* Estudos: Caderno de Erros — sem filtros por querystring no backend; filtrar no client */
-  listStudyErrors: () => request<StudyError[]>("/study-errors"),
-  registerStudyError: (body: StudyErrorRequest) =>
-    request<StudyError>("/study-errors", { method: "POST", body: JSON.stringify(body) }),
+  listAnswers: () =>
+    request<Answer[]>("/answers"),
+
+  /* ---------- Estudos: Caderno de Erros ---------- */
+
+  listStudyErrors: () =>
+    request<StudyError[]>("/study-errors"),
+
+  registerStudyError: (
+    body: StudyErrorRequest,
+  ) =>
+    request("/study-errors", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
   resolveStudyError: (id: number) =>
-    request<StudyError>(`/study-errors/${id}/resolver`, { method: "PATCH" }),
-  deleteStudyError: (id: number) => request<void>(`/study-errors/${id}`, { method: "DELETE" }),
+    request(
+      `/study-errors/${id}/resolver`,
+      {
+        method: "PATCH",
+      },
+    ),
 
-  /* Estudos: Revisões — usa /study-stats/pendentes-revisao (mesma fonte de dados do
-     caderno de erros, mas já vem com o total pronto) */
-  listPendingReviews: () => request<PendingReviewResponse>("/study-stats/pendentes-revisao"),
+  deleteStudyError: (id: number) =>
+    request(`/study-errors/${id}`, {
+      method: "DELETE",
+    }),
 
-  /* Estudos: Simulados */
-  listMockExams: () => request<MockExam[]>("/mock-exams"),
-  getMockExam: (id: number) => request<MockExamDetail>(`/mock-exams/${id}`),
-  createMockExam: (body: MockExamRequest) =>
-    request<MockExam>("/mock-exams", { method: "POST", body: JSON.stringify(body) }),
-  startMockExam: (id: number) => request<MockExam>(`/mock-exams/${id}/iniciar`, { method: "POST" }),
-  finishMockExam: (id: number) => request<MockExam>(`/mock-exams/${id}/finalizar`, { method: "POST" }),
-  deleteMockExam: (id: number) => request<void>(`/mock-exams/${id}`, { method: "DELETE" }),
+  /* ---------- Estudos: Revisões ---------- */
 
-  /* Estudos: Estatísticas — percentual vem calculado do lado do client (o record de
-     por-matéria/por-assunto do backend expõe um método percentual() que não é
-     serializado pelo Jackson, só respondidas/acertos) */
-  statsGeral: () => request<OverallStats>("/study-stats/geral"),
-  statsPorMateria: () => request<SubjectPerformance[]>("/study-stats/por-materia"),
-  statsPorAssunto: () => request<TopicPerformance[]>("/study-stats/por-assunto"),
-  statsPorPeriodo: (inicio: string, fim: string) =>
-    request<OverallStats>(`/study-stats/por-periodo?inicio=${inicio}&fim=${fim}`),
+  listPendingReviews: () =>
+    request(
+      "/study-stats/pendentes-revisao",
+    ),
+
+  /* ---------- Estudos: Simulados ---------- */
+
+  listMockExams: () =>
+    request<MockExam[]>("/mock-exams"),
+
+  getMockExam: (id: number) =>
+    request(`/mock-exams/${id}`),
+
+  createMockExam: (
+    body: MockExamRequest,
+  ) =>
+    request("/mock-exams", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  startMockExam: (id: number) =>
+    request(`/mock-exams/${id}/iniciar`, {
+      method: "POST",
+    }),
+
+  finishMockExam: (id: number) =>
+    request(
+      `/mock-exams/${id}/finalizar`,
+      {
+        method: "POST",
+      },
+    ),
+
+  deleteMockExam: (id: number) =>
+    request(`/mock-exams/${id}`, {
+      method: "DELETE",
+    }),
+
+  /* ---------- Estudos: Estatísticas ---------- */
+
+  statsGeral: () =>
+    request<OverallStats>(
+      "/study-stats/geral",
+    ),
+
+  statsPorMateria: () =>
+    request<SubjectPerformance[]>(
+      "/study-stats/por-materia",
+    ),
+
+  statsPorAssunto: () =>
+    request<TopicPerformance[]>(
+      "/study-stats/por-assunto",
+    ),
+
+  statsPorPeriodo: (
+    inicio: string,
+    fim: string,
+  ) =>
+    request(
+      `/study-stats/por-periodo?inicio=${inicio}&fim=${fim}`,
+    ),
 };
 
-/* ---------- Helpers ---------- */
+/* =========================================================
+ * Helpers
+ * ========================================================= */
 
 export const brl = (v: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+  new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(v);
 
-export const today = () => new Date().toISOString().slice(0, 10);
+export const today = () =>
+  new Date().toISOString().slice(0, 10);
 
-export const statusLabel: Record<TaskStatus, string> = {
+export const statusLabel: Record<
+  TaskStatus,
+  string
+> = {
   PENDENTE: "Pendente",
   TEORIA_VISTA: "Teoria vista",
   QUESTOES_FEITAS: "Questões feitas",
   DOMINADO: "Dominado",
 };
 
-export const priorityLabel: Record<TaskPriority, string> = {
+export const priorityLabel: Record<
+  TaskPriority,
+  string
+> = {
   BAIXA: "Baixa",
   MEDIA: "Média",
   ALTA: "Alta",
 };
 
-export const studyPlanStatusLabel: Record<StudyPlanStatus, string> = {
+export const studyPlanStatusLabel: Record<
+  StudyPlanStatus,
+  string
+> = {
   PLANEJADO: "Planejado",
   EM_ANDAMENTO: "Em andamento",
   CONCLUIDO: "Concluído",
   PAUSADO: "Pausado",
 };
 
-export const difficultyLabel: Record<QuestionDifficulty, string> = {
+export const difficultyLabel: Record<
+  QuestionDifficulty,
+  string
+> = {
   FACIL: "Fácil",
   MEDIA: "Média",
   DIFICIL: "Difícil",
 };
 
-export const errorReasonLabel: Record<ErrorReason, string> = {
+export const errorReasonLabel: Record<
+  ErrorReason,
+  string
+> = {
   NAO_SABIA: "Não sabia",
   INTERPRETACAO: "Erro de interpretação",
   DISTRACAO: "Distração",
@@ -628,8 +1010,12 @@ export const errorReasonLabel: Record<ErrorReason, string> = {
   ERRO_DE_CALCULO: "Erro de cálculo",
 };
 
-export const mockExamStatusLabel: Record<MockExamStatus, string> = {
+export const mockExamStatusLabel: Record<
+  MockExamStatus,
+  string
+> = {
   CRIADO: "Não iniciado",
   EM_ANDAMENTO: "Em andamento",
   FINALIZADO: "Finalizado",
 };
+
