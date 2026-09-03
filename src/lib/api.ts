@@ -11,7 +11,7 @@ export const UNAUTHORIZED_EVENT = "nexus:unauthorized";
 // URL padrão da API no Render
 export const DEFAULT_API_URL =
   (import.meta.env["VITE_API_URL"] as string | undefined) ??
-  "https://onrender.com";
+  "https://nexus-api-bgsf.onrender.com";
 
 /** URL base atual — pode ser trocada em tempo de execução. */
 export function getApiBaseUrl(): string {
