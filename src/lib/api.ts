@@ -3,38 +3,23 @@ const TOKEN_STORAGE_KEY = "nexus.token";
 
 export const UNAUTHORIZED_EVENT = "nexus:unauthorized";
 
-/**
- * URL padrão da API em produção.
- *
- * IMPORTANTE:
- * O backend Spring Boot utiliza:
- *
- * /api/auth
- * /api/users
- * /api/tasks
- * /api/workouts
- * etc.
- *
- * Portanto /api faz parte da URL base.
- */
 export const DEFAULT_API_URL =
   (import.meta.env["VITE_API_URL"] as string | undefined)
     ?.trim()
     .replace(/\/+$/, "") ||
   "https://nexus-api-bgsf.onrender.com/api";
 
-/**
- * Retorna a URL base da API.
- *
- * O localStorage permite alterar a API pelo painel
- * de conexão da tela de login.
- */
+/* =========================================================
+ * CONFIGURAÇÃO
+ * ========================================================= */
+
 export function getApiBaseUrl(): string {
   if (typeof window === "undefined") {
     return DEFAULT_API_URL;
   }
 
-  const stored = window.localStorage.getItem(STORAGE_KEY);
+  const stored =
+    window.localStorage.getItem(STORAGE_KEY);
 
   if (!stored) {
     return DEFAULT_API_URL;
@@ -43,33 +28,33 @@ export function getApiBaseUrl(): string {
   return stored.trim().replace(/\/+$/, "");
 }
 
-/**
- * Define manualmente a URL da API.
- */
 export function setApiBaseUrl(url: string): void {
   const clean = url.trim().replace(/\/+$/, "");
 
   if (clean) {
-    window.localStorage.setItem(STORAGE_KEY, clean);
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      clean,
+    );
   } else {
     window.localStorage.removeItem(STORAGE_KEY);
   }
 }
 
-/**
- * Retorna o JWT salvo.
- */
+/* =========================================================
+ * TOKEN
+ * ========================================================= */
+
 export function getAuthToken(): string | null {
   if (typeof window === "undefined") {
     return null;
   }
 
-  return window.localStorage.getItem(TOKEN_STORAGE_KEY);
+  return window.localStorage.getItem(
+    TOKEN_STORAGE_KEY,
+  );
 }
 
-/**
- * Salva o JWT.
- */
 export function setAuthToken(token: string): void {
   window.localStorage.setItem(
     TOKEN_STORAGE_KEY,
@@ -77,31 +62,33 @@ export function setAuthToken(token: string): void {
   );
 }
 
-/**
- * Remove o JWT.
- */
 export function clearAuthToken(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
   window.localStorage.removeItem(
     TOKEN_STORAGE_KEY,
   );
 }
 
-/**
- * Monta URL para arquivos/assets da API.
- */
+/* =========================================================
+ * URL DE ASSETS
+ * ========================================================= */
+
 export function buildAssetUrl(path: string): string {
-  const root = getApiBaseUrl().replace(/\/+$/, "");
+  const base = getApiBaseUrl().replace(
+    /\/+$/,
+    "",
+  );
 
   const cleanPath = path.startsWith("/")
     ? path
     : `/${path}`;
 
-  return `${root}${cleanPath}`;
+  return `${base}${cleanPath}`;
 }
 
-/**
- * Verifica se existe mixed content.
- */
 export function isMixedContent(
   url = getApiBaseUrl(),
 ): boolean {
@@ -115,9 +102,10 @@ export function isMixedContent(
   );
 }
 
-/**
- * Erro padronizado da API.
- */
+/* =========================================================
+ * ERRO
+ * ========================================================= */
+
 export class ApiError extends Error {
   status: number;
 
@@ -126,25 +114,15 @@ export class ApiError extends Error {
     message: string,
   ) {
     super(message);
-
     this.name = "ApiError";
     this.status = status;
   }
 }
 
-/**
- * Testa a conexão com a API.
- *
- * O backend possui:
- *
- * GET /api/auth
- *
- * como endpoint público de health check.
- *
- * IMPORTANTE:
- * Não usamos apenas /api porque esse caminho pode estar
- * protegido pelo Spring Security.
- */
+/* =========================================================
+ * TESTE DA API
+ * ========================================================= */
+
 export async function pingApi(
   url = getApiBaseUrl(),
 ): Promise<string> {
@@ -171,7 +149,9 @@ export async function pingApi(
   }
 
   if (!response.ok) {
-    const text = await response.text().catch(() => "");
+    const text = await response
+      .text()
+      .catch(() => "");
 
     throw new ApiError(
       response.status,
@@ -183,9 +163,10 @@ export async function pingApi(
   return `API respondeu corretamente (HTTP ${response.status}).`;
 }
 
-/**
- * Cliente HTTP genérico.
- */
+/* =========================================================
+ * REQUEST
+ * ========================================================= */
+
 async function request<T>(
   path: string,
   init?: RequestInit,
@@ -212,10 +193,6 @@ async function request<T>(
     init?.headers,
   );
 
-  /**
-   * FormData não pode receber Content-Type manualmente.
-   * O navegador precisa gerar o boundary automaticamente.
-   */
   if (!(init?.body instanceof FormData)) {
     if (!headers.has("Content-Type")) {
       headers.set(
@@ -225,9 +202,6 @@ async function request<T>(
     }
   }
 
-  /**
-   * Adiciona JWT automaticamente.
-   */
   const token = getAuthToken();
 
   if (
@@ -254,9 +228,6 @@ async function request<T>(
     );
   }
 
-  /**
-   * JWT inválido/expirado.
-   */
   if (
     response.status === 401 &&
     typeof window !== "undefined"
@@ -268,9 +239,6 @@ async function request<T>(
     );
   }
 
-  /**
-   * Erros HTTP.
-   */
   if (!response.ok) {
     const text = await response
       .text()
@@ -299,9 +267,6 @@ async function request<T>(
     );
   }
 
-  /**
-   * HTTP 204 — No Content.
-   */
   if (response.status === 204) {
     return undefined as T;
   }
@@ -338,10 +303,6 @@ export type TaskPriority =
   | "MEDIA"
   | "ALTA";
 
-/* =========================================================
- * USUÁRIO / AUTH
- * ========================================================= */
-
 export interface UserResponse {
   id: number;
   email: string;
@@ -354,10 +315,6 @@ export interface AuthResponse {
   user: UserResponse;
 }
 
-/* =========================================================
- * FINANCEIRO
- * ========================================================= */
-
 export interface FinancialTransaction {
   id: number;
   descricao: string;
@@ -365,10 +322,6 @@ export interface FinancialTransaction {
   tipo: TransactionType;
   data: string;
 }
-
-/* =========================================================
- * TAREFAS
- * ========================================================= */
 
 export interface Task {
   id: number;
@@ -380,20 +333,12 @@ export interface Task {
   ehTopicoEdital: boolean;
 }
 
-/* =========================================================
- * ANOTAÇÕES
- * ========================================================= */
-
 export interface StudyNote {
   id: number;
   titulo: string;
   conteudo?: string | null;
   atualizadoEm: string;
 }
-
-/* =========================================================
- * ARQUIVOS
- * ========================================================= */
 
 export interface StudyFile {
   id: number;
@@ -402,10 +347,6 @@ export interface StudyFile {
   tipoConteudo: string;
   dataUpload: string;
 }
-
-/* =========================================================
- * TREINOS
- * ========================================================= */
 
 export interface WorkoutExercise {
   id?: number;
@@ -430,18 +371,10 @@ export interface WorkoutGoal {
   metaTreinosPorSemana: number;
 }
 
-/* =========================================================
- * CHAT
- * ========================================================= */
-
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
 }
-
-/* =========================================================
- * PLANOS DE ESTUDO
- * ========================================================= */
 
 export type StudyPlanStatus =
   | "PLANEJADO"
@@ -475,10 +408,6 @@ export interface StudyPlanRequest {
   status?: StudyPlanStatus | null;
 }
 
-/* =========================================================
- * MATÉRIAS
- * ========================================================= */
-
 export interface Subject {
   id: number;
   nome: string;
@@ -491,10 +420,6 @@ export interface SubjectRequest {
   pesoNoEdital?: number | null;
 }
 
-/* =========================================================
- * ASSUNTOS
- * ========================================================= */
-
 export interface Topic {
   id: number;
   nome: string;
@@ -506,10 +431,6 @@ export interface TopicRequest {
   nome: string;
   ordem?: number | null;
 }
-
-/* =========================================================
- * QUESTÕES
- * ========================================================= */
 
 export type QuestionDifficulty =
   | "FACIL"
@@ -542,10 +463,6 @@ export interface QuestionRequest {
   ano?: number | null;
 }
 
-/* =========================================================
- * RESPOSTAS
- * ========================================================= */
-
 export interface Answer {
   id: number;
   questionId: number;
@@ -563,10 +480,6 @@ export interface AnswerRequest {
   tempoSegundos?: number | null;
   mockExamId?: number | null;
 }
-
-/* =========================================================
- * CADERNO DE ERROS
- * ========================================================= */
 
 export type ErrorReason =
   | "NAO_SABIA"
@@ -599,10 +512,6 @@ export interface PendingReviewResponse {
   totalPendentes: number;
   itens: StudyError[];
 }
-
-/* =========================================================
- * SIMULADOS
- * ========================================================= */
 
 export type MockExamStatus =
   | "CRIADO"
@@ -638,10 +547,6 @@ export interface MockExamRequest {
   duracaoMinutos?: number | null;
 }
 
-/* =========================================================
- * ESTATÍSTICAS
- * ========================================================= */
-
 export interface OverallStats {
   questoesRespondidas: number;
   acertos: number;
@@ -668,9 +573,7 @@ export interface TopicPerformance {
  * ========================================================= */
 
 export const api = {
-  /* =========================
-   * AUTH
-   * ========================= */
+  /* AUTH */
 
   login: (
     email: string,
@@ -702,9 +605,7 @@ export const api = {
       },
     ),
 
-  /* =========================
-   * FINANCEIRO
-   * ========================= */
+  /* FINANCEIRO */
 
   listTransactions: (
     userId: number,
@@ -747,9 +648,7 @@ export const api = {
       },
     ),
 
-  /* =========================
-   * TAREFAS
-   * ========================= */
+  /* TAREFAS */
 
   listTasks: (
     userId: number,
@@ -796,9 +695,7 @@ export const api = {
       },
     ),
 
-  /* =========================
-   * ANOTAÇÕES
-   * ========================= */
+  /* ANOTAÇÕES */
 
   listNotes: (
     userId: number,
@@ -862,9 +759,7 @@ export const api = {
       },
     ),
 
-  /* =========================
-   * ARQUIVOS
-   * ========================= */
+  /* ARQUIVOS */
 
   listFiles: (
     userId: number,
@@ -905,9 +800,7 @@ export const api = {
   ) =>
     `${getApiBaseUrl()}/study-files/download/${id}`,
 
-  /* =========================
-   * CHAT
-   * ========================= */
+  /* CHAT */
 
   chat: (
     message: string,
@@ -924,9 +817,7 @@ export const api = {
       },
     ),
 
-  /* =========================
-   * TREINOS
-   * ========================= */
+  /* TREINOS */
 
   listWorkouts: (
     userId: number,
@@ -990,9 +881,7 @@ export const api = {
       },
     ),
 
-  /* =========================
-   * PLANOS
-   * ========================= */
+  /* PLANOS DE ESTUDO */
 
   listStudyPlans: () =>
     request<StudyPlan[]>(
@@ -1039,9 +928,7 @@ export const api = {
       },
     ),
 
-  /* =========================
-   * MATÉRIAS
-   * ========================= */
+  /* MATÉRIAS */
 
   listSubjects: (
     studyPlanId: number,
@@ -1084,9 +971,7 @@ export const api = {
       },
     ),
 
-  /* =========================
-   * ASSUNTOS
-   * ========================= */
+  /* ASSUNTOS */
 
   listTopics: (
     subjectId: number,
@@ -1129,9 +1014,7 @@ export const api = {
       },
     ),
 
-  /* =========================
-   * QUESTÕES
-   * ========================= */
+  /* QUESTÕES */
 
   listQuestions: (
     topicId: number,
@@ -1181,9 +1064,7 @@ export const api = {
       },
     ),
 
-  /* =========================
-   * RESPOSTAS
-   * ========================= */
+  /* RESPOSTAS */
 
   submitAnswer: (
     body: AnswerRequest,
@@ -1201,9 +1082,7 @@ export const api = {
       "/answers",
     ),
 
-  /* =========================
-   * CADERNO DE ERROS
-   * ========================= */
+  /* CADERNO DE ERROS */
 
   listStudyErrors: () =>
     request<StudyError[]>(
@@ -1241,18 +1120,14 @@ export const api = {
       },
     ),
 
-  /* =========================
-   * REVISÕES
-   * ========================= */
+  /* REVISÕES */
 
   listPendingReviews: () =>
     request<PendingReviewResponse>(
       "/study-stats/pendentes-revisao",
     ),
 
-  /* =========================
-   * SIMULADOS
-   * ========================= */
+  /* SIMULADOS */
 
   listMockExams: () =>
     request<MockExam[]>(
@@ -1307,9 +1182,7 @@ export const api = {
       },
     ),
 
-  /* =========================
-   * ESTATÍSTICAS
-   * ========================= */
+  /* ESTATÍSTICAS */
 
   statsGeral: () =>
     request<OverallStats>(

@@ -23,24 +23,13 @@ const EXPIRES_AT_STORAGE_KEY = "nexus.expiresAt";
 interface AuthState {
   user: UserResponse | null;
   ready: boolean;
-
-  /**
-   * Recebe a resposta completa do login
-   * e inicia a sessão.
-   */
   signIn: (auth: AuthResponse) => void;
-
-  /**
-   * Encerra a sessão.
-   */
   signOut: () => void;
 }
 
-const AuthContext = createContext<AuthState | null>(null);
+const AuthContext =
+  createContext<AuthState | null>(null);
 
-/**
- * Recupera o usuário salvo no navegador.
- */
 function readStoredUser(): UserResponse | null {
   try {
     const expiresAtRaw =
@@ -52,10 +41,6 @@ function readStoredUser(): UserResponse | null {
       ? Number(expiresAtRaw)
       : null;
 
-    /**
-     * Se existe uma data de expiração
-     * e ela já passou, a sessão é inválida.
-     */
     if (
       expiresAt !== null &&
       Number.isFinite(expiresAt) &&
@@ -83,12 +68,9 @@ function readStoredUser(): UserResponse | null {
       return null;
     }
 
-    const parsed: unknown = JSON.parse(raw);
+    const parsed: unknown =
+      JSON.parse(raw);
 
-    /**
-     * Validação mínima para evitar colocar
-     * dados inválidos no estado de autenticação.
-     */
     if (
       typeof parsed !== "object" ||
       parsed === null ||
@@ -108,9 +90,6 @@ function readStoredUser(): UserResponse | null {
   }
 }
 
-/**
- * Provider global de autenticação.
- */
 export function AuthProvider({
   children,
 }: {
@@ -122,9 +101,6 @@ export function AuthProvider({
   const [ready, setReady] =
     useState(false);
 
-  /**
-   * Encerra a sessão completamente.
-   */
   const signOut = useCallback(() => {
     clearAuthToken();
 
@@ -139,20 +115,14 @@ export function AuthProvider({
     setUser(null);
   }, []);
 
-  /**
-   * Restaura a sessão quando o aplicativo inicia.
-   */
   useEffect(() => {
-    const storedUser = readStoredUser();
+    const storedUser =
+      readStoredUser();
 
     setUser(storedUser);
     setReady(true);
   }, []);
 
-  /**
-   * Qualquer resposta HTTP 401
-   * encerra automaticamente a sessão.
-   */
   useEffect(() => {
     const handler = () => {
       signOut();
@@ -171,10 +141,6 @@ export function AuthProvider({
     };
   }, [signOut]);
 
-  /**
-   * Monitora a expiração do JWT
-   * enquanto o aplicativo está aberto.
-   */
   useEffect(() => {
     if (!user) {
       return;
@@ -199,58 +165,39 @@ export function AuthProvider({
     const msLeft =
       expiresAt - Date.now();
 
-    /**
-     * Já expirou.
-     */
     if (msLeft <= 0) {
       signOut();
       return;
     }
 
-    /**
-     * Agenda logout automático.
-     */
-    const timer = window.setTimeout(() => {
-      signOut();
-    }, msLeft);
+    const timer =
+      window.setTimeout(() => {
+        signOut();
+      }, msLeft);
 
     return () => {
       window.clearTimeout(timer);
     };
   }, [user, signOut]);
 
-  /**
-   * Inicia uma sessão.
-   */
   const signIn = useCallback(
     (auth: AuthResponse) => {
-      /**
-       * Salva JWT.
-       */
       setAuthToken(auth.token);
 
-      /**
-       * Salva usuário.
-       */
       window.localStorage.setItem(
         USER_STORAGE_KEY,
         JSON.stringify(auth.user),
       );
 
-      /**
-       * Calcula a data absoluta de expiração.
-       */
       const expiresAt =
-        Date.now() + auth.expiresInMs;
+        Date.now() +
+        auth.expiresInMs;
 
       window.localStorage.setItem(
         EXPIRES_AT_STORAGE_KEY,
         String(expiresAt),
       );
 
-      /**
-       * Atualiza estado React.
-       */
       setUser(auth.user);
     },
     [],
@@ -278,11 +225,9 @@ export function AuthProvider({
   );
 }
 
-/**
- * Hook para acessar autenticação.
- */
 export function useAuth(): AuthState {
-  const ctx = useContext(AuthContext);
+  const ctx =
+    useContext(AuthContext);
 
   if (!ctx) {
     throw new Error(
