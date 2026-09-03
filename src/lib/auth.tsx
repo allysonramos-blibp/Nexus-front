@@ -36,8 +36,7 @@ interface AuthState {
   signOut: () => void;
 }
 
-const AuthContext =
-  createContext<AuthState | null>(null);
+const AuthContext = createContext<AuthState | null>(null);
 
 /**
  * Recupera o usuário salvo no navegador.
@@ -58,7 +57,8 @@ function readStoredUser(): UserResponse | null {
      * e ela já passou, a sessão é inválida.
      */
     if (
-      expiresAt &&
+      expiresAt !== null &&
+      Number.isFinite(expiresAt) &&
       Date.now() >= expiresAt
     ) {
       clearAuthToken();
@@ -83,9 +83,26 @@ function readStoredUser(): UserResponse | null {
       return null;
     }
 
-    return JSON.parse(
-      raw,
-    ) as UserResponse;
+    const parsed: unknown = JSON.parse(raw);
+
+    /**
+     * Validação mínima para evitar colocar
+     * dados inválidos no estado de autenticação.
+     */
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      !("id" in parsed) ||
+      !("email" in parsed)
+    ) {
+      window.localStorage.removeItem(
+        USER_STORAGE_KEY,
+      );
+
+      return null;
+    }
+
+    return parsed as UserResponse;
   } catch {
     return null;
   }
@@ -106,7 +123,7 @@ export function AuthProvider({
     useState(false);
 
   /**
-   * Faz logout completo.
+   * Encerra a sessão completamente.
    */
   const signOut = useCallback(() => {
     clearAuthToken();
@@ -126,8 +143,7 @@ export function AuthProvider({
    * Restaura a sessão quando o aplicativo inicia.
    */
   useEffect(() => {
-    const storedUser =
-      readStoredUser();
+    const storedUser = readStoredUser();
 
     setUser(storedUser);
     setReady(true);
@@ -173,7 +189,10 @@ export function AuthProvider({
       ? Number(expiresAtRaw)
       : null;
 
-    if (!expiresAt) {
+    if (
+      expiresAt === null ||
+      !Number.isFinite(expiresAt)
+    ) {
       return;
     }
 
@@ -191,13 +210,9 @@ export function AuthProvider({
     /**
      * Agenda logout automático.
      */
-    const timer =
-      window.setTimeout(
-        () => {
-          signOut();
-        },
-        msLeft,
-      );
+    const timer = window.setTimeout(() => {
+      signOut();
+    }, msLeft);
 
     return () => {
       window.clearTimeout(timer);
@@ -223,12 +238,10 @@ export function AuthProvider({
       );
 
       /**
-       * Calcula a data absoluta
-       * de expiração.
+       * Calcula a data absoluta de expiração.
        */
       const expiresAt =
-        Date.now() +
-        auth.expiresInMs;
+        Date.now() + auth.expiresInMs;
 
       window.localStorage.setItem(
         EXPIRES_AT_STORAGE_KEY,
@@ -243,7 +256,7 @@ export function AuthProvider({
     [],
   );
 
-  const value = useMemo(
+  const value = useMemo<AuthState>(
     () => ({
       user,
       ready,
@@ -268,9 +281,8 @@ export function AuthProvider({
 /**
  * Hook para acessar autenticação.
  */
-export function useAuth() {
-  const ctx =
-    useContext(AuthContext);
+export function useAuth(): AuthState {
+  const ctx = useContext(AuthContext);
 
   if (!ctx) {
     throw new Error(

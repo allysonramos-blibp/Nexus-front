@@ -18,8 +18,10 @@ export const UNAUTHORIZED_EVENT = "nexus:unauthorized";
  * Portanto /api faz parte da URL base.
  */
 export const DEFAULT_API_URL =
-  (import.meta.env["VITE_API_URL"] as string | undefined)?.trim().replace(/\/+$/, "") ||
-  "https://nexus-api-bgsf.onrender.com";
+  (import.meta.env["VITE_API_URL"] as string | undefined)
+    ?.trim()
+    .replace(/\/+$/, "") ||
+  "https://nexus-api-bgsf.onrender.com/api";
 
 /**
  * Retorna a URL base da API.
@@ -133,11 +135,15 @@ export class ApiError extends Error {
 /**
  * Testa a conexão com a API.
  *
- * Como o backend possui:
+ * O backend possui:
  *
  * GET /api/auth
  *
- * essa chamada é usada como health check.
+ * como endpoint público de health check.
+ *
+ * IMPORTANTE:
+ * Não usamos apenas /api porque esse caminho pode estar
+ * protegido pelo Spring Security.
  */
 export async function pingApi(
   url = getApiBaseUrl(),
@@ -154,7 +160,7 @@ export async function pingApi(
   let response: Response;
 
   try {
-    response = await fetch(base, {
+    response = await fetch(`${base}/auth`, {
       method: "GET",
     });
   } catch {
