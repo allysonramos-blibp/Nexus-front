@@ -1,5 +1,14 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
 import type { ReactNode } from "react";
+
 import {
   UNAUTHORIZED_EVENT,
   clearAuthToken,
@@ -14,83 +23,260 @@ const EXPIRES_AT_STORAGE_KEY = "nexus.expiresAt";
 interface AuthState {
   user: UserResponse | null;
   ready: boolean;
-  /** Recebe a resposta completa do login (token + usuário) e inicia a sessão. */
+
+  /**
+   * Recebe a resposta completa do login
+   * e inicia a sessão.
+   */
   signIn: (auth: AuthResponse) => void;
+
+  /**
+   * Encerra a sessão.
+   */
   signOut: () => void;
 }
 
-const AuthContext = createContext<AuthState | null>(null);
+const AuthContext =
+  createContext<AuthState | null>(null);
 
+/**
+ * Recupera o usuário salvo no navegador.
+ */
 function readStoredUser(): UserResponse | null {
   try {
-    const expiresAtRaw = window.localStorage.getItem(EXPIRES_AT_STORAGE_KEY);
-    const expiresAt = expiresAtRaw ? Number(expiresAtRaw) : null;
-    if (expiresAt && Date.now() >= expiresAt) {
-      // Sessão expirada enquanto o app estava fechado — não restaura.
+    const expiresAtRaw =
+      window.localStorage.getItem(
+        EXPIRES_AT_STORAGE_KEY,
+      );
+
+    const expiresAt = expiresAtRaw
+      ? Number(expiresAtRaw)
+      : null;
+
+    /**
+     * Se existe uma data de expiração
+     * e ela já passou, a sessão é inválida.
+     */
+    if (
+      expiresAt &&
+      Date.now() >= expiresAt
+    ) {
+      clearAuthToken();
+
+      window.localStorage.removeItem(
+        USER_STORAGE_KEY,
+      );
+
+      window.localStorage.removeItem(
+        EXPIRES_AT_STORAGE_KEY,
+      );
+
       return null;
     }
-    const raw = window.localStorage.getItem(USER_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as UserResponse) : null;
+
+    const raw =
+      window.localStorage.getItem(
+        USER_STORAGE_KEY,
+      );
+
+    if (!raw) {
+      return null;
+    }
+
+    return JSON.parse(
+      raw,
+    ) as UserResponse;
   } catch {
     return null;
   }
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserResponse | null>(null);
-  const [ready, setReady] = useState(false);
+/**
+ * Provider global de autenticação.
+ */
+export function AuthProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const [user, setUser] =
+    useState<UserResponse | null>(null);
 
+  const [ready, setReady] =
+    useState(false);
+
+  /**
+   * Faz logout completo.
+   */
   const signOut = useCallback(() => {
     clearAuthToken();
-    window.localStorage.removeItem(USER_STORAGE_KEY);
-    window.localStorage.removeItem(EXPIRES_AT_STORAGE_KEY);
+
+    window.localStorage.removeItem(
+      USER_STORAGE_KEY,
+    );
+
+    window.localStorage.removeItem(
+      EXPIRES_AT_STORAGE_KEY,
+    );
+
     setUser(null);
   }, []);
 
+  /**
+   * Restaura a sessão quando o aplicativo inicia.
+   */
   useEffect(() => {
-    setUser(readStoredUser());
+    const storedUser =
+      readStoredUser();
+
+    setUser(storedUser);
     setReady(true);
   }, []);
 
-  // Qualquer chamada que volte 401 (token ausente/expirado/inválido) encerra a sessão aqui.
+  /**
+   * Qualquer resposta HTTP 401
+   * encerra automaticamente a sessão.
+   */
   useEffect(() => {
-    const handler = () => signOut();
-    window.addEventListener(UNAUTHORIZED_EVENT, handler);
-    return () => window.removeEventListener(UNAUTHORIZED_EVENT, handler);
+    const handler = () => {
+      signOut();
+    };
+
+    window.addEventListener(
+      UNAUTHORIZED_EVENT,
+      handler,
+    );
+
+    return () => {
+      window.removeEventListener(
+        UNAUTHORIZED_EVENT,
+        handler,
+      );
+    };
   }, [signOut]);
 
-  // Verificação passiva de expiração enquanto o app está aberto (sem refresh token por ora).
+  /**
+   * Monitora a expiração do JWT
+   * enquanto o aplicativo está aberto.
+   */
   useEffect(() => {
-    if (!user) return;
-    const expiresAtRaw = window.localStorage.getItem(EXPIRES_AT_STORAGE_KEY);
-    const expiresAt = expiresAtRaw ? Number(expiresAtRaw) : null;
-    if (!expiresAt) return;
-    const msLeft = expiresAt - Date.now();
+    if (!user) {
+      return;
+    }
+
+    const expiresAtRaw =
+      window.localStorage.getItem(
+        EXPIRES_AT_STORAGE_KEY,
+      );
+
+    const expiresAt = expiresAtRaw
+      ? Number(expiresAtRaw)
+      : null;
+
+    if (!expiresAt) {
+      return;
+    }
+
+    const msLeft =
+      expiresAt - Date.now();
+
+    /**
+     * Já expirou.
+     */
     if (msLeft <= 0) {
       signOut();
       return;
     }
-    const timer = window.setTimeout(signOut, msLeft);
-    return () => window.clearTimeout(timer);
+
+    /**
+     * Agenda logout automático.
+     */
+    const timer =
+      window.setTimeout(
+        () => {
+          signOut();
+        },
+        msLeft,
+      );
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [user, signOut]);
 
-  const signIn = useCallback((auth: AuthResponse) => {
-    setAuthToken(auth.token);
-    window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(auth.user));
-    window.localStorage.setItem(
-      EXPIRES_AT_STORAGE_KEY,
-      String(Date.now() + auth.expiresInMs),
-    );
-    setUser(auth.user);
-  }, []);
+  /**
+   * Inicia uma sessão.
+   */
+  const signIn = useCallback(
+    (auth: AuthResponse) => {
+      /**
+       * Salva JWT.
+       */
+      setAuthToken(auth.token);
 
-  const value = useMemo(() => ({ user, ready, signIn, signOut }), [user, ready, signIn, signOut]);
+      /**
+       * Salva usuário.
+       */
+      window.localStorage.setItem(
+        USER_STORAGE_KEY,
+        JSON.stringify(auth.user),
+      );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+      /**
+       * Calcula a data absoluta
+       * de expiração.
+       */
+      const expiresAt =
+        Date.now() +
+        auth.expiresInMs;
+
+      window.localStorage.setItem(
+        EXPIRES_AT_STORAGE_KEY,
+        String(expiresAt),
+      );
+
+      /**
+       * Atualiza estado React.
+       */
+      setUser(auth.user);
+    },
+    [],
+  );
+
+  const value = useMemo(
+    () => ({
+      user,
+      ready,
+      signIn,
+      signOut,
+    }),
+    [
+      user,
+      ready,
+      signIn,
+      signOut,
+    ],
+  );
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
+/**
+ * Hook para acessar autenticação.
+ */
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth precisa estar dentro de <AuthProvider>");
+  const ctx =
+    useContext(AuthContext);
+
+  if (!ctx) {
+    throw new Error(
+      "useAuth precisa estar dentro de <AuthProvider>",
+    );
+  }
+
   return ctx;
 }
