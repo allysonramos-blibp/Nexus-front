@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowRight,
+  FileUp,
   ListChecks,
   MessageCircleQuestion,
   NotebookPen,
@@ -28,6 +29,7 @@ import { QuestionOption, type QuestionOptionState } from "@/components/ui/Questi
 import { EstudosTabs } from "./EstudosTabs";
 import { TopicPicker } from "./TopicPicker";
 import { QuestaoForm } from "./QuestaoForm";
+import { ImportarPdfDialog } from "./ImportarPdfDialog";
 
 const LETTERS = ["A", "B", "C", "D", "E"];
 const ERROR_REASONS: ErrorReason[] = [
@@ -258,6 +260,7 @@ export default function QuestoesPage() {
   const [topicId, setTopicId] = useState<number | null>(null);
   const [mode, setMode] = useState<"list" | "resolve">("list");
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Question | null>(null);
   const [deleting, setDeleting] = useState<Question | null>(null);
 
@@ -306,15 +309,20 @@ export default function QuestoesPage() {
               title="Nenhuma questão neste assunto ainda"
               description="Cadastre a primeira questão para começar a treinar."
               action={
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setEditing(null);
-                    setFormOpen(true);
-                  }}
-                >
-                  <Plus className="size-4" /> Nova questão
-                </Button>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setEditing(null);
+                      setFormOpen(true);
+                    }}
+                  >
+                    <Plus className="size-4" /> Nova questão
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+                    <FileUp className="size-4" /> Importar de PDF
+                  </Button>
+                </div>
               }
             />
           )}
@@ -322,7 +330,7 @@ export default function QuestoesPage() {
             <>
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">{list.length} questão(ões)</p>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -332,6 +340,9 @@ export default function QuestoesPage() {
                     }}
                   >
                     <Plus className="size-4" /> Nova questão
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+                    <FileUp className="size-4" /> Importar de PDF
                   </Button>
                   <Button size="sm" onClick={() => setMode("resolve")}>
                     Resolver questões
@@ -380,6 +391,10 @@ export default function QuestoesPage() {
           topicId={topicId}
           question={editing}
         />
+      )}
+
+      {topicId != null && (
+        <ImportarPdfDialog open={importOpen} onClose={() => setImportOpen(false)} topicId={topicId} />
       )}
 
       <ConfirmDialog

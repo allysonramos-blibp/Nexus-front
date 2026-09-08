@@ -582,6 +582,19 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  bulkCreateQuestions: (topicId: number, body: QuestionRequest[]) =>
+    request<Question[]>(`/topics/${topicId}/questions/bulk`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  extractQuestionsFromPdf: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return request<{ questoes: QuestionRequest[]; total: number }>("/questions/extract-pdf", {
+      method: "POST",
+      body: form,
+    });
+  },
   updateQuestion: (id: number, body: QuestionRequest) =>
     request<Question>(`/questions/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   deleteQuestion: (id: number) => request<void>(`/questions/${id}`, { method: "DELETE" }),
