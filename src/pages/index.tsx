@@ -11,7 +11,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { api, brl, priorityLabel, today } from "@/lib/api";
+import { api, brl, isTaskConcluded, priorityLabel, today, type Task } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -57,7 +57,10 @@ function Today() {
   });
 
   const complete = useMutation({
-    mutationFn: (id: number) => api.updateTaskStatus(id, "DOMINADO"),
+    mutationFn: (task: Task) =>
+      task.ehTopicoEdital
+        ? api.updateTaskStatus(task.id, "DOMINADO")
+        : api.updateTaskWorkflowStatus(task.id, "CONCLUIDA"),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks", userId] }),
   });
 
@@ -68,7 +71,7 @@ function Today() {
   // demais seções continuam renderizando com o que já têm (falha parcial não trava tudo).
   const criticalError = tasks.error ?? transactions.error ?? workouts.error;
 
-  const pendentes = (tasks.data ?? []).filter((t) => t.status !== "DOMINADO");
+  const pendentes = (tasks.data ?? []).filter((t) => !isTaskConcluded(t));
   const foco = pendentes.find((t) => t.prioridade === "ALTA") ?? pendentes[0];
   const restantes = pendentes.filter((t) => t.id !== foco?.id).slice(0, 5);
 
@@ -142,7 +145,7 @@ function Today() {
                     )}
                   </div>
                   <Button
-                    onClick={() => complete.mutate(foco.id)}
+                    onClick={() => complete.mutate(foco)}
                     loading={complete.isPending}
                     className="mt-6 bg-study hover:opacity-90"
                   >
@@ -171,7 +174,7 @@ function Today() {
                       className="flex items-center gap-3 rounded-lg border border-border/70 bg-surface-raised px-4 py-3"
                     >
                       <button
-                        onClick={() => complete.mutate(t.id)}
+                        onClick={() => complete.mutate(t)}
                         aria-label={`Concluir ${t.titulo}`}
                         className="flex size-5 items-center justify-center rounded-md border border-border text-transparent transition-colors hover:border-dash hover:text-dash"
                       >

@@ -10,7 +10,7 @@ const TOKEN_STORAGE_KEY = "nexus.token";
 export const UNAUTHORIZED_EVENT = "nexus:unauthorized";
 
 export const DEFAULT_API_URL =
-  (import.meta.env["VITE_API_URL"] as string | undefined) ?? "https://nexus-api-bgsf.onrender.com/api";
+  (import.meta.env["VITE_API_URL"] as string | undefined) ?? "http://localhost:8080/api";
 
 /** URL base atual — pode ser trocada em tempo de execução (ex.: túnel https do ngrok). */
 export function getApiBaseUrl(): string {
@@ -173,14 +173,34 @@ export interface FinancialTransactionRequest {
   categoryId?: number | null;
 }
 
+export type TaskWorkflowStatus = "PENDENTE" | "EM_ANDAMENTO" | "CONCLUIDA" | "CANCELADA";
+
 export interface Task {
   id: number;
   titulo: string;
   descricao?: string | null;
   status: TaskStatus;
+  workflowStatus?: TaskWorkflowStatus | null;
   prioridade: TaskPriority;
   dataLimite?: string | null;
+  horario?: string | null; // HH:mm
+  concluidaEm?: string | null; // ISO datetime
   ehTopicoEdital: boolean;
+  categoryId?: number | null;
+  categoryNome?: string | null;
+  categoryCor?: string | null;
+}
+
+export interface TaskRequest {
+  titulo: string;
+  descricao?: string | null;
+  status?: TaskStatus | null;
+  workflowStatus?: TaskWorkflowStatus | null;
+  prioridade: TaskPriority;
+  dataLimite?: string | null;
+  horario?: string | null;
+  ehTopicoEdital: boolean;
+  categoryId?: number | null;
 }
 
 export interface StudyNote {
@@ -461,18 +481,28 @@ export const api = {
   /* Tarefas */
   listTasks: (userId: number) => request<Task[]>(`/tasks/user/${userId}`),
   listEdital: (userId: number) => request<Task[]>(`/tasks/user/${userId}/edital`),
-  createTask: (
-    userId: number,
-    body: Omit<Task, "id">,
-  ) =>
+  createTask: (body: TaskRequest) =>
     request<Task>("/tasks", {
       method: "POST",
-      body: JSON.stringify({ ...body, user: { id: userId } }),
+      body: JSON.stringify(body),
     }),
+  updateTask: (id: number, body: TaskRequest) =>
+    request<Task>(`/tasks/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  deleteTask: (id: number) => request<void>(`/tasks/${id}`, { method: "DELETE" }),
+  /** Progresso de estudo do tópico de edital (TaskStatus) — só para ehTopicoEdital=true. */
   updateTaskStatus: (id: number, status: TaskStatus) =>
     request<Task>(`/tasks/${id}`, {
       method: "PATCH",
       body: JSON.stringify({ status }),
+    }),
+  /** Status de fluxo de uma tarefa comum (TaskWorkflowStatus) — só para ehTopicoEdital=false. */
+  updateTaskWorkflowStatus: (id: number, workflowStatus: TaskWorkflowStatus) =>
+    request<Task>(`/tasks/${id}/workflow-status`, {
+      method: "PATCH",
+      body: JSON.stringify({ workflowStatus }),
     }),
 
   /* Estudo */
@@ -654,6 +684,26 @@ export const priorityLabel: Record<TaskPriority, string> = {
   MEDIA: "Média",
   ALTA: "Alta",
 };
+
+export const workflowStatusLabel: Record<TaskWorkflowStatus, string> = {
+  PENDENTE: "Pendente",
+  EM_ANDAMENTO: "Em andamento",
+  CONCLUIDA: "Concluída",
+  CANCELADA: "Cancelada",
+};
+
+/**
+ * Tarefas de edital usam TaskStatus (DOMINADO = concluída); tarefas comuns usam
+ * TaskWorkflowStatus (CONCLUIDA). Centraliza essa escolha pra Hoje e Tarefas não
+ * duplicarem a mesma lógica de decisão.
+ */
+export function isTaskConcluded(t: Task): boolean {
+  return t.ehTopicoEdital ? t.status === "DOMINADO" : t.workflowStatus === "CONCLUIDA";
+}
+
+export function isTaskCancelled(t: Task): boolean {
+  return !t.ehTopicoEdital && t.workflowStatus === "CANCELADA";
+}
 
 export const studyPlanStatusLabel: Record<StudyPlanStatus, string> = {
   PLANEJADO: "Planejado",
