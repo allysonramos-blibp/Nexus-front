@@ -313,6 +313,8 @@ export interface Question {
   /** Só vem preenchido fora de um simulado em andamento. */
   gabarito?: string | null;
   explicacao?: string | null;
+  /** Dica de pegadinha típica da banca (gerada pela IA na importação por PDF). */
+  pegadinha?: string | null;
   banca?: string | null;
   ano?: number | null;
   topicId: number;
@@ -327,6 +329,10 @@ export interface QuestionRequest {
   dificuldade?: QuestionDifficulty | null;
   gabarito: string;
   explicacao?: string | null;
+  pegadinha?: string | null;
+  /** Só preenchidos quando o item vem da extração por PDF; não são persistidos em Question. */
+  disciplinaSugerida?: string | null;
+  assuntoSugerido?: string | null;
   banca?: string | null;
   ano?: number | null;
 }
