@@ -44,6 +44,7 @@ export function QuestaoForm({
       : 0,
   );
   const [explicacao, setExplicacao] = useState(question?.explicacao ?? "");
+  const [pegadinha, setPegadinha] = useState(question?.pegadinha ?? "");
   const [dificuldade, setDificuldade] = useState<QuestionDifficulty>(
     question?.dificuldade ?? "MEDIA",
   );
@@ -60,6 +61,7 @@ export function QuestaoForm({
         alternativas: alternativas.map((a) => a.trim()),
         gabarito: alternativas[gabaritoIndex]?.trim() ?? "",
         explicacao: explicacao.trim() || null,
+        pegadinha: pegadinha.trim() || null,
         dificuldade,
         banca: banca.trim() || null,
         ano: ano ? Number(ano) : null,
@@ -159,6 +161,14 @@ export function QuestaoForm({
           value={explicacao}
           onChange={(e) => setExplicacao(e.target.value)}
           placeholder="Por que essa é a correta — e por que as outras estão erradas."
+        />
+
+        <Textarea
+          label="Pegadinha (opcional)"
+          rows={2}
+          value={pegadinha}
+          onChange={(e) => setPegadinha(e.target.value)}
+          placeholder="O que a banca costuma fazer nesse tipo de questão…"
         />
 
         <div className="grid grid-cols-3 gap-3">

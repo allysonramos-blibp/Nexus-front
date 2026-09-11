@@ -365,6 +365,12 @@ export default function SimuladoDetalhePage() {
                         {q.explicacao && (
                           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{q.explicacao}</p>
                         )}
+                        {q.pegadinha && (
+                          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                            <span className="font-semibold text-foreground">Pegadinha: </span>
+                            {q.pegadinha}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>

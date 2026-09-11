@@ -102,6 +102,15 @@ export function RevisarQuestaoDialog({
                 {acertou ? "Dessa vez você acertou!" : "Ainda não — tudo bem, é pra isso que a revisão existe."}
               </p>
               {q.explicacao && <p className="mt-2 leading-relaxed text-foreground">{q.explicacao}</p>}
+              {q.pegadinha && (
+                <p className="mt-2 flex items-start gap-1.5 leading-relaxed text-foreground">
+                  <span aria-hidden className="shrink-0">💡</span>
+                  <span>
+                    <span className="font-semibold">Pegadinha: </span>
+                    {q.pegadinha}
+                  </span>
+                </p>
+              )}
             </div>
           )}
 

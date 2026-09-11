@@ -1,6 +1,16 @@
 import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ChevronDown, ChevronUp, FileUp, Minus, Plus, Trash2, Upload } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  FileUp,
+  Lightbulb,
+  Minus,
+  Plus,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { api, difficultyLabel, type QuestionDifficulty, type QuestionRequest } from "@/lib/api";
 import { useToast } from "@/contexts/ToastContext";
 import { Dialog } from "@/components/ui/Dialog";
@@ -34,6 +44,7 @@ function QuestaoDraftCard({
     (a) => a.trim().toLowerCase() === draft.gabarito.trim().toLowerCase(),
   );
   const semGabarito = !draft.gabarito.trim();
+  const temSugestao = Boolean(draft.disciplinaSugerida || draft.assuntoSugerido);
 
   return (
     <div className="rounded-lg border border-border/70 bg-surface-raised">
@@ -44,6 +55,11 @@ function QuestaoDraftCard({
       >
         <span className="text-xs text-muted-foreground">#{draft.numero ?? index + 1}</span>
         <span className="flex-1 truncate text-sm">{draft.enunciado || "(sem enunciado)"}</span>
+        {draft.pegadinha && (
+          <span title="A IA identificou uma possível pegadinha nessa questão">
+            <Lightbulb className="size-4 shrink-0 text-dash" />
+          </span>
+        )}
         {semGabarito && (
           <span title="Gabarito não identificado">
             <AlertTriangle className="size-4 shrink-0 text-gym" />
@@ -69,6 +85,14 @@ function QuestaoDraftCard({
 
       {expanded && (
         <div className="flex flex-col gap-3 border-t border-border p-3">
+          {temSugestao && (
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
+              <span className="text-muted-foreground">Sugestão da IA:</span>
+              {draft.disciplinaSugerida && <Badge variant="info">{draft.disciplinaSugerida}</Badge>}
+              {draft.assuntoSugerido && <Badge variant="info">{draft.assuntoSugerido}</Badge>}
+              <span className="text-muted-foreground">— confira se bate com o tópico escolhido.</span>
+            </div>
+          )}
           <Textarea
             label="Enunciado"
             rows={3}
@@ -130,6 +154,13 @@ function QuestaoDraftCard({
             rows={2}
             value={draft.explicacao ?? ""}
             onChange={(e) => onChange({ ...draft, explicacao: e.target.value })}
+          />
+          <Textarea
+            label="Pegadinha (opcional)"
+            rows={2}
+            value={draft.pegadinha ?? ""}
+            placeholder="O que a banca costuma fazer nesse tipo de questão…"
+            onChange={(e) => onChange({ ...draft, pegadinha: e.target.value })}
           />
           <Select
             label="Dificuldade"
