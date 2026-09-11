@@ -10,7 +10,7 @@ const TOKEN_STORAGE_KEY = "nexus.token";
 export const UNAUTHORIZED_EVENT = "nexus:unauthorized";
 
 export const DEFAULT_API_URL =
-  (import.meta.env["VITE_API_URL"] as string | undefined) ?? "hhttps://nexus-api-bgsf.onrender.com";
+  (import.meta.env["VITE_API_URL"] as string | undefined) ?? "hhttps://nexus-api-bgsf.onrender.com/api";
 
 /** URL base atual — pode ser trocada em tempo de execução (ex.: túnel https do ngrok). */
 export function getApiBaseUrl(): string {
