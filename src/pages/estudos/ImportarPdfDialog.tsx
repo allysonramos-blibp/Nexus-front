@@ -209,7 +209,7 @@ export function ImportarPdfDialog({
       }
       // possivelTotalNoPdf é uma estimativa heurística (regex), não uma contagem exata — só
       // alertamos quando o resultado real ficou BEM abaixo dela, pra evitar alarme falso.
-      const esperado = res.possivelTotalNoPdf ?? 0;
+      const esperado = res.possivelTotalNoPdf;
       if (esperado > 0 && res.total < esperado * 0.8) {
         setExtractionWarning(
           `Importação possivelmente incompleta: o PDF parece ter ~${esperado} questão(ões), mas só ${res.total} foram extraídas.` +
