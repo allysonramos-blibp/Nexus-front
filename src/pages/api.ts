@@ -626,7 +626,14 @@ export const api = {
   extractQuestionsFromPdf: (file: File) => {
     const form = new FormData();
     form.append("file", file);
-    return request<{ questoes: QuestionRequest[]; total: number }>("/questions/extract-pdf", {
+    return request<{
+      questoes: QuestionRequest[];
+      total: number;
+      /** Estimativa heurística de quantas questões o PDF parece ter — não é exata, só um alerta. */
+      possivelTotalNoPdf: number | null;
+      chunksProcessados: number;
+      chunksComFalha: number;
+    }>("/questions/extract-pdf", {
       method: "POST",
       body: form,
     });
