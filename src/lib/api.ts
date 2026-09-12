@@ -337,6 +337,22 @@ export interface QuestionRequest {
   ano?: number | null;
 }
 
+/**
+ * Contrato exato de POST /api/questions/extract-pdf — espelha
+ * com.nexus.nexus_api.dto.PdfExtractionResponse (backend). `total`,
+ * `chunksProcessados` e `chunksComFalha` são `int` primitivo no Java (nunca nulos).
+ * `possivelTotalNoPdf` é `Integer` no Java, mas sempre populado a partir de um `int`
+ * (estimateQuestionCount) — na prática também nunca vem nulo.
+ */
+export interface PdfExtractionResponse {
+  questoes: QuestionRequest[];
+  total: number;
+  /** Estimativa heurística (regex) de quantas questões o PDF parece ter — não é exata, só um alerta. */
+  possivelTotalNoPdf: number;
+  chunksProcessados: number;
+  chunksComFalha: number;
+}
+
 export interface Answer {
   id: number;
   questionId: number;
@@ -623,10 +639,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  extractQuestionsFromPdf: (file: File) => {
+  extractQuestionsFromPdf: (file: File): Promise<PdfExtractionResponse> => {
     const form = new FormData();
     form.append("file", file);
-    return request<{ questoes: QuestionRequest[]; total: number }>("/questions/extract-pdf", {
+    return request<PdfExtractionResponse>("/questions/extract-pdf", {
       method: "POST",
       body: form,
     });
