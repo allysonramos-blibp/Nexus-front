@@ -198,6 +198,7 @@ export function ImportarPdfDialog({
   const [file, setFile] = useState<File | null>(null);
   const [drafts, setDrafts] = useState<QuestionRequest[] | null>(null);
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [extractionWarning, setExtractionWarning] = useState<string | null>(null);
 
   const extract = useMutation({
     mutationFn: (f: File) => api.extractQuestionsFromPdf(f),
@@ -205,6 +206,23 @@ export function ImportarPdfDialog({
       setDrafts(res.questoes);
       if (res.questoes.length === 0) {
         toast("Não encontrei questões nesse PDF.", "error");
+      }
+      // possivelTotalNoPdf é uma estimativa heurística (regex), não uma contagem exata — só
+      // alertamos quando o resultado real ficou BEM abaixo dela, pra evitar alarme falso.
+      const esperado = res.possivelTotalNoPdf ?? 0;
+      if (esperado > 0 && res.total < esperado * 0.8) {
+        setExtractionWarning(
+          `Importação possivelmente incompleta: o PDF parece ter ~${esperado} questão(ões), mas só ${res.total} foram extraídas.` +
+            (res.chunksComFalha > 0
+              ? ` ${res.chunksComFalha} de ${res.chunksProcessados} trecho(s) do processamento falharam — tente importar de novo.`
+              : " Revise se faltou alguma seção do PDF (ex.: outra disciplina) antes de confirmar."),
+        );
+      } else if (res.chunksComFalha > 0) {
+        setExtractionWarning(
+          `${res.chunksComFalha} de ${res.chunksProcessados} trecho(s) do PDF falharam durante o processamento — algumas questões podem estar faltando. Tente importar de novo se parecer incompleto.`,
+        );
+      } else {
+        setExtractionWarning(null);
       }
     },
   });
@@ -222,6 +240,7 @@ export function ImportarPdfDialog({
     setFile(null);
     setDrafts(null);
     setExpanded(null);
+    setExtractionWarning(null);
     extract.reset();
     confirm.reset();
     onClose();
@@ -297,6 +316,12 @@ export function ImportarPdfDialog({
 
       {drafts && (
         <div className="flex max-h-[60vh] flex-col gap-3 overflow-y-auto pr-1">
+          {extractionWarning && (
+            <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              <AlertTriangle className="size-4 shrink-0" />
+              {extractionWarning}
+            </div>
+          )}
           {semGabaritoCount > 0 && (
             <div className="flex items-center gap-2 rounded-lg border border-gym/30 bg-gym/10 px-3 py-2 text-xs text-gym">
               <AlertTriangle className="size-4 shrink-0" />
