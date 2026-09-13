@@ -353,6 +353,72 @@ export interface PdfExtractionResponse {
   chunksComFalha: number;
 }
 
+/* ---------- Estudos: Importação de PDF por Plano (multi-matéria) ---------- */
+
+/** Um grupo de questões da PRÉVIA (ainda não salvo) — mesma matéria+assunto sugeridos pela IA. */
+export interface QuestionGroup {
+  subjectNome: string;
+  topicNome: string;
+  questoes: QuestionRequest[];
+}
+
+export interface ExistingTopicSummary {
+  id: number;
+  nome: string;
+}
+
+export interface ExistingSubjectSummary {
+  id: number;
+  nome: string;
+  topics: ExistingTopicSummary[];
+}
+
+/**
+ * Contrato exato de POST /api/study-plans/{planId}/questions/extract-pdf — espelha
+ * com.nexus.nexus_api.dto.PlanPdfExtractionResponse (backend).
+ */
+export interface PlanPdfExtractionResponse {
+  grupos: QuestionGroup[];
+  materiasExistentes: ExistingSubjectSummary[];
+  totalExtraido: number;
+  possivelTotalNoPdf: number;
+  numerosAusentes: number[];
+  numerosDuplicados: number[];
+  chunksProcessados: number;
+  chunksComFalha: number;
+}
+
+/**
+ * Um grupo já revisado pelo usuário, pronto para salvar. `subjectId`/`topicId` preenchidos =
+ * reaproveitar matéria/assunto já existente; `subjectNome`/`topicNome` = find-or-create por
+ * nome (o backend normaliza; "Geral" é usado automaticamente se topicNome vier vazio).
+ */
+export interface QuestionGroupImportRequest {
+  subjectId?: number | null;
+  subjectNome?: string | null;
+  topicId?: number | null;
+  topicNome?: string | null;
+  questoes: QuestionRequest[];
+}
+
+export interface TopicImportSummary {
+  topicId: number;
+  topicNome: string;
+  quantidade: number;
+}
+
+export interface SubjectImportSummary {
+  subjectId: number;
+  subjectNome: string;
+  topicos: TopicImportSummary[];
+}
+
+/** Contrato exato de POST /api/study-plans/{planId}/questions/import. */
+export interface PlanQuestionImportResponse {
+  totalSalvo: number;
+  resumo: SubjectImportSummary[];
+}
+
 export interface Answer {
   id: number;
   questionId: number;
@@ -647,6 +713,21 @@ export const api = {
       body: form,
     });
   },
+  /** Extração agnóstica de matéria: PDF completo → grupos por (matéria, assunto) detectados pela IA. */
+  extractQuestionsFromPdfForPlan: (planId: number, file: File): Promise<PlanPdfExtractionResponse> => {
+    const form = new FormData();
+    form.append("file", file);
+    return request<PlanPdfExtractionResponse>(`/study-plans/${planId}/questions/extract-pdf`, {
+      method: "POST",
+      body: form,
+    });
+  },
+  /** Confirmação da prévia: find-or-create de Subject/Topic por grupo, salva tudo numa transação. */
+  importQuestionsToPlan: (planId: number, grupos: QuestionGroupImportRequest[]): Promise<PlanQuestionImportResponse> =>
+    request<PlanQuestionImportResponse>(`/study-plans/${planId}/questions/import`, {
+      method: "POST",
+      body: JSON.stringify({ grupos }),
+    }),
   updateQuestion: (id: number, body: QuestionRequest) =>
     request<Question>(`/questions/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   deleteQuestion: (id: number) => request<void>(`/questions/${id}`, { method: "DELETE" }),

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ChevronDown, ChevronRight, ListPlus, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, FileUp, ListPlus, Pencil, Plus, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import {
   api,
@@ -18,6 +18,7 @@ import { Loading } from "@/components/ui/Loading";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Dialog, ConfirmDialog } from "@/components/ui/Dialog";
+import { PlanImportarPdfDialog } from "./PlanImportarPdfDialog";
 
 function TopicRow({
   topic,
@@ -273,6 +274,7 @@ export default function PlanoDetalhePage() {
 
   const [newSubjectOpen, setNewSubjectOpen] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState("");
+  const [importPdfOpen, setImportPdfOpen] = useState(false);
 
   const createSubject = useMutation({
     mutationFn: () => api.createSubject(planId, { nome: newSubjectName }),
@@ -320,9 +322,14 @@ export default function PlanoDetalhePage() {
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Matérias</h2>
-        <Button size="sm" onClick={() => setNewSubjectOpen(true)}>
-          <Plus className="size-4" /> Nova matéria
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="ghost" onClick={() => setImportPdfOpen(true)}>
+            <FileUp className="size-4" /> Importar PDF
+          </Button>
+          <Button size="sm" onClick={() => setNewSubjectOpen(true)}>
+            <Plus className="size-4" /> Nova matéria
+          </Button>
+        </div>
       </div>
 
       {subjects.isLoading && <Loading label="Carregando matérias…" />}
@@ -375,6 +382,10 @@ export default function PlanoDetalhePage() {
         />
         {createSubject.error && <ErrorState error={createSubject.error} compact className="mt-2" />}
       </Dialog>
+
+      {Number.isFinite(planId) && (
+        <PlanImportarPdfDialog open={importPdfOpen} onClose={() => setImportPdfOpen(false)} planId={planId} />
+      )}
     </AppShell>
   );
 }
