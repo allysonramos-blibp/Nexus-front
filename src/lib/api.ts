@@ -1,263 +1,131 @@
 /**
  * Cliente HTTP do Nexus — fala com a API Spring Boot.
- * Todas as chamadas rodam no browser.
+ * Todas as chamadas rodam no browser (a API vive em localhost do usuário).
  */
 
 const STORAGE_KEY = "nexus.apiUrl";
 const TOKEN_STORAGE_KEY = "nexus.token";
 
-/** Evento disparado quando a API responde 401. */
+/** Evento disparado quando a API responde 401 — o AuthProvider escuta isso para deslogar. */
 export const UNAUTHORIZED_EVENT = "nexus:unauthorized";
 
 export const DEFAULT_API_URL =
-  (import.meta.env["VITE_API_URL"] as string | undefined) ??
-  "https://nexus-api-bgsf.onrender.com";
+  (import.meta.env["VITE_API_URL"] as string | undefined) ?? "https://nexus-api-bgsf.onrender.com";
 
-/**
- * URL base atual da API.
- */
+/** URL base atual — pode ser trocada em tempo de execução (ex.: túnel https do ngrok). */
 export function getApiBaseUrl(): string {
-  if (typeof window === "undefined") {
-    return DEFAULT_API_URL;
-  }
-
-  return (
-    window.localStorage.getItem(STORAGE_KEY) ||
-    DEFAULT_API_URL
-  );
+  if (typeof window === "undefined") return DEFAULT_API_URL;
+  return window.localStorage.getItem(STORAGE_KEY) || DEFAULT_API_URL;
 }
 
 export function setApiBaseUrl(url: string) {
   let clean = url.trim().replace(/\/+$/, "");
-
   if (clean && !clean.endsWith("/api")) {
     clean += "/api";
   }
-
-  if (clean) {
-    window.localStorage.setItem(STORAGE_KEY, clean);
-  } else {
-    window.localStorage.removeItem(STORAGE_KEY);
-  }
+  if (clean) window.localStorage.setItem(STORAGE_KEY, clean);
+  else window.localStorage.removeItem(STORAGE_KEY);
 }
 
-/**
- * Token JWT atual.
- */
+/** Token JWT atual (Bearer). `auth.tsx` é o dono da sessão; isto é só o storage cru. */
 export function getAuthToken(): string | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  return window.localStorage.getItem(
-    TOKEN_STORAGE_KEY,
-  );
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(TOKEN_STORAGE_KEY);
 }
 
 export function setAuthToken(token: string) {
-  window.localStorage.setItem(
-    TOKEN_STORAGE_KEY,
-    token,
-  );
+  window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
 }
 
 export function clearAuthToken() {
-  window.localStorage.removeItem(
-    TOKEN_STORAGE_KEY,
-  );
+  window.localStorage.removeItem(TOKEN_STORAGE_KEY);
 }
 
 /**
- * Constrói URL para assets retornados pela API.
+ * `imagemUrl` do treino já vem como "/api/workouts/image/xyz.jpg" (path completo,
+ * incluindo o /api). getApiBaseUrl() também termina em /api, então aqui tiramos esse
+ * sufixo antes de concatenar, senão duplicaria "/api/api/...".
  */
 export function buildAssetUrl(path: string): string {
-  const root = getApiBaseUrl().replace(
-    /\/api\/?$/,
-    "",
-  );
-
+  const root = getApiBaseUrl().replace(/\/api\/?$/, "");
   return `${root}${path}`;
 }
 
-/**
- * true quando a página é HTTPS e a API é HTTP.
- */
-export function isMixedContent(
-  url = getApiBaseUrl(),
-): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  return (
-    window.location.protocol === "https:" &&
-    url.startsWith("http://")
-  );
+/** true quando a página é https e a API é http — o browser bloqueia (mixed content). */
+export function isMixedContent(url = getApiBaseUrl()): boolean {
+  if (typeof window === "undefined") return false;
+  return window.location.protocol === "https:" && url.startsWith("http://");
 }
 
 export class ApiError extends Error {
   status: number;
-
-  constructor(
-    status: number,
-    message: string,
-  ) {
+  constructor(status: number, message: string) {
     super(message);
     this.status = status;
     this.name = "ApiError";
   }
 }
 
-/**
- * Testa se a API está respondendo.
- */
-export async function pingApi(
-  url = getApiBaseUrl(),
-): Promise<string> {
+export async function pingApi(url = getApiBaseUrl()): Promise<string> {
   if (isMixedContent(url)) {
     throw new ApiError(
       0,
       "Esta página roda em HTTPS e a API está em HTTP — o navegador bloqueia a chamada (mixed content). Exponha a API por HTTPS (ex.: ngrok) ou rode o front localmente.",
     );
   }
-
-  const res = await fetch(`${url}/auth`, {
-    method: "GET",
-  }).catch(() => {
+  const res = await fetch(`${url}/auth`, { method: "GET" }).catch(() => {
     throw new ApiError(
       0,
-      `Não respondeu em ${url}. Verifique se a API está rodando e se o CORS libera este domínio (${
-        typeof window !== "undefined"
-          ? window.location.origin
-          : ""
-      }).`,
+      `Não respondeu em ${url}. Verifique se a API está rodando e se o CORS libera este domínio (${typeof window !== "undefined" ? window.location.origin : ""}).`,
     );
   });
-
   return `API respondeu (HTTP ${res.status}).`;
 }
 
-/**
- * Cliente HTTP centralizado.
- */
-async function request<T>(
-  path: string,
-  init?: RequestInit,
-): Promise<T> {
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
-
   const base = getApiBaseUrl();
-
   const headers: Record<string, string> =
-    init?.body instanceof FormData
-      ? {}
-      : {
-          "Content-Type":
-            "application/json",
-        };
-
+    init?.body instanceof FormData ? {} : { "Content-Type": "application/json" };
   const token = getAuthToken();
-
-  if (token) {
-    headers["Authorization"] =
-      `Bearer ${token}`;
-  }
-
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   if (isMixedContent(base)) {
     throw new ApiError(
       0,
       "Página em HTTPS chamando API em HTTP: o navegador bloqueia. Configure uma URL https da API (ngrok) na tela de login.",
     );
   }
-
   try {
-    res = await fetch(`${base}${path}`, {
-      ...init,
-      headers,
-    });
+    res = await fetch(`${base}${path}`, { ...init, headers });
   } catch {
     throw new ApiError(
       0,
-      `Não consegui falar com a API em ${base}. Ela está rodando e com CORS liberado para ${
-        typeof window !== "undefined"
-          ? window.location.origin
-          : "este domínio"
-      }?`,
+      `Não consegui falar com a API em ${base}. Ela está rodando e com CORS liberado para ${typeof window !== "undefined" ? window.location.origin : "este domínio"}?`,
     );
   }
 
-  if (
-    res.status === 401 &&
-    typeof window !== "undefined"
-  ) {
-    window.dispatchEvent(
-      new CustomEvent(
-        UNAUTHORIZED_EVENT,
-      ),
-    );
+  if (res.status === 401 && typeof window !== "undefined") {
+    // Token ausente/expirado/inválido — o AuthProvider escuta isto para encerrar a sessão.
+    window.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT));
   }
 
   if (!res.ok) {
-    const text = await res
-      .text()
-      .catch(() => "");
-
-    throw new ApiError(
-      res.status,
-      text ||
-        `Erro ${res.status} em ${path}`,
-    );
+    const text = await res.text().catch(() => "");
+    throw new ApiError(res.status, text || `Erro ${res.status} em ${path}`);
   }
 
-  if (res.status === 204) {
-    return undefined as T;
-  }
-
+  if (res.status === 204) return undefined as T;
   const text = await res.text();
-
-  return (
-    text
-      ? JSON.parse(text)
-      : undefined
-  ) as T;
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
-/* =========================================================
- * TIPOS
- * ========================================================= */
+/* ---------- Tipos ---------- */
 
-export type TransactionType =
-  | "RECEITA"
-  | "DESPESA";
-
-export type TransactionStatus =
-  | "PENDENTE"
-  | "CONCLUIDA";
-
-export type CategoryType =
-  | "TASK"
-  | "FINANCEIRO";
-
-export type TaskStatus =
-  | "PENDENTE"
-  | "TEORIA_VISTA"
-  | "QUESTOES_FEITAS"
-  | "DOMINADO";
-
-export type TaskPriority =
-  | "BAIXA"
-  | "MEDIA"
-  | "ALTA";
-
-export type TaskWorkflowStatus =
-  | "PENDENTE"
-  | "EM_ANDAMENTO"
-  | "CONCLUIDA"
-  | "CANCELADA";
-
-/* =========================================================
- * AUTH
- * ========================================================= */
+export type TransactionType = "RECEITA" | "DESPESA";
+export type TransactionStatus = "PENDENTE" | "CONCLUIDA";
+export type CategoryType = "TASK" | "FINANCEIRO";
+export type TaskStatus = "PENDENTE" | "TEORIA_VISTA" | "QUESTOES_FEITAS" | "DOMINADO";
+export type TaskPriority = "BAIXA" | "MEDIA" | "ALTA";
 
 export interface UserResponse {
   id: number;
@@ -270,10 +138,6 @@ export interface AuthResponse {
   expiresInMs: number;
   user: UserResponse;
 }
-
-/* =========================================================
- * CATEGORIAS
- * ========================================================= */
 
 export interface Category {
   id: number;
@@ -288,17 +152,13 @@ export interface CategoryRequest {
   cor?: string | null;
 }
 
-/* =========================================================
- * FINANCEIRO
- * ========================================================= */
-
 export interface FinancialTransaction {
   id: number;
   descricao: string;
   valor: number;
   tipo: TransactionType;
   status: TransactionStatus;
-  data: string;
+  data: string; // yyyy-MM-dd
   categoryId?: number | null;
   categoryNome?: string | null;
   categoryCor?: string | null;
@@ -313,22 +173,18 @@ export interface FinancialTransactionRequest {
   categoryId?: number | null;
 }
 
-/* =========================================================
- * TAREFAS
- * ========================================================= */
+export type TaskWorkflowStatus = "PENDENTE" | "EM_ANDAMENTO" | "CONCLUIDA" | "CANCELADA";
 
 export interface Task {
   id: number;
   titulo: string;
   descricao?: string | null;
   status: TaskStatus;
-  workflowStatus?:
-    | TaskWorkflowStatus
-    | null;
+  workflowStatus?: TaskWorkflowStatus | null;
   prioridade: TaskPriority;
   dataLimite?: string | null;
-  horario?: string | null;
-  concluidaEm?: string | null;
+  horario?: string | null; // HH:mm
+  concluidaEm?: string | null; // ISO datetime
   ehTopicoEdital: boolean;
   categoryId?: number | null;
   categoryNome?: string | null;
@@ -339,19 +195,13 @@ export interface TaskRequest {
   titulo: string;
   descricao?: string | null;
   status?: TaskStatus | null;
-  workflowStatus?:
-    | TaskWorkflowStatus
-    | null;
+  workflowStatus?: TaskWorkflowStatus | null;
   prioridade: TaskPriority;
   dataLimite?: string | null;
   horario?: string | null;
   ehTopicoEdital: boolean;
   categoryId?: number | null;
 }
-
-/* =========================================================
- * ESTUDOS — NOTAS
- * ========================================================= */
 
 export interface StudyNote {
   id: number;
@@ -360,10 +210,6 @@ export interface StudyNote {
   atualizadoEm: string;
 }
 
-/* =========================================================
- * ESTUDOS — ARQUIVOS
- * ========================================================= */
-
 export interface StudyFile {
   id: number;
   nomeOriginal: string;
@@ -371,10 +217,6 @@ export interface StudyFile {
   tipoConteudo: string;
   dataUpload: string;
 }
-
-/* =========================================================
- * TREINOS
- * ========================================================= */
 
 export interface WorkoutExercise {
   id?: number;
@@ -399,24 +241,14 @@ export interface WorkoutGoal {
   metaTreinosPorSemana: number;
 }
 
-/* =========================================================
- * CHAT
- * ========================================================= */
-
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
 }
 
-/* =========================================================
- * ESTUDOS — PLANOS
- * ========================================================= */
+/* ---------- Estudos (Planos / Matérias / Assuntos) ---------- */
 
-export type StudyPlanStatus =
-  | "PLANEJADO"
-  | "EM_ANDAMENTO"
-  | "CONCLUIDO"
-  | "PAUSADO";
+export type StudyPlanStatus = "PLANEJADO" | "EM_ANDAMENTO" | "CONCLUIDO" | "PAUSADO";
 
 export interface StudyPlan {
   id: number;
@@ -444,10 +276,6 @@ export interface StudyPlanRequest {
   status?: StudyPlanStatus | null;
 }
 
-/* =========================================================
- * ESTUDOS — MATÉRIAS
- * ========================================================= */
-
 export interface Subject {
   id: number;
   nome: string;
@@ -459,10 +287,6 @@ export interface SubjectRequest {
   nome: string;
   pesoNoEdital?: number | null;
 }
-
-/* =========================================================
- * ESTUDOS — ASSUNTOS
- * ========================================================= */
 
 export interface Topic {
   id: number;
@@ -476,25 +300,20 @@ export interface TopicRequest {
   ordem?: number | null;
 }
 
-/* =========================================================
- * ESTUDOS — QUESTÕES
- * ========================================================= */
+/* ---------- Estudos: Questões e Respostas ---------- */
 
-export type QuestionDifficulty =
-  | "FACIL"
-  | "MEDIA"
-  | "DIFICIL";
+export type QuestionDifficulty = "FACIL" | "MEDIA" | "DIFICIL";
 
 export interface Question {
   id: number;
   numero?: number | null;
   enunciado: string;
   alternativas: string[];
-  dificuldade?:
-    | QuestionDifficulty
-    | null;
+  dificuldade?: QuestionDifficulty | null;
+  /** Só vem preenchido fora de um simulado em andamento. */
   gabarito?: string | null;
   explicacao?: string | null;
+  /** Dica de pegadinha típica da banca (gerada pela IA na importação por PDF). */
   pegadinha?: string | null;
   banca?: string | null;
   ano?: number | null;
@@ -507,190 +326,98 @@ export interface QuestionRequest {
   numero?: number | null;
   enunciado: string;
   alternativas: string[];
-  dificuldade?:
-    | QuestionDifficulty
-    | null;
+  dificuldade?: QuestionDifficulty | null;
   gabarito: string;
   explicacao?: string | null;
   pegadinha?: string | null;
-
-  /**
-   * Campos usados durante a extração
-   * por PDF e classificação da IA.
-   */
+  /** Só preenchidos quando o item vem da extração por PDF; não são persistidos em Question. */
   disciplinaSugerida?: string | null;
   assuntoSugerido?: string | null;
-
   banca?: string | null;
   ano?: number | null;
 }
 
-/* =========================================================
- * PDF — IMPORTADOR ANTIGO
- * ========================================================= */
-
+/**
+ * Contrato exato de POST /api/questions/extract-pdf — espelha
+ * com.nexus.nexus_api.dto.PdfExtractionResponse (backend). `total`,
+ * `chunksProcessados` e `chunksComFalha` são `int` primitivo no Java (nunca nulos).
+ * `possivelTotalNoPdf` é `Integer` no Java, mas sempre populado a partir de um `int`
+ * (estimateQuestionCount) — na prática também nunca vem nulo.
+ */
 export interface PdfExtractionResponse {
   questoes: QuestionRequest[];
-
-  /**
-   * Total efetivamente extraído.
-   */
   total: number;
-
-  /**
-   * Estimativa heurística.
-   */
+  /** Estimativa heurística (regex) de quantas questões o PDF parece ter — não é exata, só um alerta. */
   possivelTotalNoPdf: number;
-
   chunksProcessados: number;
   chunksComFalha: number;
 }
 
-/* =========================================================
- * PDF — IMPORTADOR POR PLANO
- * ========================================================= */
+/* ---------- Estudos: Importação de PDF por Plano (multi-matéria) ---------- */
 
-/**
- * Assunto existente dentro de uma matéria.
- */
+/** Um grupo de questões da PRÉVIA (ainda não salvo) — mesma matéria+assunto sugeridos pela IA. */
+export interface QuestionGroup {
+  subjectNome: string;
+  topicNome: string;
+  questoes: QuestionRequest[];
+}
+
 export interface ExistingTopicSummary {
   id: number;
   nome: string;
 }
 
-/**
- * Matéria existente no plano.
- */
 export interface ExistingSubjectSummary {
   id: number;
   nome: string;
-
-  /**
-   * Assuntos existentes nesta matéria.
-   */
   topics: ExistingTopicSummary[];
 }
 
 /**
- * Grupo de questões identificado pela IA.
- *
- * Uma combinação de:
- *
- * matéria + assunto
- */
-export interface QuestionGroup {
-  subjectNome: string;
-  topicNome: string;
-  questoes: QuestionRequest[];
-
-  /**
-   * Podem ser null quando a matéria/assunto
-   * ainda não existe no plano.
-   */
-  subjectId?: number | null;
-  topicId?: number | null;
-}
-
-/**
- * Resposta da extração do PDF no nível do plano.
- *
- * Importante:
- * esta etapa NÃO deve salvar as questões.
+ * Contrato exato de POST /api/study-plans/{planId}/questions/extract-pdf — espelha
+ * com.nexus.nexus_api.dto.PlanPdfExtractionResponse (backend).
  */
 export interface PlanPdfExtractionResponse {
   grupos: QuestionGroup[];
-
-  /**
-   * Matérias já existentes no plano.
-   */
-  materiasExistentes:
-    ExistingSubjectSummary[];
-
-  /**
-   * Total real extraído.
-   */
+  materiasExistentes: ExistingSubjectSummary[];
   totalExtraido: number;
-
-  /**
-   * Estimativa do total de questões
-   * aparentemente existente no PDF.
-   */
   possivelTotalNoPdf: number;
-
-  /**
-   * Questões que parecem estar ausentes.
-   */
   numerosAusentes: number[];
-
-  /**
-   * Questões que aparecem duplicadas.
-   */
   numerosDuplicados: number[];
-
-  /**
-   * Quantidade de blocos processados.
-   */
   chunksProcessados: number;
-
-  /**
-   * Quantidade de blocos que falharam.
-   */
   chunksComFalha: number;
 }
 
 /**
- * Grupo enviado para a importação definitiva.
- *
- * null significa que o usuário/IA
- * ainda não associou a uma entidade existente.
+ * Um grupo já revisado pelo usuário, pronto para salvar. `subjectId`/`topicId` preenchidos =
+ * reaproveitar matéria/assunto já existente; `subjectNome`/`topicNome` = find-or-create por
+ * nome (o backend normaliza; "Geral" é usado automaticamente se topicNome vier vazio).
  */
 export interface QuestionGroupImportRequest {
   subjectId?: number | null;
-  subjectNome: string | null;
-
+  subjectNome?: string | null;
   topicId?: number | null;
-  topicNome: string | null;
-
+  topicNome?: string | null;
   questoes: QuestionRequest[];
 }
 
-/**
- * Payload usado pelo backend.
- */
-export interface PlanQuestionImportRequest {
-  grupos: QuestionGroupImportRequest[];
-}
-
-/**
- * Resumo de assunto após importação.
- */
 export interface TopicImportSummary {
-  id: number;
-  nome: string;
-  totalSalvo: number;
+  topicId: number;
+  topicNome: string;
+  quantidade: number;
 }
 
-/**
- * Resumo de matéria após importação.
- */
 export interface SubjectImportSummary {
-  id: number;
-  nome: string;
-  totalSalvo: number;
+  subjectId: number;
+  subjectNome: string;
   topicos: TopicImportSummary[];
 }
 
-/**
- * Resposta da importação definitiva.
- */
+/** Contrato exato de POST /api/study-plans/{planId}/questions/import. */
 export interface PlanQuestionImportResponse {
   totalSalvo: number;
-  materias: SubjectImportSummary[];
+  resumo: SubjectImportSummary[];
 }
-
-/* =========================================================
- * ESTUDOS — RESPOSTAS
- * ========================================================= */
 
 export interface Answer {
   id: number;
@@ -710,16 +437,9 @@ export interface AnswerRequest {
   mockExamId?: number | null;
 }
 
-/* =========================================================
- * CADERNO DE ERROS
- * ========================================================= */
+/* ---------- Estudos: Caderno de Erros ---------- */
 
-export type ErrorReason =
-  | "NAO_SABIA"
-  | "INTERPRETACAO"
-  | "DISTRACAO"
-  | "CHUTE"
-  | "ERRO_DE_CALCULO";
+export type ErrorReason = "NAO_SABIA" | "INTERPRETACAO" | "DISTRACAO" | "CHUTE" | "ERRO_DE_CALCULO";
 
 export interface StudyError {
   id: number;
@@ -746,14 +466,9 @@ export interface PendingReviewResponse {
   itens: StudyError[];
 }
 
-/* =========================================================
- * SIMULADOS
- * ========================================================= */
+/* ---------- Estudos: Simulados ---------- */
 
-export type MockExamStatus =
-  | "CRIADO"
-  | "EM_ANDAMENTO"
-  | "FINALIZADO";
+export type MockExamStatus = "CRIADO" | "EM_ANDAMENTO" | "FINALIZADO";
 
 export interface MockExam {
   id: number;
@@ -784,9 +499,7 @@ export interface MockExamRequest {
   duracaoMinutos?: number | null;
 }
 
-/* =========================================================
- * ESTATÍSTICAS
- * ========================================================= */
+/* ---------- Estudos: Estatísticas ---------- */
 
 export interface OverallStats {
   questoesRespondidas: number;
@@ -809,373 +522,121 @@ export interface TopicPerformance {
   acertos: number;
 }
 
-/* =========================================================
- * API
- * ========================================================= */
+/* ---------- Auth ---------- */
 
 export const api = {
-  /* =======================================================
-   * AUTH
-   * ======================================================= */
+  login: (email: string, password: string) =>
+    request<AuthResponse>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
 
-  login: (
-    email: string,
-    password: string,
-  ) =>
-    request<AuthResponse>(
-      "/auth/login",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      },
-    ),
+  // O backend não emite token no cadastro — só cria o usuário. O login deve ser chamado
+  // logo em seguida para obter o AuthResponse (ver `submit` em pages/login.tsx).
+  register: (email: string, password: string) =>
+    request<UserResponse>("/users/register", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
 
-  register: (
-    email: string,
-    password: string,
-  ) =>
-    request<UserResponse>(
-      "/users/register",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      },
-    ),
+  /* Financeiro */
+  listTransactions: (userId: number) =>
+    request<FinancialTransaction[]>(`/transactions/user/${userId}`),
+  createTransaction: (userId: number, body: FinancialTransactionRequest) =>
+    request<FinancialTransaction>(`/transactions/user/${userId}`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updateTransaction: (id: number, body: FinancialTransactionRequest) =>
+    request<FinancialTransaction>(`/transactions/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  concludeTransaction: (id: number) =>
+    request<FinancialTransaction>(`/transactions/${id}/concluir`, { method: "PATCH" }),
+  deleteTransaction: (id: number) =>
+    request<void>(`/transactions/${id}`, { method: "DELETE" }),
 
-  /* =======================================================
-   * FINANCEIRO
-   * ======================================================= */
+  /* Financeiro: Categorias */
+  listCategories: (tipo: CategoryType = "FINANCEIRO") =>
+    request<Category[]>(`/categories?tipo=${tipo}`),
+  createCategory: (body: CategoryRequest) =>
+    request<Category>("/categories", { method: "POST", body: JSON.stringify(body) }),
+  updateCategory: (id: number, body: CategoryRequest) =>
+    request<Category>(`/categories/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteCategory: (id: number) => request<void>(`/categories/${id}`, { method: "DELETE" }),
 
-  listTransactions: (
-    userId: number,
-  ) =>
-    request<FinancialTransaction[]>(
-      `/transactions/user/${userId}`,
-    ),
+  /* Tarefas */
+  listTasks: (userId: number) => request<Task[]>(`/tasks/user/${userId}`),
+  listEdital: (userId: number) => request<Task[]>(`/tasks/user/${userId}/edital`),
+  createTask: (body: TaskRequest) =>
+    request<Task>("/tasks", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updateTask: (id: number, body: TaskRequest) =>
+    request<Task>(`/tasks/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  deleteTask: (id: number) => request<void>(`/tasks/${id}`, { method: "DELETE" }),
+  /** Progresso de estudo do tópico de edital (TaskStatus) — só para ehTopicoEdital=true. */
+  updateTaskStatus: (id: number, status: TaskStatus) =>
+    request<Task>(`/tasks/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
+  /** Status de fluxo de uma tarefa comum (TaskWorkflowStatus) — só para ehTopicoEdital=false. */
+  updateTaskWorkflowStatus: (id: number, workflowStatus: TaskWorkflowStatus) =>
+    request<Task>(`/tasks/${id}/workflow-status`, {
+      method: "PATCH",
+      body: JSON.stringify({ workflowStatus }),
+    }),
 
-  createTransaction: (
-    userId: number,
-    body: FinancialTransactionRequest,
-  ) =>
-    request<FinancialTransaction>(
-      `/transactions/user/${userId}`,
-      {
-        method: "POST",
-        body: JSON.stringify(body),
-      },
-    ),
+  /* Estudo */
+  listNotes: (userId: number) => request<StudyNote[]>(`/study-notes/user/${userId}`),
+  createNote: (userId: number, titulo: string, conteudo: string) =>
+    request<StudyNote>("/study-notes", {
+      method: "POST",
+      body: JSON.stringify({
+        titulo,
+        conteudo,
+        atualizadoEm: new Date().toISOString().slice(0, 19),
+        user: { id: userId },
+      }),
+    }),
+  updateNote: (id: number, userId: number, titulo: string, conteudo: string) =>
+    request<StudyNote>(`/study-notes/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        titulo,
+        conteudo,
+        atualizadoEm: new Date().toISOString().slice(0, 19),
+        user: { id: userId },
+      }),
+    }),
+  deleteNote: (id: number) => request<void>(`/study-notes/${id}`, { method: "DELETE" }),
 
-  updateTransaction: (
-    id: number,
-    body: FinancialTransactionRequest,
-  ) =>
-    request<FinancialTransaction>(
-      `/transactions/${id}`,
-      {
-        method: "PUT",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  concludeTransaction: (
-    id: number,
-  ) =>
-    request<FinancialTransaction>(
-      `/transactions/${id}/concluir`,
-      {
-        method: "PATCH",
-      },
-    ),
-
-  deleteTransaction: (
-    id: number,
-  ) =>
-    request<void>(
-      `/transactions/${id}`,
-      {
-        method: "DELETE",
-      },
-    ),
-
-  /* =======================================================
-   * CATEGORIAS
-   * ======================================================= */
-
-  listCategories: (
-    tipo: CategoryType = "FINANCEIRO",
-  ) =>
-    request<Category[]>(
-      `/categories?tipo=${tipo}`,
-    ),
-
-  createCategory: (
-    body: CategoryRequest,
-  ) =>
-    request<Category>(
-      "/categories",
-      {
-        method: "POST",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  updateCategory: (
-    id: number,
-    body: CategoryRequest,
-  ) =>
-    request<Category>(
-      `/categories/${id}`,
-      {
-        method: "PUT",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  deleteCategory: (
-    id: number,
-  ) =>
-    request<void>(
-      `/categories/${id}`,
-      {
-        method: "DELETE",
-      },
-    ),
-
-  /* =======================================================
-   * TAREFAS
-   * ======================================================= */
-
-  listTasks: (
-    userId: number,
-  ) =>
-    request<Task[]>(
-      `/tasks/user/${userId}`,
-    ),
-
-  listEdital: (
-    userId: number,
-  ) =>
-    request<Task[]>(
-      `/tasks/user/${userId}/edital`,
-    ),
-
-  createTask: (
-    body: TaskRequest,
-  ) =>
-    request<Task>(
-      "/tasks",
-      {
-        method: "POST",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  updateTask: (
-    id: number,
-    body: TaskRequest,
-  ) =>
-    request<Task>(
-      `/tasks/${id}`,
-      {
-        method: "PUT",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  deleteTask: (
-    id: number,
-  ) =>
-    request<void>(
-      `/tasks/${id}`,
-      {
-        method: "DELETE",
-      },
-    ),
-
-  /**
-   * Status de progresso dos tópicos de edital.
-   */
-  updateTaskStatus: (
-    id: number,
-    status: TaskStatus,
-  ) =>
-    request<Task>(
-      `/tasks/${id}`,
-      {
-        method: "PATCH",
-        body: JSON.stringify({
-          status,
-        }),
-      },
-    ),
-
-  /**
-   * Status de fluxo das tarefas comuns.
-   */
-  updateTaskWorkflowStatus: (
-    id: number,
-    workflowStatus: TaskWorkflowStatus,
-  ) =>
-    request<Task>(
-      `/tasks/${id}/workflow-status`,
-      {
-        method: "PATCH",
-        body: JSON.stringify({
-          workflowStatus,
-        }),
-      },
-    ),
-
-  /* =======================================================
-   * NOTAS
-   * ======================================================= */
-
-  listNotes: (
-    userId: number,
-  ) =>
-    request<StudyNote[]>(
-      `/study-notes/user/${userId}`,
-    ),
-
-  createNote: (
-    userId: number,
-    titulo: string,
-    conteudo: string,
-  ) =>
-    request<StudyNote>(
-      "/study-notes",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          titulo,
-          conteudo,
-          atualizadoEm:
-            new Date()
-              .toISOString()
-              .slice(0, 19),
-          user: {
-            id: userId,
-          },
-        }),
-      },
-    ),
-
-  updateNote: (
-    id: number,
-    userId: number,
-    titulo: string,
-    conteudo: string,
-  ) =>
-    request<StudyNote>(
-      `/study-notes/${id}`,
-      {
-        method: "PUT",
-        body: JSON.stringify({
-          titulo,
-          conteudo,
-          atualizadoEm:
-            new Date()
-              .toISOString()
-              .slice(0, 19),
-          user: {
-            id: userId,
-          },
-        }),
-      },
-    ),
-
-  deleteNote: (
-    id: number,
-  ) =>
-    request<void>(
-      `/study-notes/${id}`,
-      {
-        method: "DELETE",
-      },
-    ),
-
-  /* =======================================================
-   * ARQUIVOS
-   * ======================================================= */
-
-  listFiles: (
-    userId: number,
-  ) =>
-    request<StudyFile[]>(
-      `/study-files/user/${userId}`,
-    ),
-
-  uploadFile: (
-    userId: number,
-    file: File,
-  ) => {
+  listFiles: (userId: number) => request<StudyFile[]>(`/study-files/user/${userId}`),
+  uploadFile: (userId: number, file: File) => {
     const form = new FormData();
-
-    form.append(
-      "file",
-      file,
-    );
-
-    return request<StudyFile>(
-      `/study-files/upload/user/${userId}`,
-      {
-        method: "POST",
-        body: form,
-      },
-    );
+    form.append("file", file);
+    return request<StudyFile>(`/study-files/upload/user/${userId}`, {
+      method: "POST",
+      body: form,
+    });
   },
+  deleteFile: (id: number) => request<void>(`/study-files/${id}`, { method: "DELETE" }),
+  fileDownloadUrl: (id: number) => `${getApiBaseUrl()}/study-files/download/${id}`,
 
-  deleteFile: (
-    id: number,
-  ) =>
-    request<void>(
-      `/study-files/${id}`,
-      {
-        method: "DELETE",
-      },
-    ),
+  chat: (message: string, history: ChatMessage[]) =>
+    request<{ reply: string }>("/study-chat", {
+      method: "POST",
+      body: JSON.stringify({ message, history }),
+    }),
 
-  fileDownloadUrl: (
-    id: number,
-  ) =>
-    `${getApiBaseUrl()}/study-files/download/${id}`,
-
-  /* =======================================================
-   * CHAT
-   * ======================================================= */
-
-  chat: (
-    message: string,
-    history: ChatMessage[],
-  ) =>
-    request<{ reply: string }>(
-      "/study-chat",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          message,
-          history,
-        }),
-      },
-    ),
-
-  /* =======================================================
-   * TREINOS
-   * ======================================================= */
-
-  listWorkouts: (
-    userId: number,
-  ) =>
-    request<Workout[]>(
-      `/workouts/user/${userId}`,
-    ),
-
+  /* Treinos */
+  listWorkouts: (userId: number) => request<Workout[]>(`/workouts/user/${userId}`),
   createWorkout: (body: {
     grupoMuscular: string;
     dataTreino: string;
@@ -1183,623 +644,193 @@ export const api = {
     exerciciosExecutados?: string;
     exercicios?: WorkoutExercise[];
   }) =>
-    request<Workout>(
-      "/workouts",
-      {
-        method: "POST",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  uploadWorkoutImage: (
-    workoutId: number,
-    file: File,
-  ) => {
+    request<Workout>("/workouts", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  uploadWorkoutImage: (workoutId: number, file: File) => {
     const form = new FormData();
-
-    form.append(
-      "file",
-      file,
-    );
-
-    return request<Workout>(
-      `/workouts/${workoutId}/image`,
-      {
-        method: "POST",
-        body: form,
-      },
-    );
+    form.append("file", file);
+    return request<Workout>(`/workouts/${workoutId}/image`, { method: "POST", body: form });
   },
+  getGoal: (userId: number) => request<WorkoutGoal>(`/workout-goals/user/${userId}`),
+  setGoal: (userId: number, metaTreinosPorSemana: number) =>
+    request<WorkoutGoal>(`/workout-goals/user/${userId}`, {
+      method: "PUT",
+      body: JSON.stringify({ metaTreinosPorSemana }),
+    }),
 
-  getGoal: (
-    userId: number,
-  ) =>
-    request<WorkoutGoal>(
-      `/workout-goals/user/${userId}`,
-    ),
+  /* Estudos: Planos — dono resolvido pelo token, sem userId na URL */
+  listStudyPlans: () => request<StudyPlan[]>("/study-plans"),
+  getStudyPlan: (id: number) => request<StudyPlan>(`/study-plans/${id}`),
+  createStudyPlan: (body: StudyPlanRequest) =>
+    request<StudyPlan>("/study-plans", { method: "POST", body: JSON.stringify(body) }),
+  updateStudyPlan: (id: number, body: StudyPlanRequest) =>
+    request<StudyPlan>(`/study-plans/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteStudyPlan: (id: number) => request<void>(`/study-plans/${id}`, { method: "DELETE" }),
 
-  setGoal: (
-    userId: number,
-    metaTreinosPorSemana: number,
-  ) =>
-    request<WorkoutGoal>(
-      `/workout-goals/user/${userId}`,
-      {
-        method: "PUT",
-        body: JSON.stringify({
-          metaTreinosPorSemana,
-        }),
-      },
-    ),
+  /* Estudos: Matérias */
+  listSubjects: (studyPlanId: number) =>
+    request<Subject[]>(`/study-plans/${studyPlanId}/subjects`),
+  createSubject: (studyPlanId: number, body: SubjectRequest) =>
+    request<Subject>(`/study-plans/${studyPlanId}/subjects`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updateSubject: (id: number, body: SubjectRequest) =>
+    request<Subject>(`/subjects/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteSubject: (id: number) => request<void>(`/subjects/${id}`, { method: "DELETE" }),
 
-  /* =======================================================
-   * ESTUDOS — PLANOS
-   * ======================================================= */
+  /* Estudos: Assuntos */
+  listTopics: (subjectId: number) => request<Topic[]>(`/subjects/${subjectId}/topics`),
+  createTopic: (subjectId: number, body: TopicRequest) =>
+    request<Topic>(`/subjects/${subjectId}/topics`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updateTopic: (id: number, body: TopicRequest) =>
+    request<Topic>(`/topics/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteTopic: (id: number) => request<void>(`/topics/${id}`, { method: "DELETE" }),
 
-  listStudyPlans: () =>
-    request<StudyPlan[]>(
-      "/study-plans",
-    ),
-
-  getStudyPlan: (
-    id: number,
-  ) =>
-    request<StudyPlan>(
-      `/study-plans/${id}`,
-    ),
-
-  createStudyPlan: (
-    body: StudyPlanRequest,
-  ) =>
-    request<StudyPlan>(
-      "/study-plans",
-      {
-        method: "POST",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  updateStudyPlan: (
-    id: number,
-    body: StudyPlanRequest,
-  ) =>
-    request<StudyPlan>(
-      `/study-plans/${id}`,
-      {
-        method: "PUT",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  deleteStudyPlan: (
-    id: number,
-  ) =>
-    request<void>(
-      `/study-plans/${id}`,
-      {
-        method: "DELETE",
-      },
-    ),
-
-  /* =======================================================
-   * ESTUDOS — MATÉRIAS
-   * ======================================================= */
-
-  listSubjects: (
-    studyPlanId: number,
-  ) =>
-    request<Subject[]>(
-      `/study-plans/${studyPlanId}/subjects`,
-    ),
-
-  createSubject: (
-    studyPlanId: number,
-    body: SubjectRequest,
-  ) =>
-    request<Subject>(
-      `/study-plans/${studyPlanId}/subjects`,
-      {
-        method: "POST",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  updateSubject: (
-    id: number,
-    body: SubjectRequest,
-  ) =>
-    request<Subject>(
-      `/subjects/${id}`,
-      {
-        method: "PUT",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  deleteSubject: (
-    id: number,
-  ) =>
-    request<void>(
-      `/subjects/${id}`,
-      {
-        method: "DELETE",
-      },
-    ),
-
-  /* =======================================================
-   * ESTUDOS — ASSUNTOS
-   * ======================================================= */
-
-  listTopics: (
-    subjectId: number,
-  ) =>
-    request<Topic[]>(
-      `/subjects/${subjectId}/topics`,
-    ),
-
-  createTopic: (
-    subjectId: number,
-    body: TopicRequest,
-  ) =>
-    request<Topic>(
-      `/subjects/${subjectId}/topics`,
-      {
-        method: "POST",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  updateTopic: (
-    id: number,
-    body: TopicRequest,
-  ) =>
-    request<Topic>(
-      `/topics/${id}`,
-      {
-        method: "PUT",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  deleteTopic: (
-    id: number,
-  ) =>
-    request<void>(
-      `/topics/${id}`,
-      {
-        method: "DELETE",
-      },
-    ),
-
-  /* =======================================================
-   * ESTUDOS — QUESTÕES
-   * ======================================================= */
-
-  listQuestions: (
-    topicId: number,
-  ) =>
-    request<Question[]>(
-      `/topics/${topicId}/questions`,
-    ),
-
-  getQuestion: (
-    id: number,
-  ) =>
-    request<Question>(
-      `/questions/${id}`,
-    ),
-
-  createQuestion: (
-    topicId: number,
-    body: QuestionRequest,
-  ) =>
-    request<Question>(
-      `/topics/${topicId}/questions`,
-      {
-        method: "POST",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  /**
-   * Importador antigo:
-   * todas as questões vão para o topicId informado.
-   */
-  bulkCreateQuestions: (
-    topicId: number,
-    body: QuestionRequest[],
-  ) =>
-    request<Question[]>(
-      `/topics/${topicId}/questions/bulk`,
-      {
-        method: "POST",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  /**
-   * Extração antiga por assunto.
-   */
-  extractQuestionsFromPdf: (
-    file: File,
-  ): Promise<PdfExtractionResponse> => {
+  /* Estudos: Questões */
+  listQuestions: (topicId: number) => request<Question[]>(`/topics/${topicId}/questions`),
+  getQuestion: (id: number) => request<Question>(`/questions/${id}`),
+  createQuestion: (topicId: number, body: QuestionRequest) =>
+    request<Question>(`/topics/${topicId}/questions`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  bulkCreateQuestions: (topicId: number, body: QuestionRequest[]) =>
+    request<Question[]>(`/topics/${topicId}/questions/bulk`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  extractQuestionsFromPdf: (file: File): Promise<PdfExtractionResponse> => {
     const form = new FormData();
-
-    form.append(
-      "file",
-      file,
-    );
-
-    return request<PdfExtractionResponse>(
-      "/questions/extract-pdf",
-      {
-        method: "POST",
-        body: form,
-      },
-    );
+    form.append("file", file);
+    return request<PdfExtractionResponse>("/questions/extract-pdf", {
+      method: "POST",
+      body: form,
+    });
   },
-
-  /**
-   * =====================================================
-   * NOVO IMPORTADOR POR PLANO
-   * =====================================================
-   *
-   * O PDF completo é enviado ao backend.
-   *
-   * A API:
-   * - extrai as questões;
-   * - identifica disciplina;
-   * - identifica assunto;
-   * - agrupa as questões;
-   * - informa matérias existentes;
-   * - não deve persistir nesta etapa.
-   */
-  extractQuestionsFromPdfForPlan: (
-    planId: number,
-    file: File,
-  ): Promise<PlanPdfExtractionResponse> => {
+  /** Extração agnóstica de matéria: PDF completo → grupos por (matéria, assunto) detectados pela IA. */
+  extractQuestionsFromPdfForPlan: (planId: number, file: File): Promise<PlanPdfExtractionResponse> => {
     const form = new FormData();
-
-    form.append(
-      "file",
-      file,
-    );
-
-    return request<PlanPdfExtractionResponse>(
-      `/study-plans/${planId}/questions/extract-pdf`,
-      {
-        method: "POST",
-        body: form,
-      },
-    );
+    form.append("file", file);
+    return request<PlanPdfExtractionResponse>(`/study-plans/${planId}/questions/extract-pdf`, {
+      method: "POST",
+      body: form,
+    });
   },
+  /** Confirmação da prévia: find-or-create de Subject/Topic por grupo, salva tudo numa transação. */
+  importQuestionsToPlan: (planId: number, grupos: QuestionGroupImportRequest[]): Promise<PlanQuestionImportResponse> =>
+    request<PlanQuestionImportResponse>(`/study-plans/${planId}/questions/import`, {
+      method: "POST",
+      body: JSON.stringify({ grupos }),
+    }),
+  updateQuestion: (id: number, body: QuestionRequest) =>
+    request<Question>(`/questions/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteQuestion: (id: number) => request<void>(`/questions/${id}`, { method: "DELETE" }),
 
-  /**
-   * =====================================================
-   * IMPORTAÇÃO DEFINITIVA POR PLANO
-   * =====================================================
-   *
-   * O componente envia um array de grupos.
-   *
-   * Aqui transformamos:
-   *
-   * [
-   *   {...},
-   *   {...}
-   * ]
-   *
-   * em:
-   *
-   * {
-   *   grupos: [
-   *     {...},
-   *     {...}
-   *   ]
-   * }
-   */
-  importQuestionsToPlan: (
-    planId: number,
-    body: QuestionGroupImportRequest[],
-  ): Promise<PlanQuestionImportResponse> =>
-    request<PlanQuestionImportResponse>(
-      `/study-plans/${planId}/questions/import`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          grupos: body,
-        }),
-      },
-    ),
+  /* Estudos: Respostas */
+  submitAnswer: (body: AnswerRequest) =>
+    request<Answer>("/answers", { method: "POST", body: JSON.stringify(body) }),
+  listAnswers: () => request<Answer[]>("/answers"),
 
-  updateQuestion: (
-    id: number,
-    body: QuestionRequest,
-  ) =>
-    request<Question>(
-      `/questions/${id}`,
-      {
-        method: "PUT",
-        body: JSON.stringify(body),
-      },
-    ),
+  /* Estudos: Caderno de Erros — sem filtros por querystring no backend; filtrar no client */
+  listStudyErrors: () => request<StudyError[]>("/study-errors"),
+  registerStudyError: (body: StudyErrorRequest) =>
+    request<StudyError>("/study-errors", { method: "POST", body: JSON.stringify(body) }),
+  resolveStudyError: (id: number) =>
+    request<StudyError>(`/study-errors/${id}/resolver`, { method: "PATCH" }),
+  deleteStudyError: (id: number) => request<void>(`/study-errors/${id}`, { method: "DELETE" }),
 
-  deleteQuestion: (
-    id: number,
-  ) =>
-    request<void>(
-      `/questions/${id}`,
-      {
-        method: "DELETE",
-      },
-    ),
+  /* Estudos: Revisões — usa /study-stats/pendentes-revisao (mesma fonte de dados do
+     caderno de erros, mas já vem com o total pronto) */
+  listPendingReviews: () => request<PendingReviewResponse>("/study-stats/pendentes-revisao"),
 
-  /* =======================================================
-   * ESTUDOS — RESPOSTAS
-   * ======================================================= */
+  /* Estudos: Simulados */
+  listMockExams: () => request<MockExam[]>("/mock-exams"),
+  getMockExam: (id: number) => request<MockExamDetail>(`/mock-exams/${id}`),
+  createMockExam: (body: MockExamRequest) =>
+    request<MockExam>("/mock-exams", { method: "POST", body: JSON.stringify(body) }),
+  startMockExam: (id: number) => request<MockExam>(`/mock-exams/${id}/iniciar`, { method: "POST" }),
+  finishMockExam: (id: number) => request<MockExam>(`/mock-exams/${id}/finalizar`, { method: "POST" }),
+  deleteMockExam: (id: number) => request<void>(`/mock-exams/${id}`, { method: "DELETE" }),
 
-  submitAnswer: (
-    body: AnswerRequest,
-  ) =>
-    request<Answer>(
-      "/answers",
-      {
-        method: "POST",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  listAnswers: () =>
-    request<Answer[]>(
-      "/answers",
-    ),
-
-  /* =======================================================
-   * ESTUDOS — CADERNO DE ERROS
-   * ======================================================= */
-
-  listStudyErrors: () =>
-    request<StudyError[]>(
-      "/study-errors",
-    ),
-
-  registerStudyError: (
-    body: StudyErrorRequest,
-  ) =>
-    request<StudyError>(
-      "/study-errors",
-      {
-        method: "POST",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  resolveStudyError: (
-    id: number,
-  ) =>
-    request<StudyError>(
-      `/study-errors/${id}/resolver`,
-      {
-        method: "PATCH",
-      },
-    ),
-
-  deleteStudyError: (
-    id: number,
-  ) =>
-    request<void>(
-      `/study-errors/${id}`,
-      {
-        method: "DELETE",
-      },
-    ),
-
-  /* =======================================================
-   * ESTUDOS — REVISÕES
-   * ======================================================= */
-
-  listPendingReviews: () =>
-    request<PendingReviewResponse>(
-      "/study-stats/pendentes-revisao",
-    ),
-
-  /* =======================================================
-   * ESTUDOS — SIMULADOS
-   * ======================================================= */
-
-  listMockExams: () =>
-    request<MockExam[]>(
-      "/mock-exams",
-    ),
-
-  getMockExam: (
-    id: number,
-  ) =>
-    request<MockExamDetail>(
-      `/mock-exams/${id}`,
-    ),
-
-  createMockExam: (
-    body: MockExamRequest,
-  ) =>
-    request<MockExam>(
-      "/mock-exams",
-      {
-        method: "POST",
-        body: JSON.stringify(body),
-      },
-    ),
-
-  startMockExam: (
-    id: number,
-  ) =>
-    request<MockExam>(
-      `/mock-exams/${id}/iniciar`,
-      {
-        method: "POST",
-      },
-    ),
-
-  finishMockExam: (
-    id: number,
-  ) =>
-    request<MockExam>(
-      `/mock-exams/${id}/finalizar`,
-      {
-        method: "POST",
-      },
-    ),
-
-  deleteMockExam: (
-    id: number,
-  ) =>
-    request<void>(
-      `/mock-exams/${id}`,
-      {
-        method: "DELETE",
-      },
-    ),
-
-  /* =======================================================
-   * ESTUDOS — ESTATÍSTICAS
-   * ======================================================= */
-
-  statsGeral: () =>
-    request<OverallStats>(
-      "/study-stats/geral",
-    ),
-
-  statsPorMateria: () =>
-    request<SubjectPerformance[]>(
-      "/study-stats/por-materia",
-    ),
-
-  statsPorAssunto: () =>
-    request<TopicPerformance[]>(
-      "/study-stats/por-assunto",
-    ),
-
-  statsPorPeriodo: (
-    inicio: string,
-    fim: string,
-  ) =>
-    request<OverallStats>(
-      `/study-stats/por-periodo?inicio=${inicio}&fim=${fim}`,
-    ),
+  /* Estudos: Estatísticas — percentual vem calculado do lado do client (o record de
+     por-matéria/por-assunto do backend expõe um método percentual() que não é
+     serializado pelo Jackson, só respondidas/acertos) */
+  statsGeral: () => request<OverallStats>("/study-stats/geral"),
+  statsPorMateria: () => request<SubjectPerformance[]>("/study-stats/por-materia"),
+  statsPorAssunto: () => request<TopicPerformance[]>("/study-stats/por-assunto"),
+  statsPorPeriodo: (inicio: string, fim: string) =>
+    request<OverallStats>(`/study-stats/por-periodo?inicio=${inicio}&fim=${fim}`),
 };
 
-/* =========================================================
- * HELPERS
- * ========================================================= */
+/* ---------- Helpers ---------- */
 
-export const brl = (
-  v: number,
-) =>
-  new Intl.NumberFormat(
-    "pt-BR",
-    {
-      style: "currency",
-      currency: "BRL",
-    },
-  ).format(v);
+export const brl = (v: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
-export const today = () =>
-  new Date()
-    .toISOString()
-    .slice(0, 10);
+export const today = () => new Date().toISOString().slice(0, 10);
 
-export const statusLabel: Record<
-  TaskStatus,
-  string
-> = {
+export const statusLabel: Record<TaskStatus, string> = {
   PENDENTE: "Pendente",
   TEORIA_VISTA: "Teoria vista",
-  QUESTOES_FEITAS:
-    "Questões feitas",
+  QUESTOES_FEITAS: "Questões feitas",
   DOMINADO: "Dominado",
 };
 
-export const priorityLabel: Record<
-  TaskPriority,
-  string
-> = {
+export const priorityLabel: Record<TaskPriority, string> = {
   BAIXA: "Baixa",
   MEDIA: "Média",
   ALTA: "Alta",
 };
 
-export const workflowStatusLabel: Record<
-  TaskWorkflowStatus,
-  string
-> = {
+export const workflowStatusLabel: Record<TaskWorkflowStatus, string> = {
   PENDENTE: "Pendente",
-  EM_ANDAMENTO:
-    "Em andamento",
+  EM_ANDAMENTO: "Em andamento",
   CONCLUIDA: "Concluída",
   CANCELADA: "Cancelada",
 };
 
 /**
- * Tarefas de edital usam TaskStatus.
- * Tarefas comuns usam TaskWorkflowStatus.
+ * Tarefas de edital usam TaskStatus (DOMINADO = concluída); tarefas comuns usam
+ * TaskWorkflowStatus (CONCLUIDA). Centraliza essa escolha pra Hoje e Tarefas não
+ * duplicarem a mesma lógica de decisão.
  */
-export function isTaskConcluded(
-  t: Task,
-): boolean {
-  return t.ehTopicoEdital
-    ? t.status === "DOMINADO"
-    : t.workflowStatus ===
-        "CONCLUIDA";
+export function isTaskConcluded(t: Task): boolean {
+  return t.ehTopicoEdital ? t.status === "DOMINADO" : t.workflowStatus === "CONCLUIDA";
 }
 
-export function isTaskCancelled(
-  t: Task,
-): boolean {
-  return (
-    !t.ehTopicoEdital &&
-    t.workflowStatus ===
-      "CANCELADA"
-  );
+export function isTaskCancelled(t: Task): boolean {
+  return !t.ehTopicoEdital && t.workflowStatus === "CANCELADA";
 }
 
-export const studyPlanStatusLabel: Record<
-  StudyPlanStatus,
-  string
-> = {
+export const studyPlanStatusLabel: Record<StudyPlanStatus, string> = {
   PLANEJADO: "Planejado",
-  EM_ANDAMENTO:
-    "Em andamento",
+  EM_ANDAMENTO: "Em andamento",
   CONCLUIDO: "Concluído",
   PAUSADO: "Pausado",
 };
 
-export const difficultyLabel: Record<
-  QuestionDifficulty,
-  string
-> = {
+export const difficultyLabel: Record<QuestionDifficulty, string> = {
   FACIL: "Fácil",
   MEDIA: "Média",
   DIFICIL: "Difícil",
 };
 
-export const errorReasonLabel: Record<
-  ErrorReason,
-  string
-> = {
+export const errorReasonLabel: Record<ErrorReason, string> = {
   NAO_SABIA: "Não sabia",
-  INTERPRETACAO:
-    "Erro de interpretação",
+  INTERPRETACAO: "Erro de interpretação",
   DISTRACAO: "Distração",
   CHUTE: "Chute",
-  ERRO_DE_CALCULO:
-    "Erro de cálculo",
+  ERRO_DE_CALCULO: "Erro de cálculo",
 };
 
-export const mockExamStatusLabel: Record<
-  MockExamStatus,
-  string
-> = {
+export const mockExamStatusLabel: Record<MockExamStatus, string> = {
   CRIADO: "Não iniciado",
-  EM_ANDAMENTO:
-    "Em andamento",
+  EM_ANDAMENTO: "Em andamento",
   FINALIZADO: "Finalizado",
 };
