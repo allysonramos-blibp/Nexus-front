@@ -325,7 +325,7 @@ export function PlanImportarPdfDialog({
             <span className="text-xs text-muted-foreground">Até 10MB — pode conter várias matérias</span>
           </button>
           {extract.isPending && (
-            <Loading label="Lendo o PDF, extraindo e classificando as questões por matéria — pode levar alguns minutos…" />
+            <Loading label="Lendo o PDF, extraindo e classificando as questões por matéria. O PDF é processado em trechos pequenos, com novas tentativas automáticas nos que falham — pode levar alguns minutos, não feche esta janela…" />
           )}
           {extract.error && <ErrorState error={extract.error} compact />}
         </div>
@@ -338,8 +338,10 @@ export function PlanImportarPdfDialog({
               <AlertTriangle className="size-4 shrink-0 mt-0.5" />
               <span>
                 Importação possivelmente incompleta: {extraction.numerosAusentes.length} questão(ões) detectada(s) no
-                PDF não vieram na extração (números: {extraction.numerosAusentes.slice(0, 15).join(", ")}
-                {extraction.numerosAusentes.length > 15 ? "…" : ""}).
+                PDF continuam faltando mesmo após as novas tentativas e a segunda passada automática (números:{" "}
+                {extraction.numerosAusentes.slice(0, 15).join(", ")}
+                {extraction.numerosAusentes.length > 15 ? "…" : ""}). Costuma ser questão com imagem/tabela ou texto
+                mal reconhecido no PDF — dá pra importar assim mesmo e cadastrar essas manualmente depois.
               </span>
             </div>
           )}
@@ -347,8 +349,9 @@ export function PlanImportarPdfDialog({
             <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
               <AlertTriangle className="size-4 shrink-0 mt-0.5" />
               <span>
-                {extraction.chunksComFalha} de {extraction.chunksProcessados} trecho(s) do PDF falharam durante o
-                processamento — questões desses trechos não aparecem abaixo. Tente importar de novo.
+                {extraction.chunksComFalha} de {extraction.chunksProcessados} trecho(s) do PDF falharam mesmo depois
+                das novas tentativas automáticas — as questões desses trechos não aparecem abaixo. Importe o que veio e
+                tente de novo depois com o mesmo PDF: normalmente os trechos que falharam passam na segunda vez.
               </span>
             </div>
           )}
@@ -361,7 +364,7 @@ export function PlanImportarPdfDialog({
           {extraction.numerosDuplicados.length > 0 && (
             <p className="text-xs text-muted-foreground">
               {extraction.numerosDuplicados.length} número(s) de questão apareceram duplicados durante o
-              processamento e já foram consolidados automaticamente.
+              processamento (normal quando um trecho é reenviado) e já foram consolidados automaticamente.
             </p>
           )}
 

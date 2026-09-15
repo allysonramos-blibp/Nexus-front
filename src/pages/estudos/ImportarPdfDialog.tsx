@@ -42,12 +42,12 @@ export function ImportarPdfDialog({
         setExtractionWarning(
           `Importação possivelmente incompleta: o PDF parece ter ~${esperado} questão(ões), mas só ${res.total} foram extraídas.` +
             (res.chunksComFalha > 0
-              ? ` ${res.chunksComFalha} de ${res.chunksProcessados} trecho(s) do processamento falharam — tente importar de novo.`
+              ? ` ${res.chunksComFalha} de ${res.chunksProcessados} trecho(s) falharam mesmo após as novas tentativas automáticas — importe o que veio e tente de novo depois para recuperar o restante.`
               : " Revise se faltou alguma seção do PDF (ex.: outra disciplina) antes de confirmar."),
         );
       } else if (res.chunksComFalha > 0) {
         setExtractionWarning(
-          `${res.chunksComFalha} de ${res.chunksProcessados} trecho(s) do PDF falharam durante o processamento — algumas questões podem estar faltando. Tente importar de novo se parecer incompleto.`,
+          `${res.chunksComFalha} de ${res.chunksProcessados} trecho(s) do PDF falharam mesmo após as novas tentativas automáticas — algumas questões podem estar faltando. Importe o que veio e rode o PDF de novo para recuperar o restante.`,
         );
       } else {
         setExtractionWarning(null);
@@ -137,7 +137,7 @@ export function ImportarPdfDialog({
             <span className="text-sm text-foreground">{file ? file.name : "Escolher arquivo PDF"}</span>
             <span className="text-xs text-muted-foreground">Até 10MB</span>
           </button>
-          {extract.isPending && <Loading label="Lendo o PDF e extraindo as questões — pode levar um minuto…" />}
+          {extract.isPending && <Loading label="Lendo o PDF e extraindo as questões em trechos pequenos, com novas tentativas automáticas nos que falham — pode levar alguns minutos, não feche esta janela…" />}
           {extract.error && <ErrorState error={extract.error} compact />}
         </div>
       )}
