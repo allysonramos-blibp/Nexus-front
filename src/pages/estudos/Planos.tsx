@@ -184,6 +184,9 @@ export default function PlanosPage() {
       toast("Plano excluído.", "success");
       setDeleting(null);
     },
+    onError: (err: any) => {
+      toast(err?.message || "Erro ao excluir o plano.", "error");
+    },
   });
 
   const planos = data ?? [];

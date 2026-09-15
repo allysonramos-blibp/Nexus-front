@@ -102,6 +102,10 @@ function SubjectCard({ subject, planId }: { subject: Subject; planId: number }) 
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["subjects", planId] });
       toast("Matéria excluída.", "success");
+      setDeletingSubject(false);
+    },
+    onError: (err: any) => {
+      toast(err?.message || "Erro ao excluir a matéria.", "error");
     },
   });
 
