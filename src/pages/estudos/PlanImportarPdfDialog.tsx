@@ -18,7 +18,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { Badge } from "@/components/ui/Badge";
 import { QuestaoDraftCard } from "./QuestaoDraftCard";
 
-/** Estado local editável de um grupo — começa a partir da sugestão da IA, mas o usuário
+/** Estado local editável de um grupo — começa a partir da estrutura detectada no PDF, mas o usuário
  * pode: trocar pra uma matéria/assunto já existente do plano, renomear o nome sugerido
  * (find-or-create por nome no backend), e mover questões entre grupos. */
 interface GroupState {
@@ -270,8 +270,8 @@ export function PlanImportarPdfDialog({
       title="Importar prova completa (PDF) para o plano"
       description={
         extraction
-          ? "Revise os grupos detectados antes de confirmar — a IA classifica automaticamente por matéria e assunto."
-          : "Funciona melhor com PDFs de texto selecionável (não escaneados/imagem). Não é preciso escolher matéria antes — a IA identifica cada questão."
+          ? "Revise os grupos detectados antes de confirmar. A extração das questões é feita localmente pelo parser do Nexus."
+          : "Funciona melhor com PDFs de texto selecionável (não escaneados/imagem). O Nexus extrai as questões sem depender da IA."
       }
       className="max-w-2xl"
       footer={
@@ -325,7 +325,7 @@ export function PlanImportarPdfDialog({
             <span className="text-xs text-muted-foreground">Até 10MB — pode conter várias matérias</span>
           </button>
           {extract.isPending && (
-            <Loading label="Lendo o PDF, extraindo e classificando as questões por matéria. O PDF é processado em trechos pequenos, com novas tentativas automáticas nos que falham — pode levar alguns minutos, não feche esta janela…" />
+            <Loading label="Lendo o PDF, extraindo e classificando as questões por matéria — pode levar alguns minutos…" />
           )}
           {extract.error && <ErrorState error={extract.error} compact />}
         </div>
@@ -338,10 +338,8 @@ export function PlanImportarPdfDialog({
               <AlertTriangle className="size-4 shrink-0 mt-0.5" />
               <span>
                 Importação possivelmente incompleta: {extraction.numerosAusentes.length} questão(ões) detectada(s) no
-                PDF continuam faltando mesmo após as novas tentativas e a segunda passada automática (números:{" "}
-                {extraction.numerosAusentes.slice(0, 15).join(", ")}
-                {extraction.numerosAusentes.length > 15 ? "…" : ""}). Costuma ser questão com imagem/tabela ou texto
-                mal reconhecido no PDF — dá pra importar assim mesmo e cadastrar essas manualmente depois.
+                PDF não vieram na extração (números: {extraction.numerosAusentes.slice(0, 15).join(", ")}
+                {extraction.numerosAusentes.length > 15 ? "…" : ""}).
               </span>
             </div>
           )}
@@ -349,9 +347,8 @@ export function PlanImportarPdfDialog({
             <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
               <AlertTriangle className="size-4 shrink-0 mt-0.5" />
               <span>
-                {extraction.chunksComFalha} de {extraction.chunksProcessados} trecho(s) do PDF falharam mesmo depois
-                das novas tentativas automáticas — as questões desses trechos não aparecem abaixo. Importe o que veio e
-                tente de novo depois com o mesmo PDF: normalmente os trechos que falharam passam na segunda vez.
+                {extraction.chunksComFalha} de {extraction.chunksProcessados} trecho(s) do PDF falharam durante o
+                processamento — questões desses trechos não aparecem abaixo. Tente importar de novo.
               </span>
             </div>
           )}
@@ -364,7 +361,7 @@ export function PlanImportarPdfDialog({
           {extraction.numerosDuplicados.length > 0 && (
             <p className="text-xs text-muted-foreground">
               {extraction.numerosDuplicados.length} número(s) de questão apareceram duplicados durante o
-              processamento (normal quando um trecho é reenviado) e já foram consolidados automaticamente.
+              processamento e já foram consolidados automaticamente.
             </p>
           )}
 
