@@ -9,6 +9,14 @@ const TOKEN_STORAGE_KEY = "nexus.token";
 /** Evento disparado quando a API responde 401. */
 export const UNAUTHORIZED_EVENT = "nexus:unauthorized";
 
+/**
+ * Limite de espera para as chamadas de importação de PDF.
+ * A extração com IA agora roda em pedaços pequenos com novas
+ * tentativas e uma segunda passada de recuperação, o que pode
+ * levar vários minutos em provas longas.
+ */
+export const PDF_IMPORT_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutos
+
 // IMPORTANTE: precisa terminar em "/api" — é o prefixo real de todas as rotas do
 // backend (ex.: AuthController mapeia @RequestMapping("/api/auth")). setApiBaseUrl()
 // garante esse sufixo pra qualquer URL customizada que a pessoa digitar na tela de
@@ -151,10 +159,21 @@ export async function pingApi(
 async function request<T>(
   path: string,
   init?: RequestInit,
+  timeoutMs = 0,
 ): Promise<T> {
   let res: Response;
 
   const base = getApiBaseUrl();
+
+  const controller =
+    timeoutMs > 0 ? new AbortController() : null;
+  const timeoutId =
+    controller != null
+      ? setTimeout(
+          () => controller.abort(),
+          timeoutMs,
+        )
+      : null;
 
   const headers: Record<string, string> =
     init?.body instanceof FormData
@@ -182,8 +201,20 @@ async function request<T>(
     res = await fetch(`${base}${path}`, {
       ...init,
       headers,
+      signal:
+        controller?.signal ?? init?.signal,
     });
-  } catch {
+  } catch (e) {
+    if (
+      controller != null &&
+      controller.signal.aborted
+    ) {
+      throw new ApiError(
+        0,
+        "A importação demorou mais do que o limite de espera e a conexão foi encerrada. Tente novamente — a importação costuma ir mais rápido na segunda tentativa.",
+      );
+    }
+
     throw new ApiError(
       0,
       `Não consegui falar com a API em ${base}. Ela está rodando e com CORS liberado para ${
@@ -192,6 +223,10 @@ async function request<T>(
           : "este domínio"
       }?`,
     );
+  } finally {
+    if (timeoutId != null) {
+      clearTimeout(timeoutId);
+    }
   }
 
   if (
@@ -1444,6 +1479,7 @@ export const api = {
         method: "POST",
         body: form,
       },
+      PDF_IMPORT_TIMEOUT_MS,
     );
   },
 
@@ -1479,6 +1515,7 @@ export const api = {
         method: "POST",
         body: form,
       },
+      PDF_IMPORT_TIMEOUT_MS,
     );
   },
 
