@@ -245,9 +245,19 @@ async function request<T>(
       .text()
       .catch(() => "");
 
+    let userMsg = text;
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed.message) {
+        userMsg = parsed.message;
+      }
+    } catch {
+      // not json
+    }
+
     throw new ApiError(
       res.status,
-      text ||
+      userMsg ||
         `Erro ${res.status} em ${path}`,
     );
   }
