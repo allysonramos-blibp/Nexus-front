@@ -22,7 +22,11 @@ import {
   RotateCcw,
   ClipboardPaste,
   X,
+  CheckSquare,
+  Square,
+  AlertTriangle,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { AppShell } from "@/components/AppShell";
 import {
   api,
@@ -572,6 +576,77 @@ export default function PlanoDetalhePage() {
   const [sugerirEditalOpen, setSugerirEditalOpen] = useState(false);
   const [importPdfOpen, setImportPdfOpen] = useState(false);
   const [importGabaritoOpen, setImportGabaritoOpen] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [selectedSubjectsToDelete, setSelectedSubjectsToDelete] = useState<Record<number, boolean>>({});
+  const [deletingProgress, setDeletingProgress] = useState<{ current: number; total: number } | null>(null);
+
+  const subjectList = subjects.data ?? [];
+
+  const isSuspiciousSubject = (name: string) => {
+    const trimmed = (name || "").trim();
+    if (trimmed.length > 30) return true;
+    if (/^(according|the |pelo |ter |em |na |no |de |da |do |com |para |como |quando |onde |qual |quais |afirmar |julgue |assinale |sua menor)/i.test(trimmed)) return true;
+    if (/[?:;.]$/.test(trimmed)) return true;
+    return false;
+  };
+
+  const suspiciousSubjectsCount = useMemo(() => {
+    return subjectList.filter((s) => isSuspiciousSubject(s.nome)).length;
+  }, [subjectList]);
+
+  const selectedCount = Object.values(selectedSubjectsToDelete).filter(Boolean).length;
+
+  const handleSelectSuspicious = () => {
+    const next: Record<number, boolean> = {};
+    subjectList.forEach((s) => {
+      if (isSuspiciousSubject(s.nome)) {
+        next[s.id] = true;
+      }
+    });
+    setSelectedSubjectsToDelete(next);
+  };
+
+  const handleSelectAll = () => {
+    const allSelected = selectedCount === subjectList.length;
+    const next: Record<number, boolean> = {};
+    if (!allSelected) {
+      subjectList.forEach((s) => {
+        next[s.id] = true;
+      });
+    }
+    setSelectedSubjectsToDelete(next);
+  };
+
+  const handleExecuteBulkDelete = async () => {
+    const toDeleteIds = Object.entries(selectedSubjectsToDelete)
+      .filter(([_, v]) => v)
+      .map(([k]) => Number(k));
+
+    if (toDeleteIds.length === 0) return;
+
+    setDeletingProgress({ current: 0, total: toDeleteIds.length });
+
+    try {
+      let done = 0;
+      for (const id of toDeleteIds) {
+        await api.deleteSubject(id);
+        done++;
+        setDeletingProgress({ current: done, total: toDeleteIds.length });
+      }
+
+      qc.invalidateQueries({ queryKey: ["subjects", planId] });
+      qc.invalidateQueries({ queryKey: ["study-plans"] });
+      qc.invalidateQueries({ queryKey: ["study-plan", planId] });
+      toast(`${toDeleteIds.length} matéria(s) excluída(s) com sucesso.`, "success");
+      setBulkDeleteOpen(false);
+      setSelectedSubjectsToDelete({});
+    } catch (err: any) {
+      toast(err?.message || "Ocorreu um erro ao excluir algumas matérias.", "error");
+    } finally {
+      setDeletingProgress(null);
+    }
+  };
+
 
   const createSubject = useMutation({
     mutationFn: async () => {
@@ -751,6 +826,26 @@ export default function PlanoDetalhePage() {
             <Button size="sm" variant="ghost" onClick={() => setImportGabaritoOpen(true)}>
               <FileCheck className="size-4" /> Gabarito
             </Button>
+            {subjectList.length > 0 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className={suspiciousSubjectsCount > 0 ? "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10" : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"}
+                onClick={() => {
+                  setSelectedSubjectsToDelete({});
+                  setBulkDeleteOpen(true);
+                }}
+                title="Gerenciar e limpar matérias do plano"
+              >
+                <Trash2 className="size-4" />
+                <span>Limpar Matérias</span>
+                {suspiciousSubjectsCount > 0 && (
+                  <Badge variant="warning" className="text-[10px] ml-1 px-1 py-0">
+                    {suspiciousSubjectsCount}
+                  </Badge>
+                )}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -893,6 +988,125 @@ export default function PlanoDetalhePage() {
           />
         </>
       )}
+      {/* Diálogo de Gerenciamento e Exclusão de Matérias em Lote */}
+      <Dialog
+        open={bulkDeleteOpen}
+        onClose={() => !deletingProgress && setBulkDeleteOpen(false)}
+        title="Limpeza e Exclusão de Matérias em Lote"
+        description="Selecione as matérias indesejadas para remover do seu plano (ideal para excluir matérias falsas ou enunciados criados por importação de PDF)."
+        className="max-w-xl"
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setBulkDeleteOpen(false)}
+              disabled={Boolean(deletingProgress)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={selectedCount === 0 || Boolean(deletingProgress)}
+              onClick={handleExecuteBulkDelete}
+            >
+              {deletingProgress
+                ? `Excluindo (${deletingProgress.current}/${deletingProgress.total})...`
+                : `Excluir ${selectedCount} matéria(s)`}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-3">
+          {deletingProgress && (
+            <Loading
+              label={`Excluindo matérias (${deletingProgress.current} de ${deletingProgress.total})...`}
+            />
+          )}
+
+          {!deletingProgress && (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button size="xs" variant="outline" onClick={handleSelectAll}>
+                    {selectedCount === subjectList.length ? "Desmarcar todas" : "Selecionar todas"}
+                  </Button>
+                  {suspiciousSubjectsCount > 0 && (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={handleSelectSuspicious}
+                      className="text-amber-500 hover:text-amber-400 border-amber-500/30"
+                    >
+                      <AlertTriangle className="size-3" />
+                      Selecionar {suspiciousSubjectsCount} suspeitas (PDF)
+                    </Button>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {selectedCount} de {subjectList.length} selecionadas
+                </span>
+              </div>
+
+              {suspiciousSubjectsCount > 0 && (
+                <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-400">
+                  <AlertTriangle className="size-4 shrink-0" />
+                  <span>
+                    Identificamos <strong>{suspiciousSubjectsCount} matéria(s)</strong> com títulos longos ou frases de questões (geradas por importação de PDF). Use o botão de suspeitas acima para marcá-las de uma só vez!
+                  </span>
+                </div>
+              )}
+
+              <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1 divide-y divide-border/20">
+                {subjectList.map((s) => {
+                  const isSel = Boolean(selectedSubjectsToDelete[s.id]);
+                  const isSuspicious = isSuspiciousSubject(s.nome);
+
+                  return (
+                    <div
+                      key={s.id}
+                      onClick={() =>
+                        setSelectedSubjectsToDelete((prev) => ({
+                          ...prev,
+                          [s.id]: !prev[s.id],
+                        }))
+                      }
+                      className={cn(
+                        "flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors gap-2",
+                        isSel
+                          ? "bg-red-500/10 border border-red-500/30"
+                          : "hover:bg-surface-raised border border-transparent"
+                      )}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        {isSel ? (
+                          <CheckSquare className="size-4 text-red-400 shrink-0" />
+                        ) : (
+                          <Square className="size-4 text-muted-foreground shrink-0" />
+                        )}
+                        <span className="text-sm font-medium text-foreground break-words">
+                          {s.nome}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {isSuspicious && (
+                          <Badge variant="warning" className="text-[10px]">
+                            Suspeita (PDF)
+                          </Badge>
+                        )}
+                        <Badge variant="default" className="text-[10px]">
+                          {s.topics?.length ?? 0} assuntos
+                        </Badge>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      </Dialog>
     </AppShell>
   );
 }

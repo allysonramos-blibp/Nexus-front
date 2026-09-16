@@ -13,6 +13,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { Loading } from "@/components/ui/Loading";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Badge } from "@/components/ui/Badge";
@@ -42,14 +43,27 @@ function groupLabel(g: GroupState): string {
   return `${g.subjectNome || "(sem nome)"} — ${g.topicNome || "(sem nome)"}`;
 }
 
+function sanitizeGroupName(name: string): string {
+  const trimmed = (name || "").trim();
+  if (!trimmed) return "Geral";
+  if (
+    trimmed.length > 35 ||
+    /^(according|the |pelo |ter |em |na |no |de |da |do |com |para |como |quando |onde |qual |quais |afirmar |julgue |assinale |sua menor)/i.test(trimmed) ||
+    /[?:;.]$/.test(trimmed)
+  ) {
+    return "Geral";
+  }
+  return trimmed;
+}
+
 function buildInitialGroups(res: PlanPdfExtractionResponse): GroupState[] {
   return res.grupos.map((g) => ({
     key: nextGroupKey(),
     subjectMode: "new",
-    subjectNome: g.subjectNome,
+    subjectNome: sanitizeGroupName(g.subjectNome),
     subjectId: null,
     topicMode: "new",
-    topicNome: g.topicNome,
+    topicNome: sanitizeGroupName(g.topicNome),
     topicId: null,
     questoes: g.questoes,
   }));
@@ -79,7 +93,6 @@ function GroupHeader({
                 ...group,
                 subjectMode: group.subjectMode === "new" ? "existing" : "new",
                 subjectId: null,
-                // trocar de matéria invalida o assunto escolhido (pode não existir na nova matéria)
                 topicMode: "new",
                 topicId: null,
               })
@@ -91,24 +104,25 @@ function GroupHeader({
         {group.subjectMode === "new" ? (
           <Input value={group.subjectNome} onChange={(e) => onChange({ ...group, subjectNome: e.target.value })} />
         ) : (
-          <Select
-            value={group.subjectId ?? ""}
-            onChange={(e) =>
+          <SearchableSelect
+            value={group.subjectId}
+            onChange={(val) =>
               onChange({
                 ...group,
-                subjectId: e.target.value ? Number(e.target.value) : null,
+                subjectId: val,
                 topicMode: "new",
                 topicId: null,
               })
             }
-          >
-            <option value="">Selecione…</option>
-            {materiasExistentes.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.nome}
-              </option>
-            ))}
-          </Select>
+            options={materiasExistentes.map((s) => ({
+              value: s.id,
+              label: s.nome,
+              badge: s.topics?.length ? `${s.topics.length} assuntos` : undefined,
+            }))}
+            placeholder="Selecione uma matéria…"
+            searchPlaceholder="Buscar matéria..."
+            modalTitle="Selecionar Matéria"
+          />
         )}
       </div>
 
@@ -134,17 +148,17 @@ function GroupHeader({
         {group.topicMode === "new" || !existingSubject ? (
           <Input value={group.topicNome} onChange={(e) => onChange({ ...group, topicNome: e.target.value })} />
         ) : (
-          <Select
-            value={group.topicId ?? ""}
-            onChange={(e) => onChange({ ...group, topicId: e.target.value ? Number(e.target.value) : null })}
-          >
-            <option value="">Selecione…</option>
-            {existingSubject.topics.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.nome}
-              </option>
-            ))}
-          </Select>
+          <SearchableSelect
+            value={group.topicId}
+            onChange={(val) => onChange({ ...group, topicId: val })}
+            options={(existingSubject?.topics ?? []).map((t) => ({
+              value: t.id,
+              label: t.nome,
+            }))}
+            placeholder="Selecione um assunto…"
+            searchPlaceholder="Buscar assunto..."
+            modalTitle="Selecionar Assunto"
+          />
         )}
       </div>
     </div>
@@ -170,6 +184,7 @@ export function PlanImportarPdfDialog({
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
   const [confirmIncomplete, setConfirmIncomplete] = useState(false);
+  const [bulkSubjectId, setBulkSubjectId] = useState<number | null>(null);
 
   const extract = useMutation({
     mutationFn: (f: File) => api.extractQuestionsFromPdfForPlan(planId, f),
@@ -179,6 +194,7 @@ export function PlanImportarPdfDialog({
       setGroups(built);
       setExpandedGroup(built[0]?.key ?? null);
       setConfirmIncomplete(false);
+    setBulkSubjectId(null);
       if (res.totalExtraido === 0) {
         toast("Não encontrei questões nesse PDF.", "error");
       }
@@ -214,6 +230,7 @@ export function PlanImportarPdfDialog({
     setExpandedGroup(null);
     setExpandedQuestion(null);
     setConfirmIncomplete(false);
+    setBulkSubjectId(null);
     extract.reset();
     confirmImport.reset();
     onClose();
@@ -384,6 +401,56 @@ export function PlanImportarPdfDialog({
             <div className="flex items-center gap-2 rounded-lg border border-gym/30 bg-gym/10 px-3 py-2 text-xs text-gym">
               <AlertTriangle className="size-4 shrink-0" />
               {semGabaritoCount} questão(ões) sem gabarito identificado — marque manualmente antes de importar.
+            </div>
+          )}
+
+          {/* Ação Rápida: Destino Unificado para todas as questões */}
+          {extraction && groups.length > 0 && extraction.materiasExistentes.length > 0 && (
+            <div className="rounded-lg border border-border bg-surface-raised/60 p-3 flex flex-col gap-2">
+              <div className="flex flex-col">
+                <span className="text-xs font-semibold text-foreground">
+                  Atribuir todas as questões a uma matéria do plano:
+                </span>
+                <span className="text-[11px] text-muted-foreground">
+                  Evita criar matérias separadas para cada trecho do PDF.
+                </span>
+              </div>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="flex-1">
+                  <SearchableSelect
+                    value={bulkSubjectId}
+                    onChange={(val) => setBulkSubjectId(val)}
+                    options={extraction.materiasExistentes.map((m) => ({ value: m.id, label: m.nome }))}
+                    placeholder="Escolha a matéria de destino..."
+                    searchPlaceholder="Buscar matéria do plano..."
+                    modalTitle="Matéria para Todas as Questões"
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={bulkSubjectId == null}
+                  onClick={() => {
+                    if (bulkSubjectId == null) return;
+                    const targetSub = extraction.materiasExistentes.find((m) => m.id === bulkSubjectId);
+                    setGroups((prev) =>
+                      prev.map((g) => ({
+                        ...g,
+                        subjectMode: "existing",
+                        subjectId: bulkSubjectId,
+                        subjectNome: targetSub?.nome || "",
+                        topicMode: "new",
+                        topicNome: "Geral",
+                        topicId: null,
+                      }))
+                    );
+                    toast(`Todas as questões foram vinculadas a "${targetSub?.nome}" (Assunto: Geral)!`, "success");
+                  }}
+                  className="shrink-0"
+                >
+                  Aplicar a todas
+                </Button>
+              </div>
             </div>
           )}
 

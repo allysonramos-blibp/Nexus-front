@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Select } from "@/components/ui/Select";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { Loading } from "@/components/ui/Loading";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -35,6 +35,7 @@ export function TopicPicker({
 
   if (planos.isLoading) return <Loading label="Carregando seus planos…" />;
   if (planos.error) return <ErrorState error={planos.error} onRetry={() => planos.refetch()} />;
+
   if ((planos.data ?? []).length === 0) {
     return (
       <EmptyState
@@ -44,61 +45,64 @@ export function TopicPicker({
     );
   }
 
+  const planoOptions = (planos.data ?? []).map((p) => ({
+    value: p.id,
+    label: p.nome,
+  }));
+
+  const subjectOptions = (subjects.data ?? []).map((s) => ({
+    value: s.id,
+    label: s.nome,
+    badge: s.topics?.length ? `${s.topics.length} assuntos` : undefined,
+  }));
+
+  const topicOptions = (topics.data ?? []).map((t) => ({
+    value: t.id,
+    label: t.nome,
+  }));
+
   return (
     <Card className="grid gap-3 sm:grid-cols-3">
-      <Select
-        label="Plano"
-        value={planoId ?? ""}
-        onChange={(e) => {
-          const v = e.target.value ? Number(e.target.value) : null;
+      <SearchableSelect
+        label="Plano de Estudo"
+        value={planoId}
+        onChange={(v) => {
           onChangePlano(v);
           onChangeSubject(null);
           onChangeTopic(null);
         }}
-      >
-        <option value="">Selecione um plano…</option>
-        {(planos.data ?? []).map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.nome}
-          </option>
-        ))}
-      </Select>
+        options={planoOptions}
+        placeholder="Selecione um plano…"
+        searchPlaceholder="Buscar plano..."
+        modalTitle="Selecionar Plano de Estudo"
+      />
 
-      <Select
+      <SearchableSelect
         label="Matéria"
-        value={subjectId ?? ""}
+        value={subjectId}
         disabled={planoId == null}
-        onChange={(e) => {
-          const v = e.target.value ? Number(e.target.value) : null;
+        onChange={(v) => {
           onChangeSubject(v);
           onChangeTopic(null);
         }}
-      >
-        <option value="">
-          {planoId == null ? "Escolha um plano primeiro" : "Todas as matérias (Geral)"}
-        </option>
-        {(subjects.data ?? []).map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.nome}
-          </option>
-        ))}
-      </Select>
+        options={subjectOptions}
+        emptyOptionLabel="Todas as matérias (Geral)"
+        placeholder={planoId == null ? "Escolha um plano primeiro" : "Todas as matérias (Geral)"}
+        searchPlaceholder="Buscar matéria no plano..."
+        modalTitle="Selecionar Matéria"
+      />
 
-      <Select
+      <SearchableSelect
         label="Assunto"
-        value={topicId ?? ""}
+        value={topicId}
         disabled={subjectId == null}
-        onChange={(e) => onChangeTopic(e.target.value ? Number(e.target.value) : null)}
-      >
-        <option value="">
-          {subjectId == null ? "Todos os assuntos (Geral)" : "Todos os assuntos (Geral)"}
-        </option>
-        {(topics.data ?? []).map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.nome}
-          </option>
-        ))}
-      </Select>
+        onChange={(v) => onChangeTopic(v)}
+        options={topicOptions}
+        emptyOptionLabel="Todos os assuntos (Geral)"
+        placeholder={subjectId == null ? "Todos os assuntos (Geral)" : "Todos os assuntos (Geral)"}
+        searchPlaceholder="Buscar assunto da matéria..."
+        modalTitle="Selecionar Assunto"
+      />
     </Card>
   );
 }

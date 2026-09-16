@@ -12,3 +12,4 @@ export * from "./ErrorState";
 export * from "./Tabs";
 export * from "./Dialog";
 export * from "./QuestionOption";
+export * from "./SearchableSelect";

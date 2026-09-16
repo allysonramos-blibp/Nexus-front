@@ -29,6 +29,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { ConfirmDialog, Dialog } from "@/components/ui/Dialog";
 import { Select } from "@/components/ui/Select";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { Textarea } from "@/components/ui/Textarea";
 import { QuestionOption, type QuestionOptionState } from "@/components/ui/QuestionOption";
 import { EstudosTabs } from "./EstudosTabs";
@@ -785,36 +786,36 @@ export default function QuestoesPage() {
         }
       >
         <div className="flex flex-col gap-3">
-          <Select
+          <SearchableSelect
             label="Matéria"
-            value={chosenSubjectId ?? ""}
-            onChange={(e) => {
-              const val = e.target.value ? Number(e.target.value) : null;
+            value={chosenSubjectId}
+            onChange={(val) => {
               setChosenSubjectId(val);
               setChosenTopicId(null);
             }}
-          >
-            <option value="">Selecione uma matéria…</option>
-            {(subjects.data ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.nome}
-              </option>
-            ))}
-          </Select>
+            options={(subjects.data ?? []).map((s) => ({
+              value: s.id,
+              label: s.nome,
+              badge: s.topics?.length ? `${s.topics.length} assuntos` : undefined,
+            }))}
+            placeholder="Selecione uma matéria…"
+            searchPlaceholder="Buscar matéria..."
+            modalTitle="Selecionar Matéria de Destino"
+          />
 
-          <Select
+          <SearchableSelect
             label="Assunto"
-            value={chosenTopicId ?? ""}
+            value={chosenTopicId}
             disabled={chosenSubjectId == null}
-            onChange={(e) => setChosenTopicId(e.target.value ? Number(e.target.value) : null)}
-          >
-            <option value="">Selecione um assunto…</option>
-            {(chosenSubjectTopics.data ?? []).map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.nome}
-              </option>
-            ))}
-          </Select>
+            onChange={(val) => setChosenTopicId(val)}
+            options={(chosenSubjectTopics.data ?? []).map((t) => ({
+              value: t.id,
+              label: t.nome,
+            }))}
+            placeholder={chosenSubjectId == null ? "Escolha uma matéria primeiro" : "Selecione um assunto…"}
+            searchPlaceholder="Buscar assunto..."
+            modalTitle="Selecionar Assunto de Destino"
+          />
         </div>
       </Dialog>
 
