@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ChevronDown, ChevronRight, FileUp, ListPlus, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, FileUp, ListPlus, Pencil, Plus, Trash2, FileCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import {
   api,
@@ -330,6 +330,9 @@ export default function PlanoDetalhePage() {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Matérias</h2>
         <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => setImportGabaritoOpen(true)}>
+            <FileCheck className="size-4" /> Importar Gabarito
+          </Button>
           <Button size="sm" variant="ghost" onClick={() => setImportPdfOpen(true)}>
             <FileUp className="size-4" /> Importar PDF
           </Button>
