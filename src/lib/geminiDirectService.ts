@@ -1,8 +1,7 @@
 /**
  * Serviço de Inteligência Artificial para o Nexus.
- * Permite usar a chave gratuita do Google AI Studio (Gemini Flash)
- * com 15 requisições por minuto e até 1.500 requisições por dia 100% gratuitas,
- * sem precisar pagar planos caros.
+ * Permite usar a chave gratuita do Google AI Studio (Gemini)
+ * com cota diária gratuita e fallback automático entre modelos estáveis.
  */
 
 const GEMINI_USER_KEY_STORAGE = "nexus_custom_gemini_api_key";
@@ -26,6 +25,15 @@ export function setCustomGeminiKey(key: string): void {
     console.error("Erro ao salvar chave customizada do Gemini", err);
   }
 }
+
+// Lista de modelos e versões para fallback automático e máxima compatibilidade
+const MODEL_CANDIDATES = [
+  { version: "v1beta", model: "gemini-2.0-flash" },
+  { version: "v1beta", model: "gemini-2.0-flash-lite" },
+  { version: "v1", model: "gemini-1.5-flash" },
+  { version: "v1beta", model: "gemini-1.5-flash-latest" },
+  { version: "v1beta", model: "gemini-pro" },
+];
 
 export async function askGeminiDirect(
   prompt: string,
@@ -52,38 +60,56 @@ ${prompt}`,
     },
   ];
 
-  // Chamada para a API oficial do Google Gemini Flash
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`;
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents,
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 1200,
-      },
-    }),
+  const body = JSON.stringify({
+    contents,
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 1200,
+    },
   });
 
-  if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({}));
-    const message = errorBody?.error?.message || `Erro ${res.status} no Gemini`;
-    if (res.status === 429) {
-      throw new Error("Limite momentâneo da sua chave atingido no Google. Aguarde cerca de 30 segundos.");
+  const cleanKey = apiKey.trim();
+  let lastErrorMessage = "";
+
+  // Tenta em sequência os modelos compatíveis com a chave
+  for (const candidate of MODEL_CANDIDATES) {
+    const url = `https://generativelanguage.googleapis.com/${candidate.version}/models/${candidate.model}:generateContent?key=${cleanKey}`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text;
+      }
+
+      const errData = await res.json().catch(() => ({}));
+      const msg = errData?.error?.message || `Status ${res.status}`;
+      lastErrorMessage = msg;
+
+      // Se for erro de autenticação ou quota, não adianta tentar outro modelo
+      if (res.status === 400 && (msg.includes("API key not valid") || msg.includes("INVALID_ARGUMENT"))) {
+        throw new Error("Chave do Google Gemini inválida. Verifique se copiou a chave completa do Google AI Studio.");
+      }
+      if (res.status === 429) {
+        throw new Error("Limite de requisições momentâneo atingido. Aguarde cerca de 30 segundos.");
+      }
+
+      // Se for "not found" ou "not supported", continua o loop para o próximo modelo
+      console.warn(`Modelo ${candidate.model} falhou: ${msg}. Tentando próximo...`);
+    } catch (e: any) {
+      if (e.message && (e.message.includes("inválida") || e.message.includes("Limite"))) {
+        throw e;
+      }
+      lastErrorMessage = e.message || lastErrorMessage;
     }
-    if (res.status === 400 || res.status === 403) {
-      throw new Error("Chave do Google Gemini inválida. Verifique sua chave no Google AI Studio.");
-    }
-    throw new Error(message);
   }
 
-  const data = await res.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    throw new Error("A IA não retornou resposta. Tente reformular a pergunta.");
-  }
-
-  return text;
+  throw new Error(
+    lastErrorMessage || "Não foi possível obter resposta da IA. Verifique sua chave de API do Google AI Studio."
+  );
 }
