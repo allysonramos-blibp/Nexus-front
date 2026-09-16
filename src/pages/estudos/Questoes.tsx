@@ -1,4 +1,5 @@
 import { isGabaritoMatch, formatGabaritoDisplay } from "@/lib/gabaritoUtils";
+import { saveCadernoNote } from "@/lib/cadernoNotesStorage";
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAiChat } from "@/contexts/AiChatContext";
@@ -77,7 +78,16 @@ function RegistrarErroDialog({
         motivo,
         observacao: observacoes.trim() || null,
       }),
-    onSuccess: () => {
+    onSuccess: (createdError) => {
+      if (createdError && createdError.id) {
+        saveCadernoNote({
+          errorId: createdError.id,
+          questionId,
+          resumoRegra: observacoes.trim() || undefined,
+          comoNaoErrar: `Motivo selecionado: ${errorReasonLabel[motivo]}`,
+          atualizadoEm: new Date().toISOString(),
+        });
+      }
       toast("Adicionado ao caderno de erros.", "success");
       onClose();
     },

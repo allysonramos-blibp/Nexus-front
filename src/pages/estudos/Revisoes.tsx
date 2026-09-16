@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, FileEdit, BookOpen, CheckCircle2, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { api, errorReasonLabel, type StudyError } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { EstudosTabs } from "./EstudosTabs";
 import { RevisarQuestaoDialog } from "./RevisarQuestaoDialog";
+import { getCadernoNote } from "@/lib/cadernoNotesStorage";
 
 function isAtrasado(e: StudyError) {
   const hoje = new Date().toISOString().slice(0, 10);
@@ -30,52 +31,93 @@ export default function RevisoesPage() {
   const ordenadas = [...itens].sort((a, b) => Number(isAtrasado(b)) - Number(isAtrasado(a)));
 
   return (
-    <AppShell title="Revisões" subtitle="Estudos">
+    <AppShell title="Revisões Ativas" subtitle="Estudos">
       <EstudosTabs active="revisoes" />
 
-      {isLoading && <Loading />}
+      {isLoading && <Loading label="Buscando revisões espaçadas pendentes..." />}
       {error && <ErrorState error={error} onRetry={() => refetch()} />}
 
       {!isLoading && !error && (
         <>
-          <Card className="flex items-center gap-3">
-            <CalendarClock className="size-5 text-study" />
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                {data?.totalPendentes ?? 0} revisão(ões) pendente(s) hoje
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Vem do que você errou e marcou no Caderno de Erros com uma próxima revisão vencida.
-              </p>
+          <Card className="flex items-center justify-between gap-3 p-4 bg-surface-raised/40">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-study/15 text-study">
+                <CalendarClock className="size-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-foreground">
+                  {data?.totalPendentes ?? 0} questão(ões) para revisar hoje
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Reencontro ativo com itens que você errou, reforçado por anotações pessoais e explicações.
+                </p>
+              </div>
             </div>
+
+            {ordenadas.length > 0 && (
+              <Button
+                size="sm"
+                onClick={() => setRevisando(ordenadas[0])}
+                className="shrink-0 gap-1.5"
+              >
+                <BookOpen className="size-3.5" /> Iniciar Revisão
+              </Button>
+            )}
           </Card>
 
           {ordenadas.length === 0 && (
             <EmptyState
-              title="Nada pendente de revisão"
-              description="Quando você registrar um erro no Caderno de Erros, ele aparece aqui quando a próxima revisão vencer."
+              icon={CheckCircle2}
+              title="Tudo em dia por aqui! Parabéns 🎉"
+              description="Você não tem nenhuma questão pendente de revisão para hoje. Continue resolvendo questões ou explore o Caderno de Erros para estudar anotações."
             />
           )}
 
           {ordenadas.length > 0 && (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2.5">
               {ordenadas.map((e) => {
                 const atrasado = isAtrasado(e);
+                const savedNote = getCadernoNote(e.id);
+
                 return (
-                  <Card key={e.id} className="flex flex-wrap items-center gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm text-foreground">{e.enunciadoQuestao}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <Badge>{errorReasonLabel[e.motivo]}</Badge>
+                  <Card 
+                    key={e.id} 
+                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:border-dash/40 transition-colors"
+                  >
+                    <div 
+                      className="min-w-0 flex-1 cursor-pointer w-full"
+                      onClick={() => setRevisando(e)}
+                    >
+                      <p className="line-clamp-2 text-sm font-medium text-foreground hover:text-dash transition-colors">
+                        {e.enunciadoQuestao}
+                      </p>
+
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                        <Badge variant="default">{errorReasonLabel[e.motivo]}</Badge>
                         <Badge variant={atrasado ? "destructive" : "warning"}>
-                          {atrasado ? "Atrasada" : "Pendente"}
+                          {atrasado ? "Atrasada" : "Para Hoje"}
                         </Badge>
-                        {e.proximaRevisao && <span>Prevista: {e.proximaRevisao}</span>}
+                        {savedNote?.resumoRegra && (
+                          <Badge variant="info" className="gap-1">
+                            <FileEdit className="size-3" /> Anotação de fixação
+                          </Badge>
+                        )}
+                        {e.proximaRevisao && <span>Vencimento: {e.proximaRevisao}</span>}
                       </div>
+
+                      {savedNote?.resumoRegra && (
+                        <p className="mt-2 rounded-lg bg-surface-raised/70 border border-border/70 p-2 text-xs text-foreground/90 line-clamp-2">
+                          <span className="font-semibold text-dash">Sua Anotação: </span>
+                          {savedNote.resumoRegra}
+                        </p>
+                      )}
                     </div>
-                    <Button size="sm" onClick={() => setRevisando(e)}>
-                      Revisar
-                    </Button>
+
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50 w-full sm:w-auto justify-end">
+                      <Button size="sm" onClick={() => setRevisando(e)} className="gap-1 text-xs">
+                        <BookOpen className="size-3.5" /> Revisar & Anotar
+                      </Button>
+                    </div>
                   </Card>
                 );
               })}
