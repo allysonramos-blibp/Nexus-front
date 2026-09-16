@@ -9,7 +9,8 @@ import {
   BookOpen,
   Wallet,
   CheckSquare,
-  Smartphone,
+  Send,
+  Zap,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
@@ -19,7 +20,10 @@ import {
   savePreferences,
   requestNotificationPermission,
   sendTestNotification,
+  sendSpecificReminder,
+  checkAndDispatchScheduledReminders,
   NotificationPreferences,
+  ReminderType,
 } from "@/lib/notifications";
 
 interface NotificationCenterModalProps {
@@ -38,8 +42,9 @@ export function NotificationCenterModal({
   const [prefs, setPrefs] = useState<NotificationPreferences>(
     getStoredPreferences()
   );
-  const [testSent, setTestSent] = useState(false);
+  const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
   const [requesting, setRequesting] = useState(false);
+  const [dispatchingAll, setDispatchingAll] = useState(false);
 
   const isMasterAdmin =
     user?.email === "allysonr510@gmail.com" || user?.role === "ROLE_ADMIN";
@@ -51,11 +56,16 @@ export function NotificationCenterModal({
     if (isOpen) {
       setPermission(getNotificationPermission());
       setPrefs(getStoredPreferences());
-      setTestSent(false);
+      setFeedbackMsg(null);
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const showFeedback = (msg: string) => {
+    setFeedbackMsg(msg);
+    setTimeout(() => setFeedbackMsg(null), 5000);
+  };
 
   const handleRequestPermission = async () => {
     setRequesting(true);
@@ -66,7 +76,7 @@ export function NotificationCenterModal({
       setPrefs(updated);
       savePreferences(updated);
       await sendTestNotification();
-      setTestSent(true);
+      showFeedback("Notificações ativadas! Enviamos um alerta de teste na sua barra de status.");
     }
     setRequesting(false);
   };
@@ -77,21 +87,39 @@ export function NotificationCenterModal({
     savePreferences(updated);
   };
 
-  const handleSendTest = async () => {
-    setTestSent(false);
-    const ok = await sendTestNotification();
+  const handleSendSingleTest = async (type: ReminderType, label: string) => {
+    const ok = await sendSpecificReminder(type);
     if (ok) {
-      setTestSent(true);
-      setTimeout(() => setTestSent(false), 4000);
+      showFeedback(`Lembrete de ${label} disparado! Veja na barra de notificações.`);
+    } else {
+      showFeedback("Não foi possível disparar. Verifique se as notificações estão permitidas.");
+    }
+  };
+
+  const handleDispatchAllNow = async () => {
+    setDispatchingAll(true);
+    const list = await checkAndDispatchScheduledReminders(true);
+    setDispatchingAll(false);
+    if (list.length > 0) {
+      showFeedback(`🚀 ${list.length} lembretes disparados agora no seu dispositivo!`);
+    } else {
+      await sendTestNotification();
+      showFeedback("Alerta de teste enviado com sucesso!");
     }
   };
 
   const isGranted = permission === "granted";
 
+  const TIME_OPTIONS = [
+    "06:00", "06:30", "07:00", "07:30", "08:00", "08:30", 
+    "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", 
+    "15:00", "16:00", "17:00", "17:30", "18:00", "19:00", 
+    "19:30", "20:00", "21:00", "22:00"
+  ];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-sm overflow-y-auto">
       <div className="relative w-full max-w-xl rounded-2xl bg-surface border border-border shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
-        
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/80 bg-surface-raised/40">
           <div className="flex items-center gap-2.5">
@@ -103,7 +131,7 @@ export function NotificationCenterModal({
                 Central de Notificações & Lembretes
               </h2>
               <p className="text-xs text-muted-foreground">
-                Alertas inteligentes direto no seu celular e navegador
+                Lembretes automáticos direto no seu celular e navegador
               </p>
             </div>
           </div>
@@ -117,7 +145,6 @@ export function NotificationCenterModal({
 
         {/* Content */}
         <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
-          
           {/* Permission Status Box */}
           <div
             className={
@@ -131,26 +158,27 @@ export function NotificationCenterModal({
               <span
                 className={
                   "p-2 rounded-lg " +
-                  (isGranted ? "bg-fin/20 text-fin" : "bg-muted text-muted-foreground")
+                  (isGranted
+                    ? "bg-fin/20 text-fin"
+                    : "bg-surface-raised text-muted-foreground")
                 }
               >
-                {isGranted ? (
-                  <CheckCircle2 className="size-5" />
-                ) : (
-                  <Smartphone className="size-5" />
-                )}
+                <Bell className="size-5" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-foreground">
-                  {isGranted
-                    ? "Notificações Ativas no Dispositivo"
-                    : permission === "denied"
-                    ? "Notificações Bloqueadas no Navegador"
-                    : "Notificações ainda não ativadas"}
+                <p className="text-sm font-medium text-foreground">
+                  Status no Dispositivo:{" "}
+                  <strong className={isGranted ? "text-fin" : "text-amber-400"}>
+                    {isGranted
+                      ? "Autorizado e Ativo ✅"
+                      : permission === "denied"
+                      ? "Bloqueado pelo Navegador 🚫"
+                      : "Pendente de Autorização ⚠️"}
+                  </strong>
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {isGranted
-                    ? "O Nexus enviará alertas na barra de notificações do seu aparelho."
+                    ? "O Nexus está programado para enviar lembretes nos horários agendados."
                     : permission === "denied"
                     ? "Permita as notificações nas configurações do navegador/site para receber alertas."
                     : "Clique abaixo para autorizar lembretes do PWA no seu dispositivo."}
@@ -158,7 +186,7 @@ export function NotificationCenterModal({
               </div>
             </div>
 
-            <div className="w-full sm:w-auto">
+            <div className="w-full sm:w-auto flex items-center gap-2">
               {!isGranted && permission !== "denied" && (
                 <Button
                   onClick={handleRequestPermission}
@@ -172,56 +200,86 @@ export function NotificationCenterModal({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleSendTest}
-                  className="w-full sm:w-auto text-xs"
+                  onClick={handleDispatchAllNow}
+                  disabled={dispatchingAll}
+                  className="w-full sm:w-auto text-xs gap-1.5 border-dash/40 text-dash hover:bg-dash/10"
                 >
-                  Testar Alerta
+                  <Zap className="size-3.5" />
+                  {dispatchingAll ? "Disparando..." : "Testar Todos Agora"}
                 </Button>
               )}
             </div>
           </div>
 
-          {testSent && (
-            <div className="p-3 rounded-xl bg-fin/10 border border-fin/30 text-fin text-xs flex items-center gap-2 animate-in fade-in duration-200">
+          {/* Feedback Toast */}
+          {feedbackMsg && (
+            <div className="p-3.5 rounded-xl bg-fin/15 border border-fin/40 text-fin text-xs flex items-center gap-2 animate-in fade-in duration-200">
               <CheckCircle2 className="size-4 shrink-0" />
-              Notificação de teste disparada! Verifique a barra de notificações do seu aparelho.
+              <span>{feedbackMsg}</span>
             </div>
           )}
+
+          {/* Banner de Execução em Segundo Plano */}
+          <div className="p-3 rounded-xl bg-dash/5 border border-dash/20 flex items-start gap-2.5 text-xs text-muted-foreground">
+            <Sparkles className="size-4 text-dash shrink-0 mt-0.5" />
+            <p>
+              <strong>Como funcionam os lembretes:</strong> O Nexus monitora os horários definidos abaixo. Quando der a hora exata, um alerta nativo com som e vibração aparecerá na barra de notificações do seu celular.
+            </p>
+          </div>
 
           {/* Configurações de Lembretes */}
           <div className="space-y-3">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Lembretes Personalizados
+              Lembretes Programados
             </h3>
 
             {/* Lembrete de Tarefas */}
-            <div className="p-3.5 rounded-xl border border-border/70 bg-surface-raised/30 flex items-center justify-between gap-3">
+            <div className="p-3.5 rounded-xl border border-border/70 bg-surface-raised/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <span className="p-2 rounded-lg bg-dash/10 text-dash">
+                <span className="p-2 rounded-lg bg-dash/10 text-dash shrink-0">
                   <CheckSquare className="size-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-medium text-foreground">
-                    Foco Diário & Tarefas Críticas
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-foreground">
+                      Foco Diário & Tarefas Críticas
+                    </p>
+                    <span className="text-[11px] font-semibold text-muted-foreground px-1.5 py-0.5 rounded bg-surface border border-border">
+                      08:30
+                    </span>
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    Avisa pela manhã se houver tarefas de alta prioridade para o dia.
+                    Avisa pela manhã as tarefas de alta prioridade do dia.
                   </p>
                 </div>
               </div>
-              <input
-                type="checkbox"
-                checked={prefs.enabled}
-                onChange={(e) => handleToggle("enabled", e.target.checked)}
-                className="size-4 rounded accent-dash cursor-pointer"
-              />
+
+              <div className="flex items-center justify-between sm:justify-end gap-2.5">
+                {isGranted && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSendSingleTest("task", "Tarefas")}
+                    className="text-xs text-dash hover:bg-dash/10 px-2 h-7 gap-1"
+                    title="Disparar este lembrete agora no celular"
+                  >
+                    <Send className="size-3" /> Testar
+                  </Button>
+                )}
+                <input
+                  type="checkbox"
+                  checked={prefs.enabled}
+                  onChange={(e) => handleToggle("enabled", e.target.checked)}
+                  className="size-4 rounded accent-dash cursor-pointer"
+                />
+              </div>
             </div>
 
-            {/* Lembrete de Estudos (se tiver módulo) */}
+            {/* Lembrete de Estudos */}
             {hasEstudos && (
-              <div className="p-3.5 rounded-xl border border-border/70 bg-surface-raised/30 flex items-center justify-between gap-3">
+              <div className="p-3.5 rounded-xl border border-border/70 bg-surface-raised/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="p-2 rounded-lg bg-study/10 text-study">
+                  <span className="p-2 rounded-lg bg-study/10 text-study shrink-0">
                     <BookOpen className="size-4" />
                   </span>
                   <div>
@@ -233,17 +291,30 @@ export function NotificationCenterModal({
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+
+                <div className="flex items-center justify-between sm:justify-end gap-2">
                   <select
                     value={prefs.dailyStudyTime}
                     onChange={(e) => handleToggle("dailyStudyTime", e.target.value)}
                     className="text-xs bg-surface border border-border rounded-lg px-2 py-1 text-foreground"
                   >
-                    <option value="09:00">09:00</option>
-                    <option value="14:00">14:00</option>
-                    <option value="19:00">19:00</option>
-                    <option value="21:00">21:00</option>
+                    {TIME_OPTIONS.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
                   </select>
+
+                  {isGranted && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSendSingleTest("study", "Estudos")}
+                      className="text-xs text-study hover:bg-study/10 px-2 h-7 gap-1"
+                      title="Disparar este lembrete agora no celular"
+                    >
+                      <Send className="size-3" /> Testar
+                    </Button>
+                  )}
+
                   <input
                     type="checkbox"
                     checked={prefs.dailyStudyReminder}
@@ -256,11 +327,11 @@ export function NotificationCenterModal({
               </div>
             )}
 
-            {/* Lembrete de Treino (se tiver módulo) */}
+            {/* Lembrete de Treino */}
             {hasTreinos && (
-              <div className="p-3.5 rounded-xl border border-border/70 bg-surface-raised/30 flex items-center justify-between gap-3">
+              <div className="p-3.5 rounded-xl border border-border/70 bg-surface-raised/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="p-2 rounded-lg bg-workout/10 text-workout">
+                  <span className="p-2 rounded-lg bg-workout/10 text-workout shrink-0">
                     <Dumbbell className="size-4" />
                   </span>
                   <div>
@@ -272,17 +343,30 @@ export function NotificationCenterModal({
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+
+                <div className="flex items-center justify-between sm:justify-end gap-2">
                   <select
                     value={prefs.workoutTime}
                     onChange={(e) => handleToggle("workoutTime", e.target.value)}
                     className="text-xs bg-surface border border-border rounded-lg px-2 py-1 text-foreground"
                   >
-                    <option value="06:30">06:30</option>
-                    <option value="12:00">12:00</option>
-                    <option value="17:30">17:30</option>
-                    <option value="19:30">19:30</option>
+                    {TIME_OPTIONS.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
                   </select>
+
+                  {isGranted && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSendSingleTest("workout", "Treinos")}
+                      className="text-xs text-workout hover:bg-workout/10 px-2 h-7 gap-1"
+                      title="Disparar este lembrete agora no celular"
+                    >
+                      <Send className="size-3" /> Testar
+                    </Button>
+                  )}
+
                   <input
                     type="checkbox"
                     checked={prefs.workoutReminder}
@@ -295,51 +379,63 @@ export function NotificationCenterModal({
               </div>
             )}
 
-            {/* Lembrete de Finanças (se tiver módulo) */}
+            {/* Lembrete de Finanças */}
             {hasFinancas && (
-              <div className="p-3.5 rounded-xl border border-border/70 bg-surface-raised/30 flex items-center justify-between gap-3">
+              <div className="p-3.5 rounded-xl border border-border/70 bg-surface-raised/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="p-2 rounded-lg bg-fin/10 text-fin">
+                  <span className="p-2 rounded-lg bg-fin/10 text-fin shrink-0">
                     <Wallet className="size-4" />
                   </span>
                   <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Fechamento Financeiro & Contas
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground">
+                        Fechamento Financeiro & Contas
+                      </p>
+                      <span className="text-[11px] font-semibold text-muted-foreground px-1.5 py-0.5 rounded bg-surface border border-border">
+                        18:00
+                      </span>
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      Avisa sobre contas nos dias próximos ao vencimento.
+                      Avisa sobre contas nos dias próximos ao vencimento e fechamento diário.
                     </p>
                   </div>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={prefs.financeReminder}
-                  onChange={(e) =>
-                    handleToggle("financeReminder", e.target.checked)
-                  }
-                  className="size-4 rounded accent-fin cursor-pointer"
-                />
+
+                <div className="flex items-center justify-between sm:justify-end gap-2.5">
+                  {isGranted && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSendSingleTest("finance", "Finanças")}
+                      className="text-xs text-fin hover:bg-fin/10 px-2 h-7 gap-1"
+                      title="Disparar este lembrete agora no celular"
+                    >
+                      <Send className="size-3" /> Testar
+                    </Button>
+                  )}
+                  <input
+                    type="checkbox"
+                    checked={prefs.financeReminder}
+                    onChange={(e) =>
+                      handleToggle("financeReminder", e.target.checked)
+                    }
+                    className="size-4 rounded accent-fin cursor-pointer"
+                  />
+                </div>
               </div>
             )}
           </div>
-
-          {/* Dica PWA */}
-          <div className="p-3.5 rounded-xl bg-surface-raised/20 border border-border/60 text-xs text-muted-foreground flex items-center gap-2.5">
-            <Sparkles className="size-4 text-dash shrink-0" />
-            <span>
-              <strong>Dica Pro:</strong> No Android e iOS, instale o Nexus na tela de início para receber alertas mesmo quando o app estiver fechado.
-            </span>
-          </div>
-
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end px-6 py-3.5 border-t border-border/80 bg-surface-raised/30">
-          <Button onClick={onClose} size="sm" className="text-xs">
+        <div className="flex items-center justify-between px-6 py-3.5 border-t border-border/80 bg-surface-raised/30">
+          <p className="text-[11px] text-muted-foreground hidden sm:block">
+            Os lembretes tocam com som e vibração no horário escolhido.
+          </p>
+          <Button onClick={onClose} size="sm" className="text-xs ml-auto">
             Concluir
           </Button>
         </div>
-
       </div>
     </div>
   );

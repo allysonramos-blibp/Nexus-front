@@ -1,5 +1,6 @@
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { NotificationCenterModal } from "@/components/NotificationCenterModal";
+import { useNotificationScheduler } from "@/lib/notifications";
 import { useState } from "react";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useAiChat } from "@/contexts/AiChatContext";
@@ -40,6 +41,7 @@ export function AppShell({
   const navigate = useNavigate();
   const { openChat } = useAiChat();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  useNotificationScheduler();
 
   useEffect(() => {
     if (ready && !user) navigate({ to: "/login" });
