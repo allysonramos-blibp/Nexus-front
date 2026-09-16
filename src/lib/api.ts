@@ -1798,9 +1798,12 @@ export const api = {
   /* =======================================================
    * GABARITO OFICIAL
    * ======================================================= */
-  importPlanAnswerKey: (planId: number, file: File) => {
+  importPlanAnswerKey: (planId: number, file: File, tipoProva?: string) => {
     const formData = new FormData();
     formData.append("file", file);
+    if (tipoProva && tipoProva.trim()) {
+      formData.append("tipoProva", tipoProva.trim());
+    }
     return request<{
       totalEncontrado: number;
       totalAtualizado: number;

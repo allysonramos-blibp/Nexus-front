@@ -6,7 +6,8 @@ import {
   CheckCircle2, 
   AlertTriangle, 
   XCircle, 
-  FileText 
+  FileText,
+  Filter
 } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
@@ -23,12 +24,13 @@ interface ImportGabaritoDialogProps {
 
 export function ImportGabaritoDialog({ open, onClose, planId }: ImportGabaritoDialogProps) {
   const [file, setFile] = useState<File | null>(null);
+  const [tipoProva, setTipoProva] = useState("TIPO 3");
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const importMutation = useMutation({
-    mutationFn: (f: File) => api.importPlanAnswerKey(planId, f),
+    mutationFn: (f: File) => api.importPlanAnswerKey(planId, f, tipoProva),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["study-plans", planId] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
@@ -65,11 +67,37 @@ export function ImportGabaritoDialog({ open, onClose, planId }: ImportGabaritoDi
       open={open}
       onClose={handleClose}
       title="Importar Gabarito Oficial"
-      description="Envie o PDF oficial do gabarito para preencher as alternativas corretas e anulações pelo número da questão."
+      description="Envie o PDF do gabarito preliminar ou definitivo. O sistema localiza o caderno exato da sua prova e associa as respostas pelo número da questão."
       className="max-w-xl"
     >
       {!result ? (
         <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5 rounded-xl border border-border bg-surface-raised/40 p-3.5">
+            <label className="flex items-center gap-2 text-xs font-semibold text-foreground">
+              <Filter className="size-3.5 text-primary" />
+              Tipo do Caderno / Prova a extrair do gabarito:
+            </label>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {["TIPO 3", "TIPO 1", "TIPO 2", "TIPO 4", "AMARELA", "BRANCA"].map((tipo) => (
+                <button
+                  key={tipo}
+                  type="button"
+                  onClick={() => setTipoProva(tipo)}
+                  className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
+                    tipoProva === tipo
+                      ? "bg-primary text-primary-foreground font-semibold"
+                      : "bg-surface border border-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tipo}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Como o PDF oficial contém todos os cargos e tipos, esse filtro isola com precisão a tabela da sua prova (ex.: Tipo 3 Amarela).
+            </p>
+          </div>
+
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
@@ -97,17 +125,17 @@ export function ImportGabaritoDialog({ open, onClose, planId }: ImportGabaritoDi
             ) : (
               <>
                 <p className="text-sm font-semibold text-foreground">
-                  Arraste o PDF do gabarito ou clique para selecionar
+                  Arraste o PDF do gabarito oficial ou clique para selecionar
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Reconhece tabelas estilo FGV, Cespe, FCC, listas 1 A, 2 B e anulações (*)
+                  Suporta gabaritos multipáginas (FGV, Cespe, FCC, Vunesp)
                 </p>
               </>
             )}
           </div>
 
           {importMutation.isPending && (
-            <Loading label="Lendo gabarito determinístico e associando às questões..." />
+            <Loading label={`Localizando tabela da Prova ${tipoProva} e associando respostas...`} />
           )}
 
           {importMutation.error && <ErrorState error={importMutation.error} compact />}
@@ -129,7 +157,7 @@ export function ImportGabaritoDialog({ open, onClose, planId }: ImportGabaritoDi
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="rounded-xl border border-border bg-surface-raised p-3 text-center">
-              <p className="text-xs text-muted-foreground">Encontradas</p>
+              <p className="text-xs text-muted-foreground">Encontradas ({tipoProva})</p>
               <p className="text-xl font-bold text-foreground">{result.totalEncontrado}</p>
             </div>
             <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-center text-emerald-400">
@@ -152,7 +180,7 @@ export function ImportGabaritoDialog({ open, onClose, planId }: ImportGabaritoDi
             <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-400">
               <AlertTriangle className="size-4 shrink-0 mt-0.5" />
               <span>
-                Questões anuladas identificadas: {result.numerosAnulados.join(", ")}.
+                Questões anuladas no gabarito oficial: {result.numerosAnulados.join(", ")}.
               </span>
             </div>
           )}
@@ -161,7 +189,7 @@ export function ImportGabaritoDialog({ open, onClose, planId }: ImportGabaritoDi
             <div className="flex items-start gap-2 rounded-xl border border-border bg-surface-raised p-3 text-xs text-muted-foreground">
               <AlertTriangle className="size-4 shrink-0 mt-0.5 text-muted-foreground" />
               <span>
-                Questões cadastradas no plano sem gabarito correspondente no PDF:{" "}
+                Questões no seu plano sem gabarito correspondente nessa tabela:{" "}
                 {result.numerosAusentesNoGabarito.join(", ")}.
               </span>
             </div>
