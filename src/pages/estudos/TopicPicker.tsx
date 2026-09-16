@@ -35,7 +35,6 @@ export function TopicPicker({
 
   if (planos.isLoading) return <Loading label="Carregando seus planos…" />;
   if (planos.error) return <ErrorState error={planos.error} onRetry={() => planos.refetch()} />;
-
   if ((planos.data ?? []).length === 0) {
     return (
       <EmptyState
@@ -57,7 +56,7 @@ export function TopicPicker({
           onChangeTopic(null);
         }}
       >
-        <option value="">Selecione…</option>
+        <option value="">Selecione um plano…</option>
         {(planos.data ?? []).map((p) => (
           <option key={p.id} value={p.id}>
             {p.nome}
@@ -75,7 +74,9 @@ export function TopicPicker({
           onChangeTopic(null);
         }}
       >
-        <option value="">{planoId == null ? "Escolha um plano primeiro" : "Selecione…"}</option>
+        <option value="">
+          {planoId == null ? "Escolha um plano primeiro" : "Todas as matérias (Geral)"}
+        </option>
         {(subjects.data ?? []).map((s) => (
           <option key={s.id} value={s.id}>
             {s.nome}
@@ -89,7 +90,9 @@ export function TopicPicker({
         disabled={subjectId == null}
         onChange={(e) => onChangeTopic(e.target.value ? Number(e.target.value) : null)}
       >
-        <option value="">{subjectId == null ? "Escolha uma matéria primeiro" : "Selecione…"}</option>
+        <option value="">
+          {subjectId == null ? "Todos os assuntos (Geral)" : "Todos os assuntos (Geral)"}
+        </option>
         {(topics.data ?? []).map((t) => (
           <option key={t.id} value={t.id}>
             {t.nome}

@@ -563,6 +563,7 @@ export interface Question {
   topicId: number;
   subjectId: number;
   subjectNome: string;
+  topicNome?: string;
 }
 
 export interface QuestionRequest {

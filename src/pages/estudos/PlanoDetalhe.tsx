@@ -81,17 +81,17 @@ function TopicRow({
   });
 
   return (
-    <li className="group flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/70 bg-surface px-3 py-2 text-sm transition-all hover:border-border hover:shadow-xs">
+    <li className="group flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-lg border border-border/70 bg-surface px-3 py-2 text-sm transition-all hover:border-border hover:shadow-xs">
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <BookOpen className="size-4 shrink-0 text-muted-foreground/80" />
         <span className="truncate font-medium text-foreground">{topic.nome}</span>
       </div>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 flex-wrap justify-end shrink-0">
         {/* Treinar questões diretamente */}
         <Link
           to={`/estudos/questoes?planId=${planId}&subjectId=${subjectId}&topicId=${topic.id}&mode=resolve`}
-          className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+          className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
           title="Resolver questões deste assunto agora"
         >
           <Play className="size-3 fill-current" />
@@ -106,7 +106,7 @@ function TopicRow({
           title="Gerar questões com IA para este assunto"
         >
           <Sparkles className="size-3 text-amber-500" />
-          <span className="hidden sm:inline">IA</span>
+          <span className="text-[11px]">IA</span>
         </button>
 
         {/* Colar questões */}
@@ -117,7 +117,7 @@ function TopicRow({
           title="Colar texto de questões para este assunto"
         >
           <ClipboardPaste className="size-3 text-emerald-500" />
-          <span className="hidden sm:inline">Colar</span>
+          <span className="text-[11px]">Colar</span>
         </button>
 
         {/* Editar */}
@@ -232,6 +232,16 @@ function SubjectCard({
     },
   });
 
+  const createGeralTopic = useMutation({
+    mutationFn: () => api.createTopic(subject.id, { nome: "Geral" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["topics", subject.id] });
+      qc.invalidateQueries({ queryKey: ["study-plans"] });
+      qc.invalidateQueries({ queryKey: ["study-plan", planId] });
+      toast("Assunto 'Geral' criado com sucesso.", "success");
+    },
+  });
+
   const saveTopic = useMutation({
     mutationFn: () =>
       topicDialog?.topic
@@ -264,71 +274,110 @@ function SubjectCard({
 
   return (
     <Card className="transition-all hover:border-border">
-      {/* Cabeçalho da Matéria */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="flex items-center gap-2 text-left transition-colors hover:text-primary"
-            aria-expanded={expanded}
-          >
-            {expanded ? (
-              <ChevronDown className="size-4.5 text-muted-foreground shrink-0" />
-            ) : (
-              <ChevronRight className="size-4.5 text-muted-foreground shrink-0" />
-            )}
-            <Layers className="size-4 text-primary shrink-0" />
-          </button>
-
-          {editingSubject ? (
-            <div className="flex flex-1 flex-wrap items-center gap-2">
-              <Input
-                autoFocus
-                value={subjectName}
-                onClick={(e) => e.stopPropagation()}
-                onChange={(e) => setSubjectName(e.target.value)}
-                className="h-8 flex-1 text-sm font-semibold"
-                placeholder="Nome da matéria"
-              />
-              <Input
-                type="number"
-                value={subjectPeso ?? ""}
-                onClick={(e) => e.stopPropagation()}
-                onChange={(e) => setSubjectPeso(e.target.value ? Number(e.target.value) : undefined)}
-                className="h-8 w-20 text-xs"
-                placeholder="Peso"
-                title="Peso no edital"
-              />
-              <Button size="sm" variant="ghost" onClick={() => setEditingSubject(false)}>
-                Cancelar
-              </Button>
-              <Button size="sm" loading={saveSubject.isPending} onClick={() => saveSubject.mutate()}>
-                Salvar
-              </Button>
-            </div>
-          ) : (
-            <div className="flex flex-wrap items-center gap-2 min-w-0">
-              <button
-                type="button"
-                onClick={() => setExpanded((v) => !v)}
-                className="truncate text-base font-semibold text-foreground text-left hover:text-primary transition-colors"
-              >
-                {subject.nome}
-              </button>
-              <Badge variant="default" className="text-[11px] font-normal">
-                {topicList.length} assunto(s)
-              </Badge>
-              {subject.pesoNoEdital != null && (
-                <Badge variant="info" className="text-[11px]">
-                  Peso {subject.pesoNoEdital}
-                </Badge>
+      {/* Cabeçalho da Matéria - Desenhado para não encavalar no mobile */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="p-1 -ml-1 text-muted-foreground transition-colors hover:text-primary shrink-0"
+              aria-expanded={expanded}
+              aria-label={expanded ? "Recolher matéria" : "Expandir matéria"}
+            >
+              {expanded ? (
+                <ChevronDown className="size-4.5 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="size-4.5 text-muted-foreground" />
               )}
+            </button>
+
+            <Layers className="size-4 text-primary shrink-0" />
+
+            {editingSubject ? (
+              <div className="flex flex-1 flex-wrap items-center gap-2">
+                <Input
+                  autoFocus
+                  value={subjectName}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => setSubjectName(e.target.value)}
+                  className="h-8 flex-1 text-sm font-semibold"
+                  placeholder="Nome da matéria"
+                />
+                <Input
+                  type="number"
+                  value={subjectPeso ?? ""}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => setSubjectPeso(e.target.value ? Number(e.target.value) : undefined)}
+                  className="h-8 w-20 text-xs"
+                  placeholder="Peso"
+                  title="Peso no edital"
+                />
+                <Button size="sm" variant="ghost" onClick={() => setEditingSubject(false)}>
+                  Cancelar
+                </Button>
+                <Button size="sm" loading={saveSubject.isPending} onClick={() => saveSubject.mutate()}>
+                  Salvar
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <button
+                  type="button"
+                  onClick={() => setExpanded((v) => !v)}
+                  className="truncate text-base font-semibold text-foreground text-left hover:text-primary transition-colors"
+                >
+                  {subject.nome}
+                </button>
+                <Badge variant="default" className="text-[11px] font-normal shrink-0 whitespace-nowrap">
+                  {topicList.length} assunto(s)
+                </Badge>
+                {subject.pesoNoEdital != null && (
+                  <Badge variant="info" className="text-[11px] shrink-0 whitespace-nowrap">
+                    Peso {subject.pesoNoEdital}
+                  </Badge>
+                )}
+              </div>
+            )}
+          </div>
+
+          {!editingSubject && (
+            <div className="flex items-center gap-1 shrink-0">
+              <Link
+                to={`/estudos/questoes?planId=${planId}&subjectId=${subject.id}&mode=resolve`}
+                className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                title="Treinar todas as questões desta matéria"
+              >
+                <Play className="size-3 fill-current" />
+                <span className="hidden xs:inline">Treinar</span>
+              </Link>
+              <button
+                aria-label={`Editar ${subject.nome}`}
+                onClick={() => {
+                  setSubjectName(subject.nome);
+                  setSubjectPeso(subject.pesoNoEdital ?? undefined);
+                  setEditingSubject(true);
+                }}
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground"
+                title="Editar matéria"
+              >
+                <Pencil className="size-3.5" />
+              </button>
+              <button
+                aria-label={`Excluir ${subject.nome}`}
+                onClick={() => setDeletingSubject(true)}
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                title="Excluir matéria"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
             </div>
           )}
         </div>
 
+        {/* Linha de ferramentas da matéria */}
         {!editingSubject && (
-          <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-border/40">
             <Button
               variant="outline"
               size="sm"
@@ -336,7 +385,7 @@ function SubjectCard({
                 setTopicDialog({ topic: null });
                 setTopicName("");
               }}
-              title="Adicionar um assunto"
+              title="Adicionar um assunto específico"
               className="h-7 text-xs px-2.5"
             >
               <Plus className="size-3" /> Assunto
@@ -359,26 +408,14 @@ function SubjectCard({
             >
               <Sparkles className="size-3.5" /> IA
             </Button>
-            <button
-              aria-label={`Editar ${subject.nome}`}
-              onClick={() => {
-                setSubjectName(subject.nome);
-                setSubjectPeso(subject.pesoNoEdital ?? undefined);
-                setEditingSubject(true);
-              }}
-              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground"
-              title="Editar matéria"
+            <Link
+              to={`/estudos/questoes?planId=${planId}&subjectId=${subject.id}&mode=list`}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors ml-auto"
+              title="Ver todas as questões desta matéria"
             >
-              <Pencil className="size-3.5" />
-            </button>
-            <button
-              aria-label={`Excluir ${subject.nome}`}
-              onClick={() => setDeletingSubject(true)}
-              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-              title="Excluir matéria"
-            >
-              <Trash2 className="size-3.5" />
-            </button>
+              <BookOpen className="size-3 text-info" />
+              <span>Ver questões</span>
+            </Link>
           </div>
         )}
       </div>
@@ -389,11 +426,20 @@ function SubjectCard({
           {topics.isLoading && <Loading label="Carregando assuntos…" />}
           {topics.error && <ErrorState error={topics.error} compact />}
           {!topics.isLoading && !topics.error && filteredTopics.length === 0 && (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/80 py-4 text-center">
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/80 py-4 px-3 text-center">
               <p className="text-xs text-muted-foreground">
                 {searchQuery ? "Nenhum assunto corresponde à sua busca." : "Nenhum assunto nesta matéria ainda."}
               </p>
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+              <div className="mt-2.5 flex flex-wrap items-center justify-center gap-2">
+                <Button
+                  variant="default"
+                  size="sm"
+                  loading={createGeralTopic.isPending}
+                  onClick={() => createGeralTopic.mutate()}
+                  className="h-8 text-xs font-semibold"
+                >
+                  <Plus className="size-3.5" /> Criar assunto "Geral"
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -401,13 +447,14 @@ function SubjectCard({
                     setTopicDialog({ topic: null });
                     setTopicName("");
                   }}
+                  className="h-8 text-xs"
                 >
-                  <Plus className="size-3.5" /> Criar assunto
+                  Personalizado
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setLoteOpen(true)}>
+                <Button variant="ghost" size="sm" onClick={() => setLoteOpen(true)} className="h-8 text-xs">
                   <ListPlus className="size-3.5" /> Colar lista
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setSugerirIaOpen(true)}>
+                <Button variant="ghost" size="sm" onClick={() => setSugerirIaOpen(true)} className="h-8 text-xs">
                   <Sparkles className="size-3.5 text-amber-500" /> Sugerir com IA
                 </Button>
               </div>
@@ -469,7 +516,7 @@ function SubjectCard({
           autoFocus
           value={topicName}
           onChange={(e) => setTopicName(e.target.value)}
-          placeholder="Ex.: Genética, Verbos irregulares, Direito Constitucional"
+          placeholder="Ex.: Geral, Controle de Constitucionalidade, Sintaxe"
         />
         {saveTopic.error && <ErrorState error={saveTopic.error} compact className="mt-2" />}
       </Dialog>
@@ -521,17 +568,28 @@ export default function PlanoDetalhePage() {
   const [editPlanoOpen, setEditPlanoOpen] = useState(false);
   const [newSubjectOpen, setNewSubjectOpen] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState("");
+  const [createDefaultGeral, setCreateDefaultGeral] = useState(true);
   const [sugerirEditalOpen, setSugerirEditalOpen] = useState(false);
   const [importPdfOpen, setImportPdfOpen] = useState(false);
   const [importGabaritoOpen, setImportGabaritoOpen] = useState(false);
 
   const createSubject = useMutation({
-    mutationFn: () => api.createSubject(planId, { nome: newSubjectName }),
+    mutationFn: async () => {
+      const subject = await api.createSubject(planId, { nome: newSubjectName.trim() });
+      if (createDefaultGeral) {
+        try {
+          await api.createTopic(subject.id, { nome: "Geral" });
+        } catch (err) {
+          console.warn("Não foi possível criar tópico Geral", err);
+        }
+      }
+      return subject;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["subjects", planId] });
       qc.invalidateQueries({ queryKey: ["study-plans"] });
       qc.invalidateQueries({ queryKey: ["study-plan", planId] });
-      toast("Matéria criada.", "success");
+      toast(createDefaultGeral ? "Matéria criada com assunto 'Geral'." : "Matéria criada.", "success");
       setNewSubjectOpen(false);
       setNewSubjectName("");
     },
@@ -596,6 +654,7 @@ export default function PlanoDetalhePage() {
               <Link
                 to={`/estudos/questoes?planId=${planId}&mode=resolve`}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90"
+                title="Treinar todas as questões cadastradas em todas as matérias deste plano"
               >
                 <Play className="size-4 fill-current" /> Treinar Questões
               </Link>
@@ -725,7 +784,7 @@ export default function PlanoDetalhePage() {
       {!subjects.isLoading && !subjects.error && (subjects.data ?? []).length === 0 && (
         <EmptyState
           title="Nenhuma matéria ainda"
-          description="Adicione as matérias desse plano — depois você poderá cadastrar assuntos e treinar questões de cada um."
+          description="Adicione as matérias desse plano — ao criar uma matéria, o assunto 'Geral' é criado automaticamente para você começar a cadastrar e treinar questões imediatamente."
           action={
             <div className="flex flex-wrap items-center justify-center gap-2">
               <Button size="sm" onClick={() => setNewSubjectOpen(true)}>
@@ -758,7 +817,7 @@ export default function PlanoDetalhePage() {
         </div>
       )}
 
-      {/* Diálogo de Nova Matéria */}
+      {/* Diálogo de Nova Matéria com Checkbox de Criar "Geral" automático */}
       <Dialog
         open={newSubjectOpen}
         onClose={() => setNewSubjectOpen(false)}
@@ -773,18 +832,29 @@ export default function PlanoDetalhePage() {
               loading={createSubject.isPending}
               onClick={() => newSubjectName.trim() && createSubject.mutate()}
             >
-              Criar
+              Criar matéria
             </Button>
           </>
         }
       >
-        <Input
-          label="Nome da matéria"
-          autoFocus
-          value={newSubjectName}
-          onChange={(e) => setNewSubjectName(e.target.value)}
-          placeholder="Ex.: Direito Constitucional, Banco de Dados, Língua Portuguesa"
-        />
+        <div className="flex flex-col gap-3">
+          <Input
+            label="Nome da matéria"
+            autoFocus
+            value={newSubjectName}
+            onChange={(e) => setNewSubjectName(e.target.value)}
+            placeholder="Ex.: Direito Constitucional, Banco de Dados, Língua Portuguesa"
+          />
+          <label className="flex items-center gap-2 cursor-pointer text-xs text-muted-foreground select-none">
+            <input
+              type="checkbox"
+              checked={createDefaultGeral}
+              onChange={(e) => setCreateDefaultGeral(e.target.checked)}
+              className="rounded border-border text-primary focus:ring-primary size-4"
+            />
+            <span>Criar assunto <strong>"Geral"</strong> automaticamente (já fica pronta para questões)</span>
+          </label>
+        </div>
         {createSubject.error && <ErrorState error={createSubject.error} compact className="mt-2" />}
       </Dialog>
 
