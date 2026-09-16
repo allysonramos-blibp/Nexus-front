@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { CircleUserRound, CheckCircle2, XCircle, LogOut, Shield, Sparkles, FileText, BellRing } from "lucide-react";
+import { CircleUserRound, CheckCircle2, XCircle, LogOut, Shield, Sparkles, FileText, BellRing, Smartphone, Download, ExternalLink } from "lucide-react";
+import { StoryPromoModal } from "@/components/StoryPromoModal";
 import { ExecutiveReportModal } from "@/components/ExecutiveReportModal";
 import { NotificationCenterModal } from "@/components/NotificationCenterModal";
 import { AppShell } from "@/components/AppShell";
@@ -13,6 +14,7 @@ function PerfilPage() {
 
   const [reportOpen, setReportOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [storyOpen, setStoryOpen] = useState(false);
   const isMasterAdmin =
     user?.email === "allysonr510@gmail.com" || user?.role === "ROLE_ADMIN";
 
@@ -173,6 +175,56 @@ function PerfilPage() {
         </Card>
       </div>
 
+      {/* Material de Divulgação / Story do Instagram */}
+      <Card className="space-y-3 border-dash/40 bg-gradient-to-br from-surface to-surface-raised">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="p-2.5 rounded-xl bg-dash/15 text-dash">
+              <Smartphone className="size-5" />
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-foreground">
+                  Story Oficial para Instagram & WhatsApp (9:16)
+                </h3>
+                <Badge variant="info">1080x1920 PNG</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Arte premium dark tech com foco em Concursos, Treinos e Finanças
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setStoryOpen(true)}
+              className="text-xs gap-1.5 border-dash/40 text-dash hover:bg-dash/10"
+            >
+              <Sparkles className="size-3.5" /> Visualizar & Baixar
+            </Button>
+            <a
+              href="/nexus_story.png"
+              download="Nexus_Story_1080x1920.png"
+              className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-dash text-white hover:bg-dash/90 transition-colors"
+            >
+              <Download className="size-3.5" /> Baixar PNG
+            </a>
+          </div>
+        </div>
+        <div className="pt-2 border-t border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span>Pronto para postar nos Stories do Instagram, Facebook e Status do WhatsApp com texto persuasivo.</span>
+          <a
+            href="/nexus_story.png"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-dash hover:underline font-medium"
+          >
+            Abrir imagem original <ExternalLink className="size-3" />
+          </a>
+        </div>
+      </Card>
+
       {/* Segurança & Sessão */}
       <Card className="space-y-3">
         <div className="flex items-center gap-2">
@@ -190,6 +242,7 @@ function PerfilPage() {
       </Button>
       <ExecutiveReportModal isOpen={reportOpen} onClose={() => setReportOpen(false)} />
       <NotificationCenterModal isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+      <StoryPromoModal isOpen={storyOpen} onClose={() => setStoryOpen(false)} />
     </AppShell>
   );
 }
