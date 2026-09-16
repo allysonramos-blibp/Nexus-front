@@ -315,6 +315,15 @@ export type TaskWorkflowStatus =
 export interface UserResponse {
   id: number;
   email: string;
+  role?: string;
+  active?: boolean;
+  plan?: "STARTER" | "PRO" | "ENTERPRISE";
+  moduloEstudos?: boolean;
+  moduloTreinos?: boolean;
+  moduloFinancas?: boolean;
+  moduloIaExtracao?: boolean;
+  pdfExtractCount?: number;
+  pdfExtractLimit?: number;
 }
 
 export interface AuthResponse {

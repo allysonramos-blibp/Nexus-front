@@ -48,8 +48,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    setUser(readStoredUser());
+    const local = readStoredUser();
+    setUser(local);
     setReady(true);
+
+    // Se estiver logado, atualiza dados frescos (módulos, status) da API /auth/me
+    const token = window.localStorage.getItem("nexus.token");
+    if (token && local) {
+      fetch("/api/auth/me", {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then((res) => res.ok ? res.json() : null)
+      .then((freshUser) => {
+        if (freshUser) {
+          window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(freshUser));
+          setUser(freshUser);
+        }
+      })
+      .catch(() => {});
+    }
   }, []);
 
   // Qualquer chamada que volte 401 (token ausente/expirado/inválido) encerra a sessão aqui.

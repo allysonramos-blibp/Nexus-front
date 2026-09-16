@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Users, 
   ShieldCheck, 
@@ -7,150 +8,162 @@ import {
   Search, 
   Layers, 
   TrendingUp, 
-  AlertCircle,
-  FileSpreadsheet,
-  ToggleLeft,
-  ToggleRight
+  FolderKanban,
+  RefreshCw,
+  SlidersHorizontal,
+  Bot
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
+import { Loading } from "@/components/ui/Loading";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { useToast } from "@/contexts/ToastContext";
+import { api } from "@/lib/api";
+import { AdminModulesModal, type AdminUserModalData } from "@/components/AdminModulesModal";
 
-interface SaasTenant {
+interface AdminUser {
   id: number;
   email: string;
-  plan: "STARTER" | "PRO" | "ENTERPRISE";
+  role: string;
+  active: boolean;
   status: "ATIVO" | "SUSPENSO" | "PENDENTE";
+  plan: "STARTER" | "PRO" | "ENTERPRISE";
   modules: {
     estudos: boolean;
     treinos: boolean;
     financas: boolean;
     iaExtracao: boolean;
   };
+  pdfExtractCount: number;
+  pdfExtractLimit: number;
   totalQuestoes: number;
   simuladosCriados: number;
+  totalPlanos: number;
   ultimoAcesso: string;
 }
 
-const INITIAL_TENANTS: SaasTenant[] = [
-  {
-    id: 1,
-    email: "allysonr510@gmail.com",
-    plan: "ENTERPRISE",
-    status: "ATIVO",
-    modules: { estudos: true, treinos: true, financas: true, iaExtracao: true },
-    totalQuestoes: 2350,
-    simuladosCriados: 48,
-    ultimoAcesso: "Hoje às 18:20",
-  },
-  {
-    id: 2,
-    email: "concurseiro.elite@gmail.com",
-    plan: "PRO",
-    status: "ATIVO",
-    modules: { estudos: true, treinos: true, financas: false, iaExtracao: true },
-    totalQuestoes: 840,
-    simuladosCriados: 12,
-    ultimoAcesso: "Ontem às 21:05",
-  },
-  {
-    id: 3,
-    email: "mariana.estudos@outlook.com",
-    plan: "STARTER",
-    status: "SUSPENSO",
-    modules: { estudos: true, treinos: false, financas: false, iaExtracao: false },
-    totalQuestoes: 120,
-    simuladosCriados: 3,
-    ultimoAcesso: "Há 4 dias",
-  },
-  {
-    id: 4,
-    email: "carlos.oab2026@gmail.com",
-    plan: "PRO",
-    status: "ATIVO",
-    modules: { estudos: true, treinos: true, financas: true, iaExtracao: true },
-    totalQuestoes: 1450,
-    simuladosCriados: 26,
-    ultimoAcesso: "Hoje às 14:15",
-  },
-  {
-    id: 5,
-    email: "pedro.tribunais@gmail.com",
-    plan: "STARTER",
-    status: "PENDENTE",
-    modules: { estudos: true, treinos: false, financas: false, iaExtracao: false },
-    totalQuestoes: 45,
-    simuladosCriados: 1,
-    ultimoAcesso: "Há 2 dias",
-  }
-];
-
 export default function AdminPage() {
-  const [tenants, setTenants] = useState<SaasTenant[]>(() => {
-    const saved = localStorage.getItem("nexus_admin_tenants");
-    return saved ? JSON.parse(saved) : INITIAL_TENANTS;
-  });
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPlanFilter, setSelectedPlanFilter] = useState<string>("ALL");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("ALL");
-  const { toast } = useToast();
 
-  function saveTenants(newList: SaasTenant[]) {
-    setTenants(newList);
-    localStorage.setItem("nexus_admin_tenants", JSON.stringify(newList));
+  // Modal de gerenciamento de módulos do usuário
+  const [selectedUserForModal, setSelectedUserForModal] = useState<AdminUser | null>(null);
+
+  // Busca dados REAIS da API Spring Boot (/api/admin/users)
+  const { 
+    data: users = [], 
+    isLoading, 
+    error, 
+    refetch, 
+    isFetching 
+  } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: () => api.listAdminUsers(),
+  });
+
+  // Mutação para atualizar status (Ativar / Suspender)
+  const statusMutation = useMutation({
+    mutationFn: ({ id, nextStatus }: { id: number; nextStatus: string }) =>
+      api.updateAdminUserStatus(id, nextStatus),
+    onSuccess: (_, variables) => {
+      queryClient.setQueryData(["admin-users"], (old: AdminUser[] | undefined) => {
+        if (!old) return [];
+        return old.map((u) => 
+          u.id === variables.id ? { 
+            ...u, 
+            status: variables.nextStatus as AdminUser["status"],
+            active: variables.nextStatus === "ATIVO"
+          } : u
+        );
+      });
+      toast(`Status do usuário atualizado para ${variables.nextStatus}.`, variables.nextStatus === "ATIVO" ? "success" : "error");
+    },
+    onError: () => {
+      toast("Erro ao sincronizar status com a API.", "error");
+    }
+  });
+
+  // Mutação para atualizar módulos e limites no modal
+  const saveModulesMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: any }) =>
+      api.updateAdminUserModules(id, payload),
+    onSuccess: (_, variables) => {
+      queryClient.setQueryData(["admin-users"], (old: AdminUser[] | undefined) => {
+        if (!old) return [];
+        return old.map((u) => {
+          if (u.id === variables.id) {
+            return {
+              ...u,
+              plan: variables.payload.plan || u.plan,
+              modules: {
+                estudos: variables.payload.estudos,
+                treinos: variables.payload.treinos,
+                financas: variables.payload.financas,
+                iaExtracao: variables.payload.iaExtracao,
+              },
+              pdfExtractLimit: variables.payload.pdfExtractLimit,
+            };
+          }
+          return u;
+        });
+      });
+      toast("Permissões e limites salvos com sucesso!", "success");
+    },
+    onError: () => {
+      toast("Erro ao salvar permissões do usuário.", "error");
+    }
+  });
+
+  function handleToggleStatus(user: AdminUser) {
+    if (user.email === "allysonr510@gmail.com") {
+      toast("O administrador mestre não pode ser suspenso.", "error");
+      return;
+    }
+    const nextStatus = user.status === "ATIVO" ? "SUSPENSO" : "ATIVO";
+    statusMutation.mutate({ id: user.id, nextStatus });
   }
 
-  function toggleStatus(id: number) {
-    const updated = tenants.map((t) => {
-      if (t.id === id) {
-        const nextStatus = t.status === "ATIVO" ? "SUSPENSO" : "ATIVO";
-        toast(`Usuário ${t.email} agora está ${nextStatus}.`, nextStatus === "ATIVO" ? "success" : "error");
-        return { ...t, status: nextStatus as SaasTenant["status"] };
-      }
-      return t;
-    });
-    saveTenants(updated);
-  }
-
-  function toggleModule(id: number, moduleKey: keyof SaasTenant["modules"]) {
-    const updated = tenants.map((t) => {
-      if (t.id === id) {
-        const current = t.modules[moduleKey];
-        toast(`Módulo ${moduleKey} ${!current ? "liberado" : "bloqueado"} para ${t.email}.`, "success");
-        return {
-          ...t,
-          modules: { ...t.modules, [moduleKey]: !current },
-        };
-      }
-      return t;
-    });
-    saveTenants(updated);
-  }
-
-  const filteredTenants = tenants.filter((t) => {
-    const matchSearch = t.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchPlan = selectedPlanFilter === "ALL" || t.plan === selectedPlanFilter;
-    const matchStatus = selectedStatusFilter === "ALL" || t.status === selectedStatusFilter;
+  const filteredUsers = users.filter((u: AdminUser) => {
+    const matchSearch = u.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchPlan = selectedPlanFilter === "ALL" || u.plan === selectedPlanFilter;
+    const matchStatus = selectedStatusFilter === "ALL" || u.status === selectedStatusFilter;
     return matchSearch && matchPlan && matchStatus;
   });
 
-  const totalAtivos = tenants.filter((t) => t.status === "ATIVO").length;
-  const totalQuestoesImportadas = tenants.reduce((acc, t) => acc + t.totalQuestoes, 0);
+  const totalAtivos = users.filter((u: AdminUser) => u.status === "ATIVO").length;
+  const totalQuestoesImportadas = users.reduce((acc: number, u: AdminUser) => acc + (u.totalQuestoes || 0), 0);
+  const totalPlanosCriados = users.reduce((acc: number, u: AdminUser) => acc + (u.totalPlanos || 0), 0);
 
   return (
-    <AppShell title="Painel SaaS" subtitle="Administração de Assinantes & Módulos">
-      {/* Cards de Métricas Principais */}
+    <AppShell 
+      title="Painel SaaS" 
+      subtitle="Gerenciamento de Assinantes & Módulos"
+      actions={
+        <Button 
+          variant="secondary" 
+          onClick={() => refetch()} 
+          disabled={isFetching}
+          className="gap-2 text-xs"
+        >
+          <RefreshCw className={`size-3.5 ${isFetching ? "animate-spin" : ""}`} />
+          Sincronizar
+        </Button>
+      }
+    >
+      {/* Cards de Métricas em Tempo Real */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="flex items-center gap-4 border-border/80 bg-surface">
           <span className="flex size-11 items-center justify-center rounded-xl bg-dash/15 text-dash">
             <Users className="size-5" />
           </span>
           <div>
-            <p className="text-xs font-medium text-muted-foreground">Total de Assinantes</p>
-            <p className="text-2xl font-bold tracking-tight text-foreground">{tenants.length}</p>
+            <p className="text-xs font-medium text-muted-foreground">Clientes Cadastrados</p>
+            <p className="text-2xl font-bold tracking-tight text-foreground">{users.length}</p>
           </div>
         </Card>
 
@@ -176,22 +189,22 @@ export default function AdminPage() {
 
         <Card className="flex items-center gap-4 border-border/80 bg-surface">
           <span className="flex size-11 items-center justify-center rounded-xl bg-gym/15 text-gym">
-            <TrendingUp className="size-5" />
+            <FolderKanban className="size-5" />
           </span>
           <div>
-            <p className="text-xs font-medium text-muted-foreground">Disponibilidade API</p>
-            <p className="text-2xl font-bold tracking-tight text-foreground">99.98%</p>
+            <p className="text-xs font-medium text-muted-foreground">Planos de Estudo</p>
+            <p className="text-2xl font-bold tracking-tight text-foreground">{totalPlanosCriados}</p>
           </div>
         </Card>
       </div>
 
-      {/* Tabela e Filtros de Gerenciamento */}
+      {/* Tabela de Gerenciamento Real */}
       <Card className="p-6 border-border/80 bg-surface">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
           <div>
-            <h2 className="text-lg font-bold text-foreground">Gerenciamento Granular de Assinantes</h2>
+            <h2 className="text-lg font-bold text-foreground">Lista de Assinantes & Controle de Acesso</h2>
             <p className="text-xs text-muted-foreground">
-              Suspenda inadimplentes e libere/bloqueie módulos em tempo real sem reiniciar o servidor.
+              Ative ou suspenda contas em 1 clique e controle o que cada usuário pode acessar.
             </p>
           </div>
 
@@ -230,121 +243,159 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Listagem de Usuários */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-border bg-surface-raised/50 text-muted-foreground uppercase font-semibold">
-              <tr>
-                <th className="py-3 px-4">Assinante</th>
-                <th className="py-3 px-4">Plano</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Módulos Liberados</th>
-                <th className="py-3 px-4">Questões</th>
-                <th className="py-3 px-4 text-right">Ações Rápidas</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filteredTenants.map((t) => (
-                <tr key={t.id} className="hover:bg-surface-raised/30 transition-colors">
-                  <td className="py-3.5 px-4 font-medium text-foreground">
-                    <p className="font-semibold">{t.email}</p>
-                    <span className="text-[11px] text-muted-foreground">Visto: {t.ultimoAcesso}</span>
-                  </td>
-
-                  <td className="py-3.5 px-4">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      t.plan === "ENTERPRISE" ? "bg-study/20 text-study border border-study/30" :
-                      t.plan === "PRO" ? "bg-dash/20 text-dash border border-dash/30" :
-                      "bg-surface-raised text-muted-foreground border border-border"
-                    }`}>
-                      {t.plan}
-                    </span>
-                  </td>
-
-                  <td className="py-3.5 px-4">
-                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                      t.status === "ATIVO" ? "bg-emerald-500/15 text-emerald-400" :
-                      t.status === "SUSPENSO" ? "bg-rose-500/15 text-rose-400" :
-                      "bg-amber-500/15 text-amber-400"
-                    }`}>
-                      <span className={`size-1.5 rounded-full ${
-                        t.status === "ATIVO" ? "bg-emerald-400" :
-                        t.status === "SUSPENSO" ? "bg-rose-400" :
-                        "bg-amber-400"
-                      }`} />
-                      {t.status}
-                    </span>
-                  </td>
-
-                  <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        title="Módulo Estudos"
-                        onClick={() => toggleModule(t.id, "estudos")}
-                        className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${
-                          t.modules.estudos ? "bg-study/20 text-study font-semibold" : "bg-surface-raised text-muted-foreground/50 line-through"
-                        }`}
-                      >
-                        Estudos
-                      </button>
-                      <button
-                        title="Módulo Treinos"
-                        onClick={() => toggleModule(t.id, "treinos")}
-                        className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${
-                          t.modules.treinos ? "bg-gym/20 text-gym font-semibold" : "bg-surface-raised text-muted-foreground/50 line-through"
-                        }`}
-                      >
-                        Treinos
-                      </button>
-                      <button
-                        title="Módulo Finanças"
-                        onClick={() => toggleModule(t.id, "financas")}
-                        className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${
-                          t.modules.financas ? "bg-fin/20 text-fin font-semibold" : "bg-surface-raised text-muted-foreground/50 line-through"
-                        }`}
-                      >
-                        Finanças
-                      </button>
-                      <button
-                        title="Módulo Extração IA"
-                        onClick={() => toggleModule(t.id, "iaExtracao")}
-                        className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${
-                          t.modules.iaExtracao ? "bg-dash/20 text-dash font-semibold" : "bg-surface-raised text-muted-foreground/50 line-through"
-                        }`}
-                      >
-                        Parser PDF
-                      </button>
-                    </div>
-                  </td>
-
-                  <td className="py-3.5 px-4 text-muted-foreground">
-                    <span className="font-semibold text-foreground">{t.totalQuestoes}</span> qts
-                    <span className="block text-[10px] text-muted-foreground">{t.simuladosCriados} simulados</span>
-                  </td>
-
-                  <td className="py-3.5 px-4 text-right">
-                    <Button
-                      variant={t.status === "ATIVO" ? "secondary" : "primary"}
-                      onClick={() => toggleStatus(t.id)}
-                      className="h-7 text-xs px-2.5"
-                    >
-                      {t.status === "ATIVO" ? (
-                        <>
-                          <Ban className="size-3 mr-1 text-rose-400" /> Suspender
-                        </>
-                      ) : (
-                        <>
-                          <ShieldCheck className="size-3 mr-1 text-emerald-400" /> Ativar Acesso
-                        </>
-                      )}
-                    </Button>
-                  </td>
+        {isLoading ? (
+          <div className="py-12 flex justify-center">
+            <Loading label="Carregando usuários do sistema..." />
+          </div>
+        ) : error ? (
+          <ErrorState error={error} compact />
+        ) : filteredUsers.length === 0 ? (
+          <div className="py-12 text-center text-sm text-muted-foreground">
+            Nenhum usuário cadastrado ou encontrado com os filtros.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-border bg-surface-raised/50 text-muted-foreground uppercase font-semibold">
+                <tr>
+                  <th className="py-3 px-4">Usuário</th>
+                  <th className="py-3 px-4">Papel / Plano</th>
+                  <th className="py-3 px-4">Status da Conta</th>
+                  <th className="py-3 px-4">Módulos Habilitados</th>
+                  <th className="py-3 px-4">IA & Extrações</th>
+                  <th className="py-3 px-4 text-right">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredUsers.map((u: AdminUser) => {
+                  const isOwner = u.email === "allysonr510@gmail.com";
+                  return (
+                    <tr key={u.id} className="hover:bg-surface-raised/30 transition-colors">
+                      <td className="py-3.5 px-4 font-medium text-foreground">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[10px] text-muted-foreground">#{u.id}</span>
+                          <p className="font-semibold">{u.email}</p>
+                        </div>
+                        <span className="text-[11px] text-muted-foreground">
+                          {u.totalQuestoes} questões • {u.simuladosCriados} simulados
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            u.role === "ROLE_ADMIN" 
+                              ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                              : "bg-surface-raised text-muted-foreground border border-border"
+                          }`}>
+                            {u.role === "ROLE_ADMIN" ? "ADMIN" : "CLIENTE"}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            u.plan === "ENTERPRISE" ? "bg-study/20 text-study border border-study/30" :
+                            u.plan === "PRO" ? "bg-dash/20 text-dash border border-dash/30" :
+                            "bg-surface-raised text-muted-foreground border border-border"
+                          }`}>
+                            {u.plan}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium ${
+                          u.status === "ATIVO" ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" :
+                          "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                        }`}>
+                          <span className={`size-1.5 rounded-full ${
+                            u.status === "ATIVO" ? "bg-emerald-400 animate-pulse" : "bg-rose-400"
+                          }`} />
+                          {u.status}
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-1">
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                            u.modules.estudos ? "bg-study/20 text-study font-semibold" : "bg-surface-raised text-muted-foreground/40 line-through"
+                          }`}>
+                            Estudos
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                            u.modules.treinos ? "bg-gym/20 text-gym font-semibold" : "bg-surface-raised text-muted-foreground/40 line-through"
+                          }`}>
+                            Treinos
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                            u.modules.financas ? "bg-fin/20 text-fin font-semibold" : "bg-surface-raised text-muted-foreground/40 line-through"
+                          }`}>
+                            Finanças
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                            u.modules.iaExtracao ? "bg-dash/20 text-dash font-semibold" : "bg-surface-raised text-muted-foreground/40 line-through"
+                          }`}>
+                            IA/PDF
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4 text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <Bot className="size-3.5 text-dash" />
+                          <span className="font-semibold text-foreground">
+                            {u.pdfExtractCount} / {isOwner ? "∞" : u.pdfExtractLimit}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="secondary"
+                            onClick={() => setSelectedUserForModal(u)}
+                            className="h-7 text-xs px-2 gap-1.5"
+                            title="Gerenciar módulos e limites"
+                          >
+                            <SlidersHorizontal className="size-3 text-muted-foreground" />
+                            Módulos
+                          </Button>
+
+                          {!isOwner && (
+                            <Button
+                              variant={u.status === "ATIVO" ? "secondary" : "primary"}
+                              onClick={() => handleToggleStatus(u)}
+                              disabled={statusMutation.isPending}
+                              className="h-7 text-xs px-2.5"
+                            >
+                              {u.status === "ATIVO" ? (
+                                <>
+                                  <Ban className="size-3 mr-1 text-rose-400" /> Suspender
+                                </>
+                              ) : (
+                                <>
+                                  <ShieldCheck className="size-3 mr-1 text-emerald-400" /> Ativar
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
+
+      {/* Modal Popup para Configuração Granular de Módulos */}
+      <AdminModulesModal
+        isOpen={Boolean(selectedUserForModal)}
+        user={selectedUserForModal}
+        onClose={() => setSelectedUserForModal(null)}
+        onSave={async (id, payload) => {
+          await saveModulesMutation.mutateAsync({ id, payload });
+        }}
+      />
     </AppShell>
   );
 }
