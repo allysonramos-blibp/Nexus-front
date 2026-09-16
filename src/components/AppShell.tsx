@@ -1,3 +1,5 @@
+import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useAiChat } from "@/contexts/AiChatContext";
 import { AiChatPopup, AiChatFab } from "@/components/AiChatPopup";
 import { Link, useNavigate } from "@/lib/router-compat";
@@ -130,6 +132,9 @@ export function AppShell({
               </span>
             )}
           </div>
+          <div className="mb-3 px-1">
+            <PWAInstallButton />
+          </div>
 
           {navItems.map((item) => {
             if (item.to === "/ia") {
@@ -185,7 +190,10 @@ export function AppShell({
               )}
               <h1 className="mt-2 text-3xl font-bold sm:text-4xl">{title}</h1>
             </div>
-            {actions}
+            <div className="flex items-center gap-2">
+              <PWAInstallButton />
+              {actions}
+            </div>
           </header>
           {children}
         </div>
@@ -194,6 +202,7 @@ export function AppShell({
       <BottomNav items={navItems} onOpenAi={() => openChat()} />
       <AiChatFab />
       <AiChatPopup />
+      <OfflineIndicator />
     </div>
   );
 }
