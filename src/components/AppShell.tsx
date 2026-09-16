@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@/lib/router-compat";
 import { useEffect } from "react";
-import { Bot, Brain, Dumbbell, LayoutDashboard, ListChecks, LogOut, User, Wallet } from "lucide-react";
+import { Bot, Brain, Dumbbell, LayoutDashboard, ListChecks, LogOut, Shield, User, Wallet } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Loading } from "@/components/ui/Loading";
@@ -15,6 +15,7 @@ const nav = [
   { to: "/treinos", label: "Treinos", icon: Dumbbell, accent: "text-gym" },
   { to: "/ia", label: "IA", icon: Bot, accent: "text-dash" },
   { to: "/perfil", label: "Perfil", icon: User, accent: "text-muted-foreground" },
+  { to: "/admin", label: "Admin SaaS", icon: Shield, accent: "text-amber-400" },
 ] as const;
 
 export function AppShell({

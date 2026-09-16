@@ -17,6 +17,7 @@ const Estudo = lazy(() => import("@/pages/estudo"));
 const Treinos = lazy(() => import("@/pages/treinos"));
 const Ia = lazy(() => import("@/pages/ia"));
 const Perfil = lazy(() => import("@/pages/perfil"));
+const Admin = lazy(() => import("@/pages/admin"));
 const Planos = lazy(() => import("@/pages/estudos/Planos"));
 const PlanoDetalhe = lazy(() => import("@/pages/estudos/PlanoDetalhe"));
 const Questoes = lazy(() => import("@/pages/estudos/Questoes"));
@@ -172,6 +173,14 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <Perfil />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute>
+                      <Admin />
                     </ProtectedRoute>
                   }
                 />
