@@ -20,6 +20,7 @@ const Estudo = lazy(() => import("@/pages/estudo"));
 const Treinos = lazy(() => import("@/pages/treinos"));
 const Ia = lazy(() => import("@/pages/ia"));
 const Perfil = lazy(() => import("@/pages/perfil"));
+const PlanosPrecos = lazy(() => import("@/pages/planos"));
 const Admin = lazy(() => import("@/pages/admin"));
 const Planos = lazy(() => import("@/pages/estudos/Planos"));
 const PlanoDetalhe = lazy(() => import("@/pages/estudos/PlanoDetalhe"));
@@ -191,6 +192,14 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <Ia />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/planos"
+                  element={
+                    <ProtectedRoute>
+                      <PlanosPrecos />
                     </ProtectedRoute>
                   }
                 />

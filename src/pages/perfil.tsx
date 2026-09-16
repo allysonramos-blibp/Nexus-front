@@ -44,9 +44,14 @@ function PerfilPage() {
               <p className="text-xs text-muted-foreground">Status da sua conta comercial</p>
             </div>
           </div>
-          <Badge variant={user?.plan === "ENTERPRISE" ? "warning" : user?.plan === "PRO" ? "info" : "default"}>
-            {user?.plan || "PRO"}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant={user?.plan === "ENTERPRISE" ? "warning" : user?.plan === "PRO" ? "info" : "default"}>
+              {user?.plan || "PRO"}
+            </Badge>
+            <a href="/planos" className="inline-flex items-center gap-1 text-xs font-semibold text-dash hover:underline">
+              Mudar de Plano <Sparkles className="size-3" />
+            </a>
+          </div>
         </div>
 
         {/* Grade de Módulos Liberados para Este Usuário */}

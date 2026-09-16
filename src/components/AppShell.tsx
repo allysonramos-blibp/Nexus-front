@@ -16,7 +16,8 @@ import {
   LogOut, 
   Shield, 
   User, 
-  Wallet 
+  Wallet,
+  Sparkles
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -106,6 +107,7 @@ export function AppShell({
       visible: isMasterAdmin || user.moduloFinancas !== false 
     },
     { to: "/tarefas", label: "Tarefas", icon: ListChecks, accent: "text-dash", visible: true },
+    { to: "/planos", label: "Planos & Preços", icon: Sparkles, accent: "text-dash", visible: true },
     { 
       to: "/ia", 
       label: "IA", 
