@@ -189,7 +189,7 @@ function ResolverQuestoes({
       <Card className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
           {question.subjectNome && (
-            <Badge variant="outline" className="text-[11px] font-normal">
+            <Badge variant="default" className="text-[11px] font-normal">
               {question.subjectNome}
             </Badge>
           )}
@@ -503,7 +503,7 @@ export default function QuestoesPage() {
 
   const confirmDestinoAndOpen = () => {
     if (!chosenTopicId) {
-      toast("Selecione um assunto para vincular as questões.", "warning");
+      toast("Selecione um assunto para vincular as questões.", "info");
       return;
     }
     const topicObj = chosenSubjectTopics.data?.find((t) => t.id === chosenTopicId);
@@ -717,7 +717,7 @@ export default function QuestoesPage() {
                         <p className="truncate text-sm font-medium text-foreground">{q.enunciado}</p>
                         <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
                           {q.subjectNome && (
-                            <Badge variant="outline" className="text-[10px] font-normal py-0 px-1.5">
+                            <Badge variant="default" className="text-[10px] font-normal py-0 px-1.5">
                               {q.subjectNome}
                             </Badge>
                           )}
@@ -796,7 +796,7 @@ export default function QuestoesPage() {
             options={(subjects.data ?? []).map((s) => ({
               value: s.id,
               label: s.nome,
-              badge: s.topics?.length ? `${s.topics.length} assuntos` : undefined,
+              
             }))}
             placeholder="Selecione uma matéria…"
             searchPlaceholder="Buscar matéria..."

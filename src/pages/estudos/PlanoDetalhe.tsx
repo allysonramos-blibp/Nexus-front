@@ -436,7 +436,7 @@ function SubjectCard({
               </p>
               <div className="mt-2.5 flex flex-wrap items-center justify-center gap-2">
                 <Button
-                  variant="default"
+                  variant="primary"
                   size="sm"
                   loading={createGeralTopic.isPending}
                   onClick={() => createGeralTopic.mutate()}
@@ -1029,12 +1029,12 @@ export default function PlanoDetalhePage() {
             <>
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2.5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Button size="xs" variant="outline" onClick={handleSelectAll}>
+                  <Button size="sm" variant="outline" onClick={handleSelectAll}>
                     {selectedCount === subjectList.length ? "Desmarcar todas" : "Selecionar todas"}
                   </Button>
                   {suspiciousSubjectsCount > 0 && (
                     <Button
-                      size="xs"
+                      size="sm"
                       variant="outline"
                       onClick={handleSelectSuspicious}
                       className="text-amber-500 hover:text-amber-400 border-amber-500/30"
@@ -1095,9 +1095,7 @@ export default function PlanoDetalhePage() {
                             Suspeita (PDF)
                           </Badge>
                         )}
-                        <Badge variant="default" className="text-[10px]">
-                          {s.topics?.length ?? 0} assuntos
-                        </Badge>
+                        
                       </div>
                     </div>
                   );
