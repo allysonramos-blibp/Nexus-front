@@ -1,3 +1,4 @@
+import { isGabaritoMatch, formatGabaritoDisplay } from "@/lib/gabaritoUtils";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -120,7 +121,7 @@ export default function SimuladoDetalhePage() {
       if (resposta == null) continue;
       const entry = map.get(q.subjectNome) ?? { respondidas: 0, acertos: 0 };
       entry.respondidas += 1;
-      if (normalize(resposta) === normalize(q.gabarito ?? "")) entry.acertos += 1;
+      if (isGabaritoMatch(resposta, q.gabarito, q.alternativas)) entry.acertos += 1;
       map.set(q.subjectNome, entry);
     }
     return [...map.entries()].map(([nome, v]) => ({ nome, ...v }));
@@ -133,7 +134,7 @@ export default function SimuladoDetalhePage() {
 
     if (isFinalizado) {
       const dada = answersByQuestion.get(question.id);
-      const isGabarito = normalize(alt) === normalize(question.gabarito ?? "");
+      const isGabarito = isGabaritoMatch(alt, question.gabarito, question.alternativas);
       if (isGabarito) return "correct";
       if (dada && normalize(dada) === normalize(alt)) return "incorrect";
       return "idle";
@@ -346,7 +347,7 @@ export default function SimuladoDetalhePage() {
             <div className="mt-3 flex flex-col gap-2">
               {questoes.map((q, i) => {
                 const dada = answersByQuestion.get(q.id);
-                const acertou = dada != null && normalize(dada) === normalize(q.gabarito ?? "");
+                const acertou = dada != null && isGabaritoMatch(dada, q.gabarito, q.alternativas);
                 return (
                   <div key={q.id} className="rounded-lg border border-border/70 bg-surface-raised p-3">
                     <div className="flex items-start gap-2">
@@ -360,7 +361,7 @@ export default function SimuladoDetalhePage() {
                           {i + 1}. {q.enunciado}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {dada ? `Você respondeu: ${dada}` : "Não respondida"} · Gabarito: {q.gabarito}
+                          {dada ? `Você respondeu: ${dada}` : "Não respondida"} · Gabarito: {formatGabaritoDisplay(q.gabarito, q.alternativas)}
                         </p>
                         {q.explicacao && (
                           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{q.explicacao}</p>

@@ -1,3 +1,4 @@
+import { isGabaritoMatch, formatGabaritoDisplay } from "@/lib/gabaritoUtils";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
@@ -59,12 +60,12 @@ export function RevisarQuestaoDialog({
   }
 
   const q = question.data;
-  const acertou = submitted && q && normalize(selected ?? "") === normalize(q.gabarito ?? "");
+  const acertou = submitted && q && isGabaritoMatch(selected, q.gabarito, q.alternativas);
 
   function optionState(alt: string): QuestionOptionState {
     if (!q) return "idle";
     if (!submitted) return selected === alt ? "selected" : "idle";
-    const isGabarito = normalize(alt) === normalize(q.gabarito ?? "");
+    const isGabarito = isGabaritoMatch(alt, q.gabarito, q.alternativas);
     if (isGabarito) return "correct";
     if (selected === alt) return "incorrect";
     return "idle";

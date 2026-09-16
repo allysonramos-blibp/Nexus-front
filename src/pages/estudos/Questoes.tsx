@@ -1,3 +1,4 @@
+import { isGabaritoMatch, formatGabaritoDisplay } from "@/lib/gabaritoUtils";
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAiChat } from "@/contexts/AiChatContext";
@@ -154,7 +155,7 @@ function ResolverQuestoes({
 
   function optionState(alt: string): QuestionOptionState {
     if (!submitted) return selected === alt ? "selected" : "idle";
-    const isGabarito = normalize(alt) === normalize(question.gabarito ?? "");
+    const isGabarito = isGabaritoMatch(alt, question.gabarito, question.alternativas);
     if (isGabarito) return "correct";
     if (selected === alt) return "incorrect";
     return "idle";
@@ -171,7 +172,7 @@ function ResolverQuestoes({
     setLastAnswerId(null);
   }
 
-  const acertou = submitted && normalize(selected ?? "") === normalize(question.gabarito ?? "");
+  const acertou = submitted && isGabaritoMatch(selected, question.gabarito, question.alternativas);
 
   return (
     <div className="flex flex-col gap-4">
@@ -227,7 +228,7 @@ function ResolverQuestoes({
             <p className="font-semibold">{acertou ? "Você acertou!" : "Você errou."}</p>
             {!acertou && (
               <p className="mt-1 text-foreground">
-                Gabarito: <strong>{question.gabarito}</strong>
+                Gabarito: <strong>{formatGabaritoDisplay(question.gabarito, question.alternativas)}</strong>
               </p>
             )}
             {question.explicacao && (
