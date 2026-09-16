@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { 
-  Check, Sparkles, Shield, Zap, Star 
+  Check, Sparkles, Zap, Star, Lock, CreditCard, QrCode
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/Button";
@@ -63,6 +63,9 @@ export default function PlanosPage() {
             </span>
           </button>
         </div>
+        <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+          <Lock className="size-3 text-emerald-400" /> Pagamento com Chave PIX (34992005737) ou Cartão de Crédito com Comprovante em PDF
+        </p>
       </div>
 
       {/* Grid de Planos */}
@@ -109,8 +112,19 @@ export default function PlanosPage() {
                     <span className="text-xs text-muted-foreground">/mês</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    {billingCycle === "YEARLY" ? "Cobrado anualmente (12x)" : "Sem fidelidade, cancele quando quiser"}
+                    {billingCycle === "YEARLY" ? `Cobrado anualmente (R$ ${(plan.priceYearly * 12).toFixed(2).replace(".", ",")}/ano)` : "Sem fidelidade, cancele quando quiser"}
                   </p>
+                </div>
+
+                {/* Métodos aceitos */}
+                <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground">
+                  <span className="flex items-center gap-1 text-emerald-400 font-medium">
+                    <QrCode className="size-3" /> PIX Instantâneo
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <CreditCard className="size-3 text-dash" /> Cartão até 12x
+                  </span>
                 </div>
 
                 {/* Lista de Vantagens */}
@@ -148,13 +162,15 @@ export default function PlanosPage() {
         })}
       </div>
 
-      {/* Modal de Pagamento */}
+      {/* Modal de Pagamento & Checkout */}
       {selectedPlan && (
         <CheckoutModal
           isOpen={!!selectedPlan}
           onClose={() => setSelectedPlan(null)}
           selectedPlan={selectedPlan}
           billingCycle={billingCycle}
+          onSelectPlan={(newPlan) => setSelectedPlan(newPlan)}
+          onSelectCycle={(newCycle) => setBillingCycle(newCycle)}
         />
       )}
     </AppShell>
