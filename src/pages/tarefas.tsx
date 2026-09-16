@@ -184,7 +184,7 @@ function TaskFormDialog({
     setIsDecomposing(true);
     try {
       const prompt = `Você é o assistente inteligente Nexus de produtividade e estudos. O usuário precisa cumprir a seguinte tarefa: "${form.titulo.trim()}". Desdobre-a em 3 a 5 passos práticos, diretos e acionáveis, estimando o tempo necessário para cada um. Retorne apenas uma lista onde cada item comece com hífen e tempo entre colchetes, por exemplo: "- [25 min] Leitura e marcação dos conceitos fundamentais". Não adicione introduções nem conclusões.`;
-      const res = await api.chatWithStudyAssistant(prompt);
+      const res = await api.chat(prompt, []);
       const lines = res.reply
         .split("\n")
         .map((l: string) => l.replace(/^[-*•\d.)\s]+/, "").trim())
@@ -247,9 +247,21 @@ function TaskFormDialog({
       description={
         task ? "Altere os campos da tarefa." : "Defina uma tarefa da sua rotina ou tópico do edital."
       }
-      confirmLabel={task ? "Salvar alterações" : "Criar tarefa"}
-      onConfirm={handleSubmit}
-      loading={save.isPending}
+      footer={
+        <>
+          <Button variant="ghost" size="sm" onClick={onClose} disabled={save.isPending}>
+            Cancelar
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleSubmit}
+            loading={save.isPending}
+            disabled={!form.titulo.trim()}
+          >
+            {task ? "Salvar alterações" : "Criar tarefa"}
+          </Button>
+        </>
+      }
     >
       <div className="flex flex-col gap-4">
         <div>
@@ -433,7 +445,6 @@ function PomodoroModal({
       onClose={onClose}
       title="Nexus Foco & Pomodoro"
       description="Concentre-se na execução desta tarefa com blocos cronometrados."
-      showFooter={false}
     >
       <div className="flex flex-col items-center gap-6 py-2">
         <div className="w-full rounded-xl border border-study/20 bg-study/5 p-4 text-center">
