@@ -19,6 +19,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Dialog, ConfirmDialog } from "@/components/ui/Dialog";
 import { PlanImportarPdfDialog } from "./PlanImportarPdfDialog";
+import { ImportGabaritoDialog } from "./ImportGabaritoDialog";
+import { CheckSquare } from "lucide-react";
 
 function TopicRow({
   topic,
@@ -279,6 +281,7 @@ export default function PlanoDetalhePage() {
   const [newSubjectOpen, setNewSubjectOpen] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState("");
   const [importPdfOpen, setImportPdfOpen] = useState(false);
+  const [importGabaritoOpen, setImportGabaritoOpen] = useState(false);
 
   const createSubject = useMutation({
     mutationFn: () => api.createSubject(planId, { nome: newSubjectName }),
@@ -388,7 +391,10 @@ export default function PlanoDetalhePage() {
       </Dialog>
 
       {Number.isFinite(planId) && (
-        <PlanImportarPdfDialog open={importPdfOpen} onClose={() => setImportPdfOpen(false)} planId={planId} />
+        <>
+          <PlanImportarPdfDialog open={importPdfOpen} onClose={() => setImportPdfOpen(false)} planId={planId} />
+          <ImportGabaritoDialog open={importGabaritoOpen} onClose={() => setImportGabaritoOpen(false)} planId={planId} />
+        </>
       )}
     </AppShell>
   );

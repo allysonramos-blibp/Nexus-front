@@ -1794,6 +1794,25 @@ export const api = {
         body: JSON.stringify(payload),
       },
     ),
+
+  /* =======================================================
+   * GABARITO OFICIAL
+   * ======================================================= */
+  importPlanAnswerKey: (planId: number, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return request<{
+      totalEncontrado: number;
+      totalAtualizado: number;
+      questoesSemCorrespondencia: number[];
+      numerosAusentesNoGabarito: number[];
+      numerosAnulados: number[];
+      numerosDuplicadosIgnorados: number[];
+    }>(`/study-plans/${planId}/questions/import-gabarito`, {
+      method: "POST",
+      body: formData,
+    });
+  },
 };
 
 /* =========================================================
