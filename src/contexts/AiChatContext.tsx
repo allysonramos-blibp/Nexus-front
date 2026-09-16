@@ -14,6 +14,7 @@ interface AiChatContextValue {
   toggleChat: () => void;
   history: ChatMessage[];
   sendMessage: (msg: string) => Promise<void>;
+  retryLastMessage: () => Promise<void>;
   clearHistory: () => void;
   isLoading: boolean;
   error: string | null;
@@ -85,41 +86,80 @@ export function AiChatProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const performChatRequest = async (prompt: string, contextHistory: ChatMessage[]): Promise<string> => {
+    if (customApiKey && customApiKey.trim()) {
+      return await askGeminiDirect(prompt, contextHistory, customApiKey.trim());
+    }
+
+    try {
+      const res = await api.chat(prompt, contextHistory);
+      return res.reply;
+    } catch (backendErr: any) {
+      const msg = backendErr?.message || "";
+      const status = backendErr?.status;
+      if (status === 429 || msg.includes("quota") || msg.includes("limite")) {
+        throw new Error(
+          "O limite da IA compartilhada do servidor foi atingido temporariamente. Você pode inserir sua chave gratuita do Google (sem pagar nada) nas configurações da IA acima para ter 1.500 mensagens livres todos os dias."
+        );
+      }
+      throw backendErr;
+    }
+  };
+
   const sendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return;
     setError(null);
 
-    const userMsg: ChatMessage = { role: "user", content: content.trim() };
-    const newHistory = [...history, userMsg];
-    setHistory(newHistory);
+    const text = content.trim();
+    const userMsg: ChatMessage = { role: "user", content: text };
+    
+    // Se a última mensagem for um userMsg com o mesmo texto e não tiver sido respondida, não duplica
+    let currentHistory = [...history];
+    if (currentHistory.length > 0 && currentHistory[currentHistory.length - 1].role === "user" && currentHistory[currentHistory.length - 1].content === text) {
+      // Já está no histórico
+    } else {
+      currentHistory = [...currentHistory, userMsg];
+      setHistory(currentHistory);
+    }
+
     setIsLoading(true);
 
     try {
-      let replyText = "";
+      // Envia histórico anterior (sem a pergunta atual)
+      const previousMessages = currentHistory.slice(0, -1);
+      const reply = await performChatRequest(text, previousMessages);
 
-      // 1. Se o usuário configurou sua própria chave gratuita do Google Gemini (1500 req/dia de graça):
-      if (customApiKey && customApiKey.trim()) {
-        replyText = await askGeminiDirect(content.trim(), history, customApiKey.trim());
-      } else {
-        // 2. Se não, tenta o backend padrão do Nexus
-        try {
-          const res = await api.chat(content.trim(), history);
-          replyText = res.reply;
-        } catch (backendErr: any) {
-          const msg = backendErr?.message || "";
-          const status = backendErr?.status;
-          
-          // Se o backend estiver sem quota (429) ou sobrecarregado (503), avisa de forma amigável sobre a chave gratuita
-          if (status === 429 || msg.includes("quota") || msg.includes("limite")) {
-            throw new Error(
-              "O limite da IA compartilhada do servidor foi atingido temporariamente. Você pode inserir sua chave gratuita do Google (sem pagar nada) nas configurações da IA acima para ter 1.500 mensagens livres todos os dias."
-            );
-          }
-          throw backendErr;
-        }
+      setHistory([...currentHistory, { role: "assistant", content: reply }]);
+      if (!isOpen) {
+        setUnreadCount((c) => c + 1);
       }
+    } catch (err: any) {
+      const msg = err?.message || (typeof err === "string" ? err : "");
+      if (err?.status === 401 || msg.includes("Token") || msg.includes("autenticado")) {
+        setError("Sua sessão expirou. Faça login novamente para continuar.");
+      } else if (msg) {
+        setError(msg);
+      } else {
+        setError("Erro ao se comunicar com a IA. Tente novamente em instantes.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      setHistory([...newHistory, { role: "assistant", content: replyText }]);
+  const retryLastMessage = async () => {
+    if (isLoading || history.length === 0) return;
+    const lastMsg = history[history.length - 1];
+    if (lastMsg.role !== "user") return;
+
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const previousMessages = history.slice(0, -1);
+      const reply = await performChatRequest(lastMsg.content, previousMessages);
+
+      setHistory([...history, { role: "assistant", content: reply }]);
       if (!isOpen) {
         setUnreadCount((c) => c + 1);
       }
@@ -146,6 +186,7 @@ export function AiChatProvider({ children }: { children: ReactNode }) {
         toggleChat,
         history,
         sendMessage,
+        retryLastMessage,
         clearHistory,
         isLoading,
         error,

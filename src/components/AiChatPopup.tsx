@@ -31,6 +31,7 @@ export function AiChatPopup() {
     closeChat,
     history,
     sendMessage,
+    retryLastMessage,
     clearHistory,
     isLoading,
     error,
@@ -291,8 +292,7 @@ export function AiChatPopup() {
                   variant="outline"
                   className="h-7 text-[11px] px-2.5 border-destructive/40 text-destructive hover:bg-destructive/20"
                   onClick={() => {
-                    const lastUserMsg = history[history.length - 1].content;
-                    sendMessage(lastUserMsg);
+                    retryLastMessage();
                   }}
                 >
                   Tentar novamente
