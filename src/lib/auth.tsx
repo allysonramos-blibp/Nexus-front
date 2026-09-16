@@ -55,7 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Se estiver logado, atualiza dados frescos (módulos, status) da API /auth/me
     const token = window.localStorage.getItem("nexus.token");
     if (token && local) {
-      fetch("/api/auth/me", {
+      const baseUrl = window.localStorage.getItem("nexus.api_url") || "https://nexus-api-bgsf.onrender.com/api";
+      fetch(`${baseUrl}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then((res) => res.ok ? res.json() : null)
