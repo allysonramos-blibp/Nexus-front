@@ -5,6 +5,8 @@ import { AuthProvider } from "@/lib/auth";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { AiChatProvider } from "@/contexts/AiChatContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminRoute } from "@/components/AdminRoute";
+import { ModuleUpgradeGuard } from "@/components/ModuleUpgradeGuard";
 import { Loading } from "@/components/ui/Loading";
 
 // Cada rota vira seu próprio chunk (code splitting) — a pessoa só baixa o código da
@@ -70,7 +72,9 @@ export default function App() {
                   path="/financeiro"
                   element={
                     <ProtectedRoute>
-                      <Financeiro />
+                      <ModuleUpgradeGuard moduleKey="financas">
+                        <Financeiro />
+                      </ModuleUpgradeGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -86,7 +90,9 @@ export default function App() {
                   path="/estudo"
                   element={
                     <ProtectedRoute>
-                      <Estudo />
+                      <ModuleUpgradeGuard moduleKey="estudos">
+                        <Estudo />
+                      </ModuleUpgradeGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -94,7 +100,9 @@ export default function App() {
                   path="/estudos"
                   element={
                     <ProtectedRoute>
-                      <Planos />
+                      <ModuleUpgradeGuard moduleKey="estudos">
+                        <Planos />
+                      </ModuleUpgradeGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -102,7 +110,9 @@ export default function App() {
                   path="/estudos/planos/:id"
                   element={
                     <ProtectedRoute>
-                      <PlanoDetalhe />
+                      <ModuleUpgradeGuard moduleKey="estudos">
+                        <PlanoDetalhe />
+                      </ModuleUpgradeGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -110,7 +120,9 @@ export default function App() {
                   path="/estudos/questoes"
                   element={
                     <ProtectedRoute>
-                      <Questoes />
+                      <ModuleUpgradeGuard moduleKey="estudos">
+                        <Questoes />
+                      </ModuleUpgradeGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -118,7 +130,9 @@ export default function App() {
                   path="/estudos/caderno-erros"
                   element={
                     <ProtectedRoute>
-                      <CadernoDeErros />
+                      <ModuleUpgradeGuard moduleKey="estudos">
+                        <CadernoDeErros />
+                      </ModuleUpgradeGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -126,7 +140,9 @@ export default function App() {
                   path="/estudos/revisoes"
                   element={
                     <ProtectedRoute>
-                      <Revisoes />
+                      <ModuleUpgradeGuard moduleKey="estudos">
+                        <Revisoes />
+                      </ModuleUpgradeGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -134,7 +150,9 @@ export default function App() {
                   path="/estudos/simulados"
                   element={
                     <ProtectedRoute>
-                      <Simulados />
+                      <ModuleUpgradeGuard moduleKey="estudos">
+                        <Simulados />
+                      </ModuleUpgradeGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -142,7 +160,9 @@ export default function App() {
                   path="/estudos/simulados/:id"
                   element={
                     <ProtectedRoute>
-                      <SimuladoDetalhe />
+                      <ModuleUpgradeGuard moduleKey="estudos">
+                        <SimuladoDetalhe />
+                      </ModuleUpgradeGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -150,7 +170,9 @@ export default function App() {
                   path="/estudos/desempenho"
                   element={
                     <ProtectedRoute>
-                      <Desempenho />
+                      <ModuleUpgradeGuard moduleKey="estudos">
+                        <Desempenho />
+                      </ModuleUpgradeGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -158,7 +180,9 @@ export default function App() {
                   path="/treinos"
                   element={
                     <ProtectedRoute>
-                      <Treinos />
+                      <ModuleUpgradeGuard moduleKey="treinos">
+                        <Treinos />
+                      </ModuleUpgradeGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -181,9 +205,9 @@ export default function App() {
                 <Route
                   path="/admin"
                   element={
-                    <ProtectedRoute>
+                    <AdminRoute>
                       <Admin />
-                    </ProtectedRoute>
+                    </AdminRoute>
                   }
                 />
                 <Route
