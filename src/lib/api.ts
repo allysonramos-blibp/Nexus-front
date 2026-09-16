@@ -909,6 +909,22 @@ export const api = {
         }),
       },
     ),
+  forgotPassword: (email: string) =>
+    request<{ success: boolean; message: string; code?: string; email?: string }>(
+      "/auth/forgot-password",
+      {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      },
+    ),
+  resetPassword: (email: string, token: string, newPassword: string) =>
+    request<{ message: string }>(
+      "/auth/reset-password",
+      {
+        method: "POST",
+        body: JSON.stringify({ email, token, newPassword }),
+      },
+    ),
 
   /* =======================================================
    * FINANCEIRO
