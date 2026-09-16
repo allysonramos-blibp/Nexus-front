@@ -1,4 +1,7 @@
-import { CircleUserRound, CheckCircle2, XCircle, LogOut, Shield, Sparkles, KeyRound } from "lucide-react";
+import { useState } from "react";
+import { CircleUserRound, CheckCircle2, XCircle, LogOut, Shield, Sparkles, FileText, BellRing } from "lucide-react";
+import { ExecutiveReportModal } from "@/components/ExecutiveReportModal";
+import { NotificationCenterModal } from "@/components/NotificationCenterModal";
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/lib/auth";
 import { Card } from "@/components/ui/Card";
@@ -8,6 +11,8 @@ import { Badge } from "@/components/ui/Badge";
 function PerfilPage() {
   const { user, signOut } = useAuth();
 
+  const [reportOpen, setReportOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const isMasterAdmin =
     user?.email === "allysonr510@gmail.com" || user?.role === "ROLE_ADMIN";
 
@@ -114,6 +119,55 @@ function PerfilPage() {
         </div>
       </Card>
 
+      {/* Relatórios & Notificações */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="p-2 rounded-xl bg-dash/10 text-dash">
+              <FileText className="size-4" />
+            </span>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Relatório Executivo (PDF)</h3>
+              <p className="text-xs text-muted-foreground">Documento consolidado de desempenho</p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Gere um relatório completo em PDF com 1 clique para acompanhar seus estudos, tarefas, treinos e finanças.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setReportOpen(true)}
+            className="w-full text-xs gap-1.5"
+          >
+            <FileText className="size-3.5 text-dash" /> Gerar Relatório em PDF
+          </Button>
+        </Card>
+
+        <Card className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="p-2 rounded-xl bg-study/10 text-study">
+              <BellRing className="size-4" />
+            </span>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Central de Lembretes & Push</h3>
+              <p className="text-xs text-muted-foreground">Notificações no celular e navegador</p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Configure alertas diários para não perder suas metas de questões, revisões espaçadas e tarefas críticas.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setNotificationsOpen(true)}
+            className="w-full text-xs gap-1.5"
+          >
+            <BellRing className="size-3.5 text-study" /> Configurar Notificações
+          </Button>
+        </Card>
+      </div>
+
       {/* Segurança & Sessão */}
       <Card className="space-y-3">
         <div className="flex items-center gap-2">
@@ -129,6 +183,8 @@ function PerfilPage() {
       <Button variant="outline" onClick={signOut} className="self-start text-destructive hover:bg-destructive/10">
         <LogOut className="size-4 mr-1.5" /> Desconectar da conta
       </Button>
+      <ExecutiveReportModal isOpen={reportOpen} onClose={() => setReportOpen(false)} />
+      <NotificationCenterModal isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     </AppShell>
   );
 }

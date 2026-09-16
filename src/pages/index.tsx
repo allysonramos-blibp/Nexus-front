@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { ExecutiveReportModal } from "@/components/ExecutiveReportModal";
 import { Link } from "@/lib/router-compat";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -63,6 +65,7 @@ function Today() {
   const qc = useQueryClient();
   const { openChat } = useAiChat();
   const userId = user?.id;
+  const [reportOpen, setReportOpen] = useState(false);
 
   // Permissões comerciais e controle de acesso por módulo
   const isMasterAdmin =
@@ -159,22 +162,34 @@ function Today() {
   const totalRevisoesPendentes = pendingReviews.data?.totalPendentes ?? 0;
 
   // Ação Dinâmica no topo do Header de acordo com os módulos contratados
-  const headerAction = canTreinos ? (
-    <div className="flex items-center gap-2 rounded-full border border-gym/30 bg-gym/10 px-3.5 py-1.5 text-xs font-semibold text-gym">
-      <Flame className="size-4 text-gym animate-pulse" />
-      <span>
-        {feitosNaSemana} {feitosNaSemana === 1 ? "treino" : "treinos"} na semana
-      </span>
-    </div>
-  ) : canEstudos && totalEdital > 0 ? (
-    <div className="flex items-center gap-2 rounded-full border border-study/30 bg-study/10 px-3.5 py-1.5 text-xs font-semibold text-study">
-      <Brain className="size-4 text-study" />
-      <span>{dominados} tópicos dominados</span>
-    </div>
-  ) : (
-    <div className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-semibold text-primary">
-      <CheckCircle2 className="size-4 text-primary" />
-      <span>{concluidas.length} concluídas</span>
+  const headerAction = (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setReportOpen(true)}
+        className="text-xs gap-1.5 border-border/80 hover:border-dash/40 cursor-pointer"
+      >
+        <FileText className="size-3.5 text-dash" />
+        <span className="hidden sm:inline">Relatório Executivo</span>
+        <span className="sm:hidden">Relatório</span>
+      </Button>
+      {canTreinos ? (
+        <div className="hidden sm:flex items-center gap-2 rounded-full border border-gym/30 bg-gym/10 px-3 py-1.5 text-xs font-semibold text-gym">
+          <Flame className="size-3.5 text-gym animate-pulse" />
+          <span>{feitosNaSemana} treinos na semana</span>
+        </div>
+      ) : canEstudos && totalEdital > 0 ? (
+        <div className="hidden sm:flex items-center gap-2 rounded-full border border-study/30 bg-study/10 px-3 py-1.5 text-xs font-semibold text-study">
+          <Brain className="size-3.5 text-study" />
+          <span>{dominados} tópicos dominados</span>
+        </div>
+      ) : (
+        <div className="hidden sm:flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+          <CheckCircle2 className="size-3.5 text-primary" />
+          <span>{concluidas.length} concluídas</span>
+        </div>
+      )}
     </div>
   );
 
@@ -630,6 +645,7 @@ function Today() {
           )}
         </div>
       )}
+      <ExecutiveReportModal isOpen={reportOpen} onClose={() => setReportOpen(false)} />
     </AppShell>
   );
 }

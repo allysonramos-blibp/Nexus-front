@@ -113,3 +113,23 @@
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-focus);
 }
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  aside, header, nav, .bottom-nav, button, .pwa-install-banner, #offline-indicator {
+    display: none !important;
+  }
+  #nexus-executive-report-preview {
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  .fixed.inset-0 {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+}

@@ -1,10 +1,13 @@
 import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { NotificationCenterModal } from "@/components/NotificationCenterModal";
+import { useState } from "react";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useAiChat } from "@/contexts/AiChatContext";
 import { AiChatPopup, AiChatFab } from "@/components/AiChatPopup";
 import { Link, useNavigate } from "@/lib/router-compat";
 import { useEffect } from "react";
 import { 
+  Bell,
   Bot, 
   Brain, 
   Dumbbell, 
@@ -35,6 +38,7 @@ export function AppShell({
   const { user, ready, signOut } = useAuth();
   const navigate = useNavigate();
   const { openChat } = useAiChat();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   useEffect(() => {
     if (ready && !user) navigate({ to: "/login" });
@@ -105,7 +109,8 @@ export function AppShell({
     { 
       to: "/ia", 
       label: "IA", 
-      icon: Bot, 
+      icon: Bell,
+  Bot, 
       accent: "text-dash", 
       visible: isMasterAdmin || user.moduloIaExtracao !== false 
     },
@@ -132,8 +137,17 @@ export function AppShell({
               </span>
             )}
           </div>
-          <div className="mb-3 px-1">
+          <div className="mb-3 px-1 space-y-1.5">
             <PWAInstallButton />
+            <button
+              type="button"
+              onClick={() => setNotificationsOpen(true)}
+              className="flex w-full items-center gap-2 rounded-lg border border-border/70 bg-surface-raised/50 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors cursor-pointer"
+            >
+              <Bell className="size-3.5 text-dash" />
+              <span>Lembretes & Push</span>
+              <span className="ml-auto size-2 rounded-full bg-dash" />
+            </button>
           </div>
 
           {navItems.map((item) => {
@@ -191,6 +205,15 @@ export function AppShell({
               <h1 className="mt-2 text-3xl font-bold sm:text-4xl">{title}</h1>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setNotificationsOpen(true)}
+                title="Central de Notificações & Lembretes Push"
+                className="relative flex size-9 items-center justify-center rounded-xl border border-border/80 bg-surface hover:bg-surface-raised text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <Bell className="size-4" />
+                <span className="absolute top-2 right-2 size-2 rounded-full bg-dash ring-2 ring-surface" />
+              </button>
               <PWAInstallButton />
               {actions}
             </div>
@@ -203,6 +226,7 @@ export function AppShell({
       <AiChatFab />
       <AiChatPopup />
       <OfflineIndicator />
+      <NotificationCenterModal isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     </div>
   );
 }
