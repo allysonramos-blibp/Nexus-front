@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/lib/auth";
 import { ToastProvider } from "@/contexts/ToastContext";
+import { AiChatProvider } from "@/contexts/AiChatContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Loading } from "@/components/ui/Loading";
 
@@ -50,6 +51,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
+        <AiChatProvider>
         <AuthProvider>
           <BrowserRouter>
             <Suspense fallback={<RouteFallback />}>
@@ -196,6 +198,7 @@ export default function App() {
             </Suspense>
           </BrowserRouter>
         </AuthProvider>
+      </AiChatProvider>
       </ToastProvider>
     </QueryClientProvider>
   );

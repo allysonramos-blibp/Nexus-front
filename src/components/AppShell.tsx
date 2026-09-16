@@ -1,3 +1,5 @@
+import { useAiChat } from "@/contexts/AiChatContext";
+import { AiChatPopup, AiChatFab } from "@/components/AiChatPopup";
 import { Link, useNavigate } from "@/lib/router-compat";
 import { useEffect } from "react";
 import { 
@@ -30,6 +32,7 @@ export function AppShell({
 }) {
   const { user, ready, signOut } = useAuth();
   const navigate = useNavigate();
+  const { openChat } = useAiChat();
 
   useEffect(() => {
     if (ready && !user) navigate({ to: "/login" });
@@ -128,18 +131,36 @@ export function AppShell({
             )}
           </div>
 
-          {navItems.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              activeOptions={{ exact: item.to === "/" }}
-              className="flex items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground"
-              activeProps={{ className: "bg-surface-raised text-foreground font-semibold" }}
-            >
-              <item.icon className={`size-4 ${item.accent}`} />
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            if (item.to === "/ia") {
+              return (
+                <button
+                  key={item.to}
+                  type="button"
+                  onClick={() => openChat()}
+                  className="flex w-full items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground cursor-pointer"
+                >
+                  <item.icon className={`size-4 ${item.accent}`} />
+                  {item.label}
+                  <span className="ml-auto rounded-full bg-study/15 px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider text-study border border-study/20">
+                    Popup
+                  </span>
+                </button>
+              );
+            }
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                activeOptions={{ exact: item.to === "/" }}
+                className="flex items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground"
+                activeProps={{ className: "bg-surface-raised text-foreground font-semibold" }}
+              >
+                <item.icon className={`size-4 ${item.accent}`} />
+                {item.label}
+              </Link>
+            );
+          })}
         </div>
 
         <div>
@@ -170,7 +191,9 @@ export function AppShell({
         </div>
       </main>
 
-      <BottomNav items={navItems} />
+      <BottomNav items={navItems} onOpenAi={() => openChat()} />
+      <AiChatFab />
+      <AiChatPopup />
     </div>
   );
 }

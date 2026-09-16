@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAiChat } from "@/contexts/AiChatContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -108,6 +109,7 @@ function RegistrarErroDialog({
 function ResolverQuestoes({ questions, onExit }: { questions: Question[]; onExit: () => void }) {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { openChat } = useAiChat();
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -209,11 +211,7 @@ function ResolverQuestoes({ questions, onExit }: { questions: Question[]; onExit
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    navigate("/ia", {
-                      state: {
-                        initialMessage: `Pode me explicar essa questão? "${question.enunciado}" — o gabarito é "${question.gabarito}".`,
-                      },
-                    })
+                    openChat(`Pode me explicar essa questão de forma clara e didática? "\${question.enunciado}" — o gabarito correto é "\${question.gabarito}".`)
                   }
                 >
                   <MessageCircleQuestion className="size-3.5" /> Perguntar à IA
