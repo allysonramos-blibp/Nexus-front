@@ -1,151 +1,317 @@
-# Nexus — frontend React
+# 🚀 Nexus Web — Ecossistema de Alta Performance (Frontend PWA)
 
-Frontend em React 19 + Vite + TypeScript + Tailwind v4, integrado com a API Spring
-Boot do Nexus (JWT, módulo de Estudos completo).
+> **Plataforma unificada de alta performance para gestão de estudos para concursos, produtividade diária, rotina de treinos e finanças pessoais.**
 
-## Rodando em desenvolvimento
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19.0.0-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-5.7+-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Vite-6.0+-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-v4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS v4" />
+  <img src="https://img.shields.io/badge/PWA-Ready-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white" alt="PWA" />
+  <img src="https://img.shields.io/badge/TanStack_Query-v5-FF4154?style=for-the-badge&logo=react-query&logoColor=white" alt="React Query" />
+  <img src="https://img.shields.io/badge/PDF_Engine-jsPDF-E11D48?style=for-the-badge" alt="jsPDF" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
+</p>
 
+---
+
+## 📌 Sumário
+
+1. [Visão Geral](#-visão-geral)
+2. [Diferenciais & Funcionalidades](#-diferenciais--funcionalidades)
+3. [Arquitetura & Tecnologias](#-arquitetura--tecnologias)
+4. [Telas & Módulos do Sistema](#-telas--módulos-do-sistema)
+5. [PWA & Notificações Nativas](#-pwa--notificações-nativas)
+6. [Gerador de Relatórios Executivos em PDF](#-gerador-de-relatórios-executivos-em-pdf)
+7. [Como Executar Localmente](#-como-executar-localmente)
+8. [Variáveis de Ambiente](#-variáveis-de-ambiente)
+9. [Build & Deploy](#-build--deploy)
+10. [Segurança & Autenticação](#-segurança--autenticação)
+11. [Estrutura de Pastas](#-estrutura-de-pastas)
+
+---
+
+## 🌟 Visão Geral
+
+O **Nexus Web** é uma Single Page Application (SPA) progressiva de alta densidade visual e técnica. Projetado para quem busca alto rendimento nos estudos e na vida pessoal, o Nexus consolida em uma única interface intuitiva:
+
+- 🎯 **Rotina de Produtividade:** Foco do dia, checklist de prioridades e gestão de prazos.
+- 📚 **Preparação para Concursos Públicos:** Editais verticalizados, resolução de questões com gabarito comentado, caderno de erros inteligente, repetição espaçada e simulados completos com cronômetro.
+- 🏋️ **Consistência em Treinos:** Frequência semanal, divisão muscular (ABC/ABCD), controle de séries/repetições/cargas e registro fotográfico.
+- 💰 **Controle Financeiro:** Balanço de receitas, despesas, contas a pagar/receber e saldo consolidado.
+- 🤖 **Copilot de Inteligência Artificial:** Tutor inteligente flutuante disponível em qualquer tela e extração automática de questões a partir de PDFs de bancas examinadoras.
+- 📑 **Relatórios Executivos:** Exportação em vetor A4 para acompanhamento gerencial e auditoria de progresso pessoal.
+
+---
+
+## ✨ Diferenciais & Funcionalidades
+
+### 1. 🎯 Dashboard Dinâmico (`/`)
+- Saudação inteligente personalizada com cálculo de período do dia.
+- Painel "Foco Único" destacando a prioridade crítica do dia.
+- Widget de progresso em tempo real do edital de concurso com cálculo de taxa de domínio.
+- Cards rápidos de resumo financeiro e meta de treinos da semana.
+- Feed de atividades e pendências com conclusão em 1 clique.
+
+### 2. 📚 Módulo de Estudos & Concursos
+- **Planos de Estudos:** Cadastro de editais, definição de datas-alvo e metas de horas disponíveis.
+- **Árvore Curricular:** Estruturação hierárquica `Plano ➔ Matéria ➔ Assunto`.
+- **Banco de Questões & Simulação:**
+  - Resolução interativa com gabaritos detalhados.
+  - Simulados cronometrados com trava de alternativa para auditoria fiel de pontuação.
+  - Indicador de "Marcar para revisar" e estatísticas de acerto por matéria.
+- **Caderno de Erros Inteligente:** Registro automático de erros para fixação por repetição espaçada.
+- **Importador de PDFs:** Upload de provas em PDF com estruturação automática de questões e gabaritos via IA.
+
+### 3. 🏋️ Módulo de Treinos & Fisiologia
+- Registro diário de treinos por grupo muscular (Peito, Costas, Pernas, etc.).
+- Detalhamento de exercícios com séries, repetições e carga (kg).
+- Upload de fotos de evolução física com suporte a volume persistente.
+- Acompanhamento da meta semanal de treinos com indicador de streak.
+
+### 4. 💰 Módulo Financeiro Pessoal
+- Lançamentos de receitas e despesas com categorização.
+- Gestão de contas a pagar e receber com confirmação rápida de status (`PENDENTE` / `CONCLUIDA`).
+- Indicador visual dinâmico de saldo líquido mensal.
+
+### 5. 🤖 Assistente Virtual Flutuante (AI Copilot)
+- Botão flutuante acessível em qualquer tela com interface estilo modal/drawer.
+- Conexão direta com a API de IA com contexto acadêmico e pedagógico.
+- Atalhos rápidos para geração de perguntas de teste sobre o edital.
+
+### 6. 📑 Relatório Executivo em PDF (1-Clique)
+- Emissão oficial instantânea em vetor A4 formatado para impressão ou arquivamento digital.
+- Compilação dos dados de tarefas, progresso de matérias, frequência física e balanço financeiro.
+- Diagnóstico automático de desempenho gerado com base nos dados reais do usuário.
+
+### 7. 🔔 Central de Notificações Web Push & PWA
+- Totalmente instalável no smartphone (iOS e Android) e no desktop como aplicativo nativo.
+- Suporte a cache offline via Service Worker (Workbox).
+- Gerenciamento de alertas diários e teste prático de notificações locais.
+
+### 8. 🛡️ Controle Comercial & Níveis de Acesso (RBAC)
+- Sistema granular de liberação de módulos (`moduloEstudos`, `moduloTreinos`, `moduloFinancas`, `moduloIaExtracao`).
+- Suporte a planos `PRO` e `ENTERPRISE`.
+- Painel seguro de Master Admin com visão completa de usuários e limites de IA.
+
+---
+
+## 🛠️ Arquitetura & Tecnologias
+
+```
+                  ┌─────────────────────────────────┐
+                  │      Nexus Web Frontend         │
+                  │   React 19 + TypeScript + Vite  │
+                  │      Tailwind CSS v4 + PWA      │
+                  └───────────────┬─────────────────┘
+                                  │
+                   HTTPS / REST API (Bearer JWT)
+                                  │
+                  ┌───────────────▼─────────────────┐
+                  │          Nexus API              │
+                  │    Spring Boot 4.1 + Java 21    │
+                  └───────┬─────────────────┬───────┘
+                          │                 │
+              ┌───────────▼─────┐     ┌─────▼───────────┐
+              │   PostgreSQL    │     │  Anthropic / AI │
+              │  Banco de Dados │     │  Processamento  │
+              └─────────────────┘     └─────────────────┘
+```
+
+| Camada | Tecnologia | Função |
+|---|---|---|
+| **Core Framework** | React 19 + TypeScript 5.7+ | Renderização reativa, tipagem estrita e DX moderna |
+| **Build Tool** | Vite 6 | Compilação ultrarrápida, HMR e otimização de bundles |
+| **Estilização** | Tailwind CSS v4 | Design system unificado com tema escuro e suporte a design tokens |
+| **Gerenciamento de Estado** | TanStack Query v5 (React Query) | Cache assíncrono, refetch inteligente e mutations otimistas |
+| **PWA & Offline** | Vite PWA Plugin + Workbox | Service worker, manifest PWA e estratégias de cache |
+| **Roteamento** | React Router DOM v7 (compat layer) | Navegação client-side fluida com SPA fallback |
+| **Relatórios** | jsPDF | Geração de PDFs vetoriais A4 direto no navegador |
+| **Ícones** | Lucide React | Biblioteca completa e consistente de ícones vetoriais |
+
+---
+
+## 🖥️ Telas & Rotas
+
+| Rota | Tela | Funcionalidade Principal |
+|---|---|---|
+| `/` | **Hoje (Dashboard)** | Visão unificada diária, foco do dia, progresso do edital, meta de treinos e finanças |
+| `/login` | **Autenticação** | Login seguro com JWT, cadastro de usuário e seletor dinâmico de API |
+| `/tarefas` | **Produtividade** | Kanban e lista de tarefas cotidianas e tópicos do edital |
+| `/estudos` | **Hub de Estudos** | Gestão de planos, matérias, cronograma e materiais de apoio |
+| `/estudos/planos/:id` | **Detalhe do Edital** | Gestão de disciplinas, assuntos e árvore de tópicos |
+| `/estudos/questoes` | **Banco de Questões** | Resolução interativa, gabarito instantâneo e comentários |
+| `/estudos/caderno-erros`| **Caderno de Erros** | Análise de gaps de aprendizagem e re-execução de questões |
+| `/estudos/revisoes` | **Revisões Espaçadas** | Fila de tópicos para revisão baseada no histórico de erros |
+| `/estudos/simulados` | **Simulados** | Configuração, execução com cronômetro regressivo e análise de performance |
+| `/estudos/desempenho` | **Analytics** | Gráficos de acerto por matéria, evolução temporal e assertividade |
+| `/treinos` | **Musculação** | Diário de treinos, montagem de séries/repetições/cargas e fotos |
+| `/financeiro` | **Finanças** | Lançamentos, fluxo de receitas e despesas, contas pendentes |
+| `/perfil` | **Perfil & Assinatura** | Dados da conta, plano contratado, gerador de relatório e notificações |
+
+---
+
+## 📱 PWA & Notificações Nativas
+
+O Nexus foi estruturado com padrão **PWA (Progressive Web App)**:
+
+- **Instalação Nativa:** Adicione à tela inicial no iOS (Safari ➔ Compartilhar ➔ Adicionar à Tela de Início) ou Android/Chrome (botão de instalação automática).
+- **Trabalho Offline:** Telas e assets estáticos ficam armazenados em cache local através do Workbox Service Worker.
+- **Central de Push:** Permite configurar notificações no dispositivo para lembrar de revisões de concurso, treinos e contas a pagar.
+
+---
+
+## 📑 Gerador de Relatórios Executivos em PDF
+
+Localizado tanto no topo do Dashboard (`/`) quanto na tela de Perfil (`/perfil`), o gerador de relatórios permite:
+1. Visualizar um preview interativo na tela.
+2. Imprimir com formatação profissional via folha de estilo dedicada `@media print`.
+3. Fazer download de um arquivo `.pdf` formatado no padrão A4 oficial com cabeçalho institucional, dados do usuário e métricas consolidadas dos módulos contratados.
+
+---
+
+## 🚀 Como Executar Localmente
+
+### Pré-requisitos
+- **Node.js**: v18.0.0 ou superior (recomendado Node 20+)
+- **npm** ou **bun** instalado
+
+### Passo a Passo
+
+1. **Clone o repositório:**
+   ```bash
+   git clone https://github.com/allysonramos-blibp/Nexus-front.git
+   cd Nexus-front
+   ```
+
+2. **Instale as dependências:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure as variáveis de ambiente:**
+   ```bash
+   cp .env.example .env
+   ```
+   Edite o arquivo `.env` para apontar para a sua instância da Nexus API:
+   ```env
+   VITE_API_URL=http://localhost:8080/api
+   ```
+
+4. **Inicie o servidor de desenvolvimento:**
+   ```bash
+   npm run dev
+   ```
+   A aplicação estará acessível em: `http://localhost:5173`
+
+---
+
+## ⚙️ Variáveis de Ambiente
+
+| Variável | Padrão | Descrição |
+|---|---|---|
+| `VITE_API_URL` | `http://localhost:8080/api` | URL base do backend Nexus (Spring Boot). Pode ser trocada dinamicamente na tela de login |
+
+> 💡 **Dica de Desenvolvimento:** Na tela de login há uma opção de teste de ping da API e um campo para trocar a URL base em tempo de execução, facilitando testes com túneis como ngrok (`https://abc.ngrok-free.app/api`).
+
+---
+
+## 📦 Build & Deploy
+
+### Build de Produção
 ```bash
-npm install
-npm run dev
+npm run build
 ```
+O comando gera os arquivos estáticos e otimizados na pasta `dist/`.
 
-Abre em http://localhost:5173.
-
-## Build de produção
-
+### Pré-visualização Local do Build
 ```bash
-npm run build   # tsc -b && vite build — gera dist/
-npm run preview # serve o build de dist/ localmente, pra conferir antes de publicar
+npm run preview
 ```
 
-## Variáveis de ambiente
+### Hospedagens Recomendadas (Vercel, Netlify, Cloudflare Pages, Nginx)
 
-Copie `.env.example` para `.env` e ajuste:
+Por se tratar de uma SPA com roteamento dinâmico via browser, configure o servidor para redirecionar todas as requisições não-estáticas para o `index.html`.
+
+#### Configuração Nginx:
+```nginx
+server {
+    listen 80;
+    server_name nexus.seudominio.com;
+    root /var/www/nexus-front/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Cache agressivo para assets estáticos
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+---
+
+## 🔒 Segurança & Autenticação
+
+- **Autenticação Stateless JWT:** O token recebido no login é anexado automaticamente em todas as requisições HTTP (`Authorization: Bearer <token>`).
+- **Auto-Logout em Expiração:** Se a API responder com status HTTP `401`, a sessão local é encerrada com segurança e o usuário é redirecionado ao login.
+- **Sanitização de Dados:** Proteção contra injeção em inputs e manipulação de formulários.
+- **Isolamento de Tenant:** Todas as requisições utilizam o contexto do usuário autenticado no token da API, garantindo isolamento total de registros.
+
+---
+
+## 📂 Estrutura de Pastas
 
 ```
-VITE_API_URL=http://localhost:8080/api
+nexus-front/
+├── public/                  # Ícones PWA, favicon, manifest.webmanifest
+├── src/
+│   ├── components/          # Componentes reutilizáveis (AppShell, Modais, Cards)
+│   │   ├── ui/              # Design System base (Button, Input, Badge, Dialog)
+│   │   ├── ExecutiveReportModal.tsx   # Modal e preview do relatório A4
+│   │   ├── NotificationCenterModal.tsx # Central de push notifications
+│   │   ├── AiChatFloating.tsx         # Chat flutuante com IA
+│   │   └── PwaInstallBanner.tsx       # Banner inteligente de instalação PWA
+│   ├── pages/               # Telas da aplicação
+│   │   ├── index.tsx        # Dashboard "Hoje"
+│   │   ├── login.tsx        # Autenticação e boas-vindas
+│   │   ├── tarefas.tsx      # Central de Tarefas & Edital
+│   │   ├── financeiro.tsx   # Gestão financeira
+│   │   ├── treinos.tsx      # Diário de treinos e fisiologia
+│   │   ├── estudos.tsx      # Hub de estudos para concursos
+│   │   ├── questoes.tsx     # Banco e resolução de questões
+│   │   ├── simulados.tsx    # Simulado com cronômetro
+│   │   ├── caderno-erros.tsx# Repetição espaçada e caderno de erros
+│   │   ├── perfil.tsx       # Configurações de conta e assinatura
+│   │   └── admin.tsx        # Painel Master Admin (gestão de planos)
+│   ├── lib/                 # Integrações, helpers e utilitários
+│   │   ├── api.ts           # Cliente HTTP fortemente tipado
+│   │   ├── auth.tsx         # Contexto de autenticação e sessão
+│   │   ├── exportPdfReport.ts # Motor de geração de PDF em vetor A4
+│   │   ├── notifications.ts # Driver de notificações nativas
+│   │   └── router-compat.tsx# Abstração de roteamento
+│   ├── styles.css           # Configurações do Tailwind v4 e estilos de impressão
+│   └── main.tsx             # Entry point da aplicação React
+├── index.html               # Entry point HTML com metatags PWA
+├── package.json             # Dependências e scripts
+├── tsconfig.json            # Configuração TypeScript
+└── vite.config.ts           # Configurações do Vite e plugin PWA
 ```
 
-A URL também pode ser trocada em tempo de execução na tela de login (fica salva no
-navegador em `localStorage`) — útil para apontar pra um túnel HTTPS (ex.: `ngrok http
-8080`) sem precisar rebuildar.
+---
 
-⚠️ `VITE_API_URL` é embutida no build (é assim que o Vite trata variáveis
-`VITE_*` — viram texto fixo no JS gerado, não são lidas em tempo de execução do
-servidor). Se a URL da API mudar depois de publicado, cada usuário precisaria
-reconfigurar na tela de login (ela grava a nova URL no navegador dele), ou você
-builda de novo com o valor certo antes de publicar.
+## 👨‍💻 Autor
 
-## Deploy
+Desenvolvido por **Allyson Ramos**  
+- **GitHub:** [@allysonramos-blibp](https://github.com/allysonramos-blibp)  
+- **Email:** allysonr510@gmail.com  
 
-Depois do `npm run build`, o conteúdo de `dist/` é 100% estático — sobe em
-qualquer hospedagem de arquivos estáticos (Vercel, Netlify, Cloudflare Pages,
-S3+CloudFront, ou um Nginx numa VM).
+---
 
-**Importante — roteamento client-side (React Router):** como as rotas
-(`/estudos/planos/5`, por exemplo) só existem no navegador, o servidor precisa
-devolver `index.html` para qualquer caminho que não seja um arquivo real — senão
-dá 404 ao recarregar a página em qualquer rota que não seja `/`.
-
-- **Vercel/Netlify**: já fazem isso automaticamente para builds Vite/SPA — só
-  conectar o repo e apontar `Build command: npm run build`, `Output: dist`. Na
-  Netlify, se não funcionar de primeira, adicione um `public/_redirects` com
-  `/* /index.html 200`.
-- **Nginx** (servidor próprio):
-  ```nginx
-  server {
-      listen 80;
-      server_name app.seudominio.com;
-      root /var/www/nexus-web/dist;
-      index index.html;
-
-      location / {
-          try_files $uri $uri/ /index.html;
-      }
-  }
-  ```
-  Depois disso, coloque HTTPS na frente (Certbot/Let's Encrypt) — o backend em
-  HTTPS + frontend em HTTPS é obrigatório, senão o navegador bloqueia as chamadas
-  (mixed content), como o próprio aviso na tela de login já explica.
-
-Antes de publicar, confirme que o `CORS_ALLOWED_ORIGINS` do backend inclui o
-domínio final do frontend (ver README do `nexus-api`) — sem isso, a API
-recusa as chamadas por CORS mesmo com tudo certo aqui.
-
-## Autenticação
-
-A API exige JWT (`Authorization: Bearer <token>`) em praticamente todos os
-endpoints — só `POST /api/auth/login`, `GET /api/auth` (healthcheck) e `POST
-/api/users/register` são públicos. O frontend:
-
-- guarda o token retornado pelo login e o expira sozinho conforme `expiresInMs`;
-- inclui o header `Authorization` automaticamente em toda chamada autenticada;
-- desloga automaticamente se qualquer chamada voltar `401`.
-
-Como `POST /users/register` não retorna token, o cadastro dispara um login
-automático logo em seguida.
-
-## CORS
-
-O `CorsConfig.java` antigo não existe mais — a configuração de CORS agora vive dentro
-de `SecurityConfig.java`, via o bean `corsConfigurationSource()`. Libere a origem do
-frontend (`http://localhost:5173` em dev) lá.
-
-## Telas
-
-| Rota | O que é |
-|---|---|
-| `/login`, `/esqueci-senha` | Login/cadastro + teste de conexão com a API; recuperação de senha ainda é só um aviso (endpoint não existe no backend) |
-| `/` | Hoje — foco único, saldo, treino do dia, progresso no edital |
-| `/financeiro` | Receitas, despesas e saldo — criar, editar, excluir |
-| `/tarefas` | Tarefas e tópicos do edital — criar, mudar status, filtrar |
-| `/estudos` | Hub de Estudos — Meus Planos (CRUD completo de plano/matéria/assunto) |
-| `/estudos/planos/:id` | Detalhe do plano — matérias e assuntos |
-| `/estudos/questoes` | Cadastro de questões + resolução uma por vez, com gabarito/explicação |
-| `/estudos/caderno-erros` | Erros registrados, com filtro por status e período |
-| `/estudos/revisoes` | Revisões pendentes — reabre a questão e marca como revisada |
-| `/estudos/simulados`, `/estudos/simulados/:id` | Configurar, executar (cronômetro, navegação, marcar questão) e ver resultado com análise por matéria |
-| `/estudos/desempenho` | Estatísticas gerais, por matéria, por assunto e por período |
-| `/estudo` | Materiais — notas e arquivos (aba "Materiais" dentro do hub de Estudos) |
-| `/treinos` | Registro de treino com exercícios estruturados (séries/repetições/carga) e foto |
-| `/ia` | Tutor de IA — chat, com atalho a partir de questões erradas |
-| `/perfil` | Dados da sessão, plano (placeholder "Free"), logout |
-
-## Antes do primeiro `git push`
-
-- `.gitignore` já cobre `node_modules`, `dist` e `.env` — nada sensível ou pesado
-  demais deveria entrar no repositório.
-- Não existe nenhum segredo no código do frontend (a URL da API não é sensível) —
-  só o `.env` local, que já está ignorado.
-
-## Notas de implementação — Simulados
-
-- Ao responder uma questão dentro de um simulado, a alternativa fica **travada**
-  depois de escolhida (sem "trocar resposta"). Isso é proposital: o backend
-  (`AnswerService`) sempre insere uma linha nova em `Answer` a cada `POST
-  /api/answers` — nunca atualiza uma existente — e `finalizar()` conta *todas* as
-  respostas certas do simulado. Se o front permitisse responder a mesma questão
-  várias vezes, o placar do simulado ficaria inflado. Trocar isso exigiria o
-  backend fazer upsert (uma resposta por questão por simulado) antes de destravar
-  a troca de alternativa no front.
-- "Marcar questão" (pra revisar depois, dentro da execução) é só um estado local do
-  navegador — não existe conceito disso na API, então some se a página recarregar.
-- O desempenho por matéria dentro do resultado do simulado é calculado no
-  frontend, cruzando as questões do próprio simulado com as respostas dadas — a
-  API não tem uma estatística "por simulado", só estatísticas globais
-  (`/study-stats/*`).
-
-## Lacunas conhecidas no backend
-
-Estas telas existem no frontend mas ficam limitadas até o backend expor os endpoints
-correspondentes (nenhuma delas foi contornada com dado inventado):
-
-- **Tarefas**: sem `PUT`/`DELETE /api/tasks/{id}` — só criar, listar e trocar status.
-- **Treinos**: sem `PUT`/`DELETE /api/workouts/{id}` — só criar, listar e subir imagem.
-- **Perfil**: sem `GET/PUT /api/users/me` — a tela só mostra o que já está na sessão.
-  Os models `Profile` e `Preferences` existem no backend, mas sem controller.
-- **Financeiro**: sem controller para `Category`/`CategoryType`/`FinancialGoal` —
-  não dá para categorizar lançamentos nem definir metas financeiras.
-- **Caderno de Erros**: `StudyErrorResponse` não traz matéria/assunto/dificuldade da
-  questão, então os filtros ficam limitados a status e período.
+<p align="center">
+  <sub>Nexus Platform © Todos os direitos reservados. Foco, consistência e alta performance.</sub>
+</p>
