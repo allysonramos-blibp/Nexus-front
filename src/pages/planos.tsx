@@ -6,15 +6,12 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { SAAS_PLANS, CheckoutModal, type PlanDetails } from "@/components/CheckoutModal";
-import { StoryPromoModal } from "@/components/StoryPromoModal";
-import { Image as ImageIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 export default function PlanosPage() {
   const { user } = useAuth();
   const [billingCycle, setBillingCycle] = useState<"MONTHLY" | "YEARLY">("YEARLY");
   const [selectedPlan, setSelectedPlan] = useState<PlanDetails | null>(null);
-  const [isStoryModalOpen, setIsStoryModalOpen] = useState(false);
 
   const handleOpenCheckout = (plan: PlanDetails) => {
     setSelectedPlan(plan);
@@ -34,15 +31,6 @@ export default function PlanosPage() {
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
             Tenha acesso completo a simulados inteligentes, repetição espaçada, controle de treinos, finanças e tutor com IA.
           </p>
-          <div className="pt-2">
-            <Button
-              type="button"
-              onClick={() => setIsStoryModalOpen(true)}
-              className="text-xs font-semibold gap-1.5 bg-dash/20 hover:bg-dash/30 text-dash border border-dash/40"
-            >
-              <ImageIcon className="size-4" /> Gerar Imagem para Story do Instagram (9:16)
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -185,7 +173,6 @@ export default function PlanosPage() {
           onSelectCycle={(newCycle) => setBillingCycle(newCycle)}
         />
       )}
-      <StoryPromoModal isOpen={isStoryModalOpen} onClose={() => setIsStoryModalOpen(false)} />
     </AppShell>
   );
 }
