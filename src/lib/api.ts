@@ -1749,6 +1749,51 @@ export const api = {
     request<OverallStats>(
       `/study-stats/por-periodo?inicio=${inicio}&fim=${fim}`,
     ),
+
+  /* =======================================================
+   * ADMIN SAAS
+   * ======================================================= */
+  listAdminUsers: () =>
+    request<
+      Array<{
+        id: number;
+        email: string;
+        role: string;
+        active: boolean;
+        status: "ATIVO" | "SUSPENSO" | "PENDENTE";
+        plan: "STARTER" | "PRO" | "ENTERPRISE";
+        modules: {
+          estudos: boolean;
+          treinos: boolean;
+          financas: boolean;
+          iaExtracao: boolean;
+        };
+        pdfExtractCount: number;
+        pdfExtractLimit: number;
+        totalQuestoes: number;
+        simuladosCriados: number;
+        totalPlanos: number;
+        ultimoAcesso: string;
+      }>
+    >("/admin/users"),
+
+  updateAdminUserStatus: (id: number, nextStatus: string) =>
+    request<{ userId: number; status: string; message: string }>(
+      `/admin/users/${id}/status`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ status: nextStatus }),
+      },
+    ),
+
+  updateAdminUserModules: (id: number, payload: any) =>
+    request<{ userId: number; message: string }>(
+      `/admin/users/${id}/modules`,
+      {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      },
+    ),
 };
 
 /* =========================================================
