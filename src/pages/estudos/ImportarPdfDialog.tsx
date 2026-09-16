@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, FileUp, Upload } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileUp, Filter, Upload } from "lucide-react";
 import { api, type QuestionRequest } from "@/lib/api";
 import { useToast } from "@/contexts/ToastContext";
 import { Dialog } from "@/components/ui/Dialog";
@@ -22,11 +22,11 @@ export function ImportarPdfDialog({
   const qc = useQueryClient();
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
-
   const [file, setFile] = useState<File | null>(null);
   const [drafts, setDrafts] = useState<QuestionRequest[] | null>(null);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [extractionWarning, setExtractionWarning] = useState<string | null>(null);
+  const [filterSemGabarito, setFilterSemGabarito] = useState(false);
 
   const extract = useMutation({
     mutationFn: (f: File) => api.extractQuestionsFromPdf(f),
@@ -35,19 +35,17 @@ export function ImportarPdfDialog({
       if (res.questoes.length === 0) {
         toast("Não encontrei questões nesse PDF.", "error");
       }
-      // possivelTotalNoPdf é uma estimativa heurística (regex), não uma contagem exata — só
-      // alertamos quando o resultado real ficou BEM abaixo dela, pra evitar alarme falso.
       const esperado = res.possivelTotalNoPdf;
       if (esperado > 0 && res.total < esperado * 0.8) {
         setExtractionWarning(
           `Importação possivelmente incompleta: o PDF parece ter ~${esperado} questão(ões), mas só ${res.total} foram extraídas.` +
             (res.chunksComFalha > 0
-              ? ` ${res.chunksComFalha} de ${res.chunksProcessados} trecho(s) falharam mesmo após as novas tentativas automáticas — importe o que veio e tente de novo depois para recuperar o restante.`
-              : " Revise se faltou alguma seção do PDF (ex.: outra disciplina) antes de confirmar."),
+              ? ` ${res.chunksComFalha} de ${res.chunksProcessados} trecho(s) falharam — importe o que veio e tente de novo depois.`
+              : " Revise se faltou alguma seção do PDF antes de confirmar."),
         );
       } else if (res.chunksComFalha > 0) {
         setExtractionWarning(
-          `${res.chunksComFalha} de ${res.chunksProcessados} trecho(s) do PDF falharam mesmo após as novas tentativas automáticas — algumas questões podem estar faltando. Importe o que veio e rode o PDF de novo para recuperar o restante.`,
+          `${res.chunksComFalha} de ${res.chunksProcessados} trecho(s) do PDF falharam nas tentativas automáticas.`,
         );
       } else {
         setExtractionWarning(null);
@@ -59,7 +57,7 @@ export function ImportarPdfDialog({
     mutationFn: () => api.bulkCreateQuestions(topicId, drafts ?? []),
     onSuccess: (created) => {
       qc.invalidateQueries({ queryKey: ["questions", topicId] });
-      toast(`${created.length} questão(ões) importada(s).`, "success");
+      toast(`${created.length} questão(ões) importada(s) com sucesso.`, "success");
       handleClose();
     },
   });
@@ -69,12 +67,18 @@ export function ImportarPdfDialog({
     setDrafts(null);
     setExpanded(null);
     setExtractionWarning(null);
+    setFilterSemGabarito(false);
     extract.reset();
     confirm.reset();
     onClose();
   }
 
   const semGabaritoCount = (drafts ?? []).filter((d) => !d.gabarito.trim()).length;
+
+  const displayedDrafts = (drafts ?? []).map((draft, originalIndex) => ({
+    draft,
+    originalIndex,
+  })).filter((item) => (filterSemGabarito ? !item.draft.gabarito.trim() : true));
 
   return (
     <Dialog
@@ -83,8 +87,8 @@ export function ImportarPdfDialog({
       title="Importar questões de um PDF"
       description={
         drafts
-          ? "Revise antes de confirmar — a extração automática pode errar, principalmente o gabarito."
-          : "Funciona melhor com PDFs de texto selecionável (não escaneados/imagem)."
+          ? "Revise antes de confirmar — você pode salvar todas de uma vez ou corrigir gabaritos."
+          : "Funciona com provas e apostilas em PDF com texto selecionável."
       }
       className="max-w-2xl"
       footer={
@@ -99,7 +103,7 @@ export function ImportarPdfDialog({
               disabled={drafts.length === 0}
               onClick={() => confirm.mutate()}
             >
-              Importar {drafts.length} questão(ões)
+              Salvar Todas ({drafts.length} questões)
             </Button>
           </>
         ) : (
@@ -135,9 +139,11 @@ export function ImportarPdfDialog({
           >
             <FileUp className="size-6 text-muted-foreground" />
             <span className="text-sm text-foreground">{file ? file.name : "Escolher arquivo PDF"}</span>
-            <span className="text-xs text-muted-foreground">Até 10MB</span>
+            <span className="text-xs text-muted-foreground">Provas, apostilas e listas de questões (até 10MB)</span>
           </button>
-          {extract.isPending && <Loading label="Lendo o PDF e extraindo as questões em trechos pequenos, com novas tentativas automáticas nos que falham — pode levar alguns minutos, não feche esta janela…" />}
+          {extract.isPending && (
+            <Loading label="Lendo o PDF e extraindo as questões com IA — aguarde um momento..." />
+          )}
           {extract.error && <ErrorState error={extract.error} compact />}
         </div>
       )}
@@ -150,36 +156,68 @@ export function ImportarPdfDialog({
               {extractionWarning}
             </div>
           )}
-          {semGabaritoCount > 0 && (
-            <div className="flex items-center gap-2 rounded-lg border border-gym/30 bg-gym/10 px-3 py-2 text-xs text-gym">
-              <AlertTriangle className="size-4 shrink-0" />
-              {semGabaritoCount} questão(ões) sem gabarito identificado — marque manualmente antes de importar
-              (clique para expandir).
+
+          {/* Barra de Filtros e Status */}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/80 pb-2">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setFilterSemGabarito(false)}
+                className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-colors ${
+                  !filterSemGabarito
+                    ? "bg-surface-raised text-foreground border border-border"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Todas ({drafts.length})
+              </button>
+              {semGabaritoCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setFilterSemGabarito(true)}
+                  className={`text-xs px-2.5 py-1 rounded-lg font-semibold transition-colors flex items-center gap-1 ${
+                    filterSemGabarito
+                      ? "bg-gym/20 text-gym border border-gym/40"
+                      : "text-gym/80 hover:text-gym"
+                  }`}
+                >
+                  <AlertTriangle className="size-3" />
+                  Sem Gabarito ({semGabaritoCount})
+                </button>
+              )}
             </div>
-          )}
-          {drafts.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">Nada pra importar.</p>
+
+            {semGabaritoCount === 0 && (
+              <span className="text-xs text-emerald-400 font-medium flex items-center gap-1">
+                <CheckCircle2 className="size-3.5" /> Gabaritos prontos para salvar
+              </span>
+            )}
+          </div>
+
+          {displayedDrafts.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Nenhuma questão encontrada com o filtro selecionado.
+            </p>
           ) : (
-            drafts.map((d, i) => (
+            displayedDrafts.map(({ draft, originalIndex }) => (
               <QuestaoDraftCard
-                key={i}
-                draft={d}
-                index={i}
-                expanded={expanded === i}
-                onToggle={() => setExpanded(expanded === i ? null : i)}
-                onChange={(next) => setDrafts((arr) => arr!.map((v, idx) => (idx === i ? next : v)))}
+                key={originalIndex}
+                draft={draft}
+                index={originalIndex}
+                expanded={expanded === originalIndex}
+                onToggle={() => setExpanded(expanded === originalIndex ? null : originalIndex)}
+                onChange={(next) =>
+                  setDrafts((arr) => arr!.map((v, idx) => (idx === originalIndex ? next : v)))
+                }
                 onRemove={() => {
-                  setDrafts((arr) => arr!.filter((_, idx) => idx !== i));
+                  setDrafts((arr) => arr!.filter((_, idx) => idx !== originalIndex));
                   setExpanded(null);
                 }}
               />
             ))
           )}
+
           {confirm.error && <ErrorState error={confirm.error} compact />}
-          <div className="flex justify-between border-t border-border pt-2">
-            <Badge>{drafts.length} questão(ões)</Badge>
-            {semGabaritoCount > 0 && <Badge variant="warning">{semGabaritoCount} sem gabarito</Badge>}
-          </div>
         </div>
       )}
     </Dialog>

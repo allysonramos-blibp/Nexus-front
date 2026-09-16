@@ -5,13 +5,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowRight,
+  ClipboardPaste,
   FileUp,
   ListChecks,
   MessageCircleQuestion,
   NotebookPen,
   Pencil,
+  Play,
   Plus,
+  Sparkles,
   Trash2,
+  Zap,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { api, errorReasonLabel, type ErrorReason, type Question } from "@/lib/api";
@@ -31,8 +35,11 @@ import { EstudosTabs } from "./EstudosTabs";
 import { TopicPicker } from "./TopicPicker";
 import { QuestaoForm } from "./QuestaoForm";
 import { ImportarPdfDialog } from "./ImportarPdfDialog";
+import { ColarTextoRapidoDialog } from "./ColarTextoRapidoDialog";
+import { GerarQuestoesIaDialog } from "./GerarQuestoesIaDialog";
 
 const LETTERS = ["A", "B", "C", "D", "E"];
+
 const ERROR_REASONS: ErrorReason[] = [
   "NAO_SABIA",
   "INTERPRETACAO",
@@ -58,57 +65,75 @@ function RegistrarErroDialog({
 }) {
   const { toast } = useToast();
   const [motivo, setMotivo] = useState<ErrorReason>("NAO_SABIA");
-  const [observacao, setObservacao] = useState("");
+  const [observacoes, setObservacoes] = useState("");
 
   const save = useMutation({
     mutationFn: () =>
-      api.registerStudyError({ questionId, answerId, motivo, observacao: observacao.trim() || null }),
+      api.registerStudyError({
+        questionId,
+        answerId,
+        motivo,
+        observacao: observacoes.trim() || null,
+      }),
     onSuccess: () => {
       toast("Adicionado ao caderno de erros.", "success");
       onClose();
     },
+    onError: () => toast("Erro ao registrar no caderno de erros.", "error"),
   });
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title="Registrar no caderno de erros"
-      description="Ajuda a saber depois em que você mais precisa revisar."
+      title="Registrar no Caderno de Erros"
+      description="Identifique o motivo do erro para direcionar suas próximas revisões."
       footer={
         <>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            Agora não
+          <Button variant="ghost" size="sm" onClick={onClose} disabled={save.isPending}>
+            Cancelar
           </Button>
           <Button size="sm" loading={save.isPending} onClick={() => save.mutate()}>
-            Registrar
+            Salvar no Caderno
           </Button>
         </>
       }
     >
       <div className="flex flex-col gap-3">
-        <Select label="Motivo do erro" value={motivo} onChange={(e) => setMotivo(e.target.value as ErrorReason)}>
+        <Select
+          label="Motivo do erro"
+          value={motivo}
+          onChange={(e) => setMotivo(e.target.value as ErrorReason)}
+        >
           {ERROR_REASONS.map((r) => (
             <option key={r} value={r}>
               {errorReasonLabel[r]}
             </option>
           ))}
         </Select>
+
         <Textarea
-          label="Observação (opcional)"
-          rows={2}
-          value={observacao}
-          onChange={(e) => setObservacao(e.target.value)}
+          label="Anotações / Como não errar de novo (opcional)"
+          rows={3}
+          value={observacoes}
+          onChange={(e) => setObservacoes(e.target.value)}
+          placeholder="Ex: Confundi os prazos do art. 5º; atentar para a palavra 'exclusivamente'..."
         />
+
         {save.error && <ErrorState error={save.error} compact />}
       </div>
     </Dialog>
   );
 }
 
-function ResolverQuestoes({ questions, onExit }: { questions: Question[]; onExit: () => void }) {
+function ResolverQuestoes({
+  questions,
+  onExit,
+}: {
+  questions: Question[];
+  onExit: () => void;
+}) {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const { openChat } = useAiChat();
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -211,7 +236,7 @@ function ResolverQuestoes({ questions, onExit }: { questions: Question[]; onExit
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    openChat(`Pode me explicar essa questão de forma clara e didática? "\${question.enunciado}" — o gabarito correto é "\${question.gabarito}".`)
+                    openChat(`Pode me explicar essa questão de forma clara e didática? "${question.enunciado}" — o gabarito correto é "${question.gabarito}".`)
                   }
                 >
                   <MessageCircleQuestion className="size-3.5" /> Perguntar à IA
@@ -257,10 +282,31 @@ export default function QuestoesPage() {
   const [subjectId, setSubjectId] = useState<number | null>(null);
   const [topicId, setTopicId] = useState<number | null>(null);
   const [mode, setMode] = useState<"list" | "resolve">("list");
+
+  // Modais de criação e importação
   const [formOpen, setFormOpen] = useState(false);
+  const [colarOpen, setColarOpen] = useState(false);
+  const [gerarIaOpen, setGerarIaOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+
   const [editing, setEditing] = useState<Question | null>(null);
   const [deleting, setDeleting] = useState<Question | null>(null);
+
+  // Consultar detalhes do tópico e matéria para contextualizar IA e Smart Paste
+  const topics = useQuery({
+    queryKey: ["topics", subjectId],
+    queryFn: () => api.listTopics(subjectId!),
+    enabled: subjectId != null,
+  });
+
+  const subjects = useQuery({
+    queryKey: ["subjects", planoId],
+    queryFn: () => api.listSubjects(planoId!),
+    enabled: planoId != null,
+  });
+
+  const activeTopic = topics.data?.find((t) => t.id === topicId);
+  const activeSubject = subjects.data?.find((s) => s.id === subjectId);
 
   const questions = useQuery({
     queryKey: ["questions", topicId],
@@ -301,34 +347,29 @@ export default function QuestoesPage() {
           {questions.error && (
             <ErrorState error={questions.error} onRetry={() => questions.refetch()} />
           )}
+
           {!questions.isLoading && !questions.error && list.length === 0 && (
             <EmptyState
               icon={ListChecks}
               title="Nenhuma questão neste assunto ainda"
-              description="Cadastre a primeira questão para começar a treinar."
+              description="Escolha a forma mais fácil e rápida para cadastrar suas questões:"
               action={
-                <div className="flex flex-wrap justify-center gap-2">
+                <div className="flex flex-wrap justify-center gap-2.5 max-w-lg mt-1">
                   <Button
                     size="sm"
-                    onClick={() => {
-                      setEditing(null);
-                      setFormOpen(true);
-                    }}
+                    className="gap-1.5 bg-study hover:bg-study/90 text-white font-semibold shadow-sm"
+                    onClick={() => setColarOpen(true)}
                   >
-                    <Plus className="size-4" /> Nova questão
+                    <ClipboardPaste className="size-4" /> Colar Texto Rápido
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-                    <FileUp className="size-4" /> Importar de PDF
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 border-study/40 text-study hover:bg-study/10"
+                    onClick={() => setGerarIaOpen(true)}
+                  >
+                    <Sparkles className="size-4" /> Gerar com IA
                   </Button>
-                </div>
-              }
-            />
-          )}
-          {!questions.isLoading && list.length > 0 && (
-            <>
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">{list.length} questão(ões)</p>
-                <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -336,41 +377,131 @@ export default function QuestoesPage() {
                       setEditing(null);
                       setFormOpen(true);
                     }}
+                    className="gap-1.5"
                   >
-                    <Plus className="size-4" /> Nova questão
+                    <Plus className="size-4" /> Nova Manual
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setImportOpen(true)}
+                    className="gap-1.5"
+                  >
                     <FileUp className="size-4" /> Importar de PDF
                   </Button>
-                  <Button size="sm" onClick={() => setMode("resolve")}>
-                    Resolver questões
+                </div>
+              }
+            />
+          )}
+
+          {!questions.isLoading && list.length > 0 && (
+            <>
+              {/* Barra de Ações com Ferramentas Rápidas */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface p-3 rounded-xl border border-border/80 shadow-xs">
+                <div className="flex items-center gap-2">
+                  <Badge variant="info">{list.length} questão(ões)</Badge>
+                  {activeTopic && (
+                    <span className="text-xs text-muted-foreground hidden sm:inline font-medium truncate max-w-xs">
+                      {activeTopic.nome}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    className="gap-1.5 bg-study/90 hover:bg-study text-white font-semibold text-xs"
+                    onClick={() => setColarOpen(true)}
+                  >
+                    <ClipboardPaste className="size-3.5" /> Colar Rápido
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 border-study/40 text-study hover:bg-study/10 text-xs"
+                    onClick={() => setGerarIaOpen(true)}
+                  >
+                    <Sparkles className="size-3.5" /> Gerar IA
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                    onClick={() => {
+                      setEditing(null);
+                      setFormOpen(true);
+                    }}
+                  >
+                    <Plus className="size-3.5" /> Manual
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                    onClick={() => setImportOpen(true)}
+                  >
+                    <FileUp className="size-3.5" /> PDF
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="gap-1.5 text-xs font-semibold"
+                    onClick={() => setMode("resolve")}
+                  >
+                    <Play className="size-3.5" /> Treinar
                   </Button>
                 </div>
               </div>
+
+              {/* Lista de Questões Cadastradas */}
               <div className="flex flex-col gap-2">
-                {list.map((q, i) => (
-                  <Card key={q.id} className="flex items-center gap-3 p-4">
-                    <span className="text-xs text-muted-foreground">#{i + 1}</span>
-                    <p className="flex-1 truncate text-sm text-foreground">{q.enunciado}</p>
-                    <button
-                      aria-label="Editar questão"
-                      onClick={() => {
-                        setEditing(q);
-                        setFormOpen(true);
-                      }}
-                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground"
-                    >
-                      <Pencil className="size-3.5" />
-                    </button>
-                    <button
-                      aria-label="Excluir questão"
-                      onClick={() => setDeleting(q)}
-                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
-                  </Card>
-                ))}
+                {list.map((q, i) => {
+                  const isCE =
+                    q.alternativas.length === 2 &&
+                    q.alternativas.some((a) => a.trim().toLowerCase() === "certo") &&
+                    q.alternativas.some((a) => a.trim().toLowerCase() === "errado");
+
+                  return (
+                    <Card key={q.id} className="flex items-center gap-3 p-3.5">
+                      <span className="text-xs font-semibold text-muted-foreground">#{i + 1}</span>
+                      <div className="flex flex-1 flex-col min-w-0">
+                        <p className="truncate text-sm font-medium text-foreground">{q.enunciado}</p>
+                        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-muted-foreground">
+                          {q.banca && <span>{q.banca}</span>}
+                          {q.ano && <span>• {q.ano}</span>}
+                          <span>• {isCE ? "Certo/Errado" : `${q.alternativas.length} alts`}</span>
+                          {q.gabarito && (
+                            <span className="text-emerald-400 font-semibold">
+                              • Gab: {q.gabarito}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        aria-label="Editar questão"
+                        onClick={() => {
+                          setEditing(q);
+                          setFormOpen(true);
+                        }}
+                        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground"
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+                      <button
+                        aria-label="Excluir questão"
+                        onClick={() => setDeleting(q)}
+                        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </Card>
+                  );
+                })}
               </div>
             </>
           )}
@@ -381,6 +512,7 @@ export default function QuestoesPage() {
         <ResolverQuestoes questions={list} onExit={() => setMode("list")} />
       )}
 
+      {/* Modal 1: Formulário Manual (com Modo Certo/Errado e Múltipla Escolha) */}
       {topicId != null && (
         <QuestaoForm
           key={editing?.id ?? "new"}
@@ -391,10 +523,37 @@ export default function QuestoesPage() {
         />
       )}
 
+      {/* Modal 2: Colar Texto Rápido (Smart Paste de sites e apostilas) */}
       {topicId != null && (
-        <ImportarPdfDialog open={importOpen} onClose={() => setImportOpen(false)} topicId={topicId} />
+        <ColarTextoRapidoDialog
+          open={colarOpen}
+          onClose={() => setColarOpen(false)}
+          topicId={topicId}
+          topicName={activeTopic?.nome}
+        />
       )}
 
+      {/* Modal 3: Gerar Questões Inéditas com IA */}
+      {topicId != null && (
+        <GerarQuestoesIaDialog
+          open={gerarIaOpen}
+          onClose={() => setGerarIaOpen(false)}
+          topicId={topicId}
+          topicName={activeTopic?.nome}
+          subjectName={activeSubject?.nome}
+        />
+      )}
+
+      {/* Modal 4: Importar de PDF (com Salvar Todas e Filtros) */}
+      {topicId != null && (
+        <ImportarPdfDialog
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+          topicId={topicId}
+        />
+      )}
+
+      {/* Diálogo de Confirmação de Exclusão */}
       <ConfirmDialog
         open={Boolean(deleting)}
         onClose={() => setDeleting(null)}
