@@ -85,8 +85,19 @@ export function AiChatProvider({ children }: { children: ReactNode }) {
       if (!isOpen) {
         setUnreadCount((c) => c + 1);
       }
-    } catch (err) {
-      setError("Erro ao se comunicar com a IA do Nexus. Tente novamente.");
+    } catch (err: any) {
+      const msg = err?.message || (typeof err === "string" ? err : "");
+      if (err?.status === 401 || msg.includes("Token") || msg.includes("autenticado")) {
+        setError("Sua sessão expirou ou não está autenticada. Faça login novamente para conversar com o Tutor IA.");
+      } else if (err?.status === 429 || msg.includes("quota") || msg.includes("limite")) {
+        setError("Limite temporário de requisições da IA atingido. Aguarde alguns instantes e tente novamente.");
+      } else if (err?.status === 503 || msg.includes("indisponível") || msg.includes("API")) {
+        setError("O serviço de inteligência artificial está temporariamente sobrecarregado. Tente em alguns segundos.");
+      } else if (msg) {
+        setError(msg);
+      } else {
+        setError("Erro ao se comunicar com a IA do Nexus. Tente novamente.");
+      }
     } finally {
       setIsLoading(false);
     }

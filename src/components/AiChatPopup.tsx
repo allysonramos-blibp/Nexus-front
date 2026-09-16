@@ -197,8 +197,22 @@ export function AiChatPopup() {
         )}
 
         {error && (
-          <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive text-center">
-            {error}
+          <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive text-center flex flex-col items-center gap-2">
+            <p>{error}</p>
+            {history.length > 0 && history[history.length - 1].role === "user" && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 text-[11px] px-2.5 border-destructive/40 text-destructive hover:bg-destructive/20"
+                onClick={() => {
+                  const lastUserMsg = history[history.length - 1].content;
+                  sendMessage(lastUserMsg);
+                }}
+              >
+                Tentar novamente
+              </Button>
+            )}
           </div>
         )}
       </div>
