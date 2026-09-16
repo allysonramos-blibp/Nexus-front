@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookOpen, Pencil, Plus, Target, Trash2 } from "lucide-react";
@@ -36,7 +36,7 @@ const emptyForm: StudyPlanRequest = {
   status: "PLANEJADO",
 };
 
-function PlanoDialog({
+export function PlanoDialog({
   open,
   onClose,
   plano,
@@ -62,6 +62,24 @@ function PlanoDialog({
       : emptyForm,
   );
 
+  useEffect(() => {
+    if (open) {
+      setForm(
+        plano
+          ? {
+              nome: plano.nome,
+              objetivo: plano.objetivo ?? "",
+              descricao: plano.descricao ?? "",
+              dataInicio: plano.dataInicio ?? "",
+              dataAlvo: plano.dataAlvo ?? "",
+              horasDisponiveis: plano.horasDisponiveis ?? undefined,
+              status: plano.status,
+            }
+          : emptyForm,
+      );
+    }
+  }, [open, plano]);
+
   const save = useMutation({
     mutationFn: () => {
       const body: StudyPlanRequest = {
@@ -74,6 +92,9 @@ function PlanoDialog({
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["study-plans"] });
+      if (plano) {
+        qc.invalidateQueries({ queryKey: ["study-plan", plano.id] });
+      }
       toast(plano ? "Plano atualizado." : "Plano criado.", "success");
       onClose();
     },

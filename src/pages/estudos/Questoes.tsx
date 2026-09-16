@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAiChat } from "@/contexts/AiChatContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -278,10 +278,23 @@ function ResolverQuestoes({
 export default function QuestoesPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
-  const [planoId, setPlanoId] = useState<number | null>(null);
-  const [subjectId, setSubjectId] = useState<number | null>(null);
-  const [topicId, setTopicId] = useState<number | null>(null);
-  const [mode, setMode] = useState<"list" | "resolve">("list");
+  const [searchParams] = useSearchParams();
+  const urlPlanId = searchParams.get("planId") ? Number(searchParams.get("planId")) : null;
+  const urlSubjectId = searchParams.get("subjectId") ? Number(searchParams.get("subjectId")) : null;
+  const urlTopicId = searchParams.get("topicId") ? Number(searchParams.get("topicId")) : null;
+  const urlMode = searchParams.get("mode") === "resolve" ? "resolve" : "list";
+
+  const [planoId, setPlanoId] = useState<number | null>(urlPlanId);
+  const [subjectId, setSubjectId] = useState<number | null>(urlSubjectId);
+  const [topicId, setTopicId] = useState<number | null>(urlTopicId);
+  const [mode, setMode] = useState<"list" | "resolve">(urlMode);
+
+  useEffect(() => {
+    if (urlPlanId && planoId !== urlPlanId) setPlanoId(urlPlanId);
+    if (urlSubjectId && subjectId !== urlSubjectId) setSubjectId(urlSubjectId);
+    if (urlTopicId && topicId !== urlTopicId) setTopicId(urlTopicId);
+    if (urlMode && mode !== urlMode) setMode(urlMode);
+  }, [urlPlanId, urlSubjectId, urlTopicId, urlMode]);
 
   // Modais de criação e importação
   const [formOpen, setFormOpen] = useState(false);
