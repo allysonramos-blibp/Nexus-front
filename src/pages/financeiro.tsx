@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -16,6 +16,7 @@ import {
   List,
   Pencil,
   PieChart,
+  PiggyBank,
   Plus,
   Search,
   Settings2,
@@ -52,6 +53,8 @@ import { Dialog, ConfirmDialog } from "@/components/ui/Dialog";
 import { SaldoChart } from "@/components/ui/SaldoChart";
 import { DonutChart, type DonutSlice } from "@/components/ui/DonutChart";
 import { CategoriasDialog } from "./financeiro-parts/CategoriasDialog";
+import { CaixinhasSection } from "@/components/CaixinhasSection";
+import { getCaixinhas, type Caixinha } from "@/lib/caixinhasStorage";
 
 const CATEGORY_FALLBACK_COLOR = "#6B7280";
 
@@ -784,6 +787,25 @@ function FinanceiroPage() {
   const [mesRef, setMesRef] = useState(() => new Date());
   const [tabFiltro, setTabFiltro] = useState<TabFiltro>("todas");
   const [searchQuery, setSearchQuery] = useState("");
+  const [abaPrincipal, setAbaPrincipal] = useState<"extrato" | "caixinhas">("extrato");
+  const [caixinhas, setCaixinhas] = useState<Caixinha[]>(() => getCaixinhas(userId || 1));
+
+  useEffect(() => {
+    if (userId) {
+      setCaixinhas(getCaixinhas(userId));
+    }
+    function handleUpdate() {
+      if (userId) {
+        setCaixinhas(getCaixinhas(userId));
+      }
+    }
+    window.addEventListener("nexus-caixinhas-updated", handleUpdate);
+    return () => window.removeEventListener("nexus-caixinhas-updated", handleUpdate);
+  }, [userId]);
+
+  const totalCaixinhas = useMemo(() => {
+    return caixinhas.reduce((acc, c) => acc + (Number(c.saldo) || 0), 0);
+  }, [caixinhas]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<FinancialTransaction | null>(null);
@@ -1192,8 +1214,99 @@ function FinanceiroPage() {
 
       {!isLoading && !error && (
         <>
-          {/* Card do Saldo e Gráfico */}
-          <Card className="border-fin/30 bg-fin/5">
+          {/* Navegação entre Extrato & Lançamentos e Caixinhas & Metas */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex rounded-xl border border-border bg-surface p-1 max-w-fit shadow-xs">
+              <button
+                type="button"
+                onClick={() => setAbaPrincipal("extrato")}
+                className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                  abaPrincipal === "extrato"
+                    ? "bg-surface-raised text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Wallet className="size-3.5 text-fin" />
+                <span>Extrato & Lançamentos</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAbaPrincipal("caixinhas")}
+                className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                  abaPrincipal === "caixinhas"
+                    ? "bg-surface-raised text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <PiggyBank className="size-3.5 text-fin" />
+                <span>Caixinhas ({brl(totalCaixinhas)})</span>
+                {totalCaixinhas > 0 && (
+                  <span className="size-2 rounded-full bg-fin animate-pulse" />
+                )}
+              </button>
+            </div>
+
+            {/* Resumo de Patrimônio Líquido Global (Conta + Caixinhas) */}
+            <div className="flex items-center gap-2 text-xs bg-surface-raised/80 border border-border/70 px-3 py-1.5 rounded-xl shadow-xs">
+              <span className="text-muted-foreground">Patrimônio Total:</span>
+              <span className="font-bold font-display text-foreground">{brl(saldoAtual + totalCaixinhas)}</span>
+              <span className="text-[10px] text-muted-foreground hidden sm:inline">
+                ({brl(saldoAtual)} em conta + {brl(totalCaixinhas)} guardados)
+              </span>
+            </div>
+          </div>
+
+          {abaPrincipal === "caixinhas" ? (
+            <CaixinhasSection
+              userId={userId || 1}
+              caixinhas={caixinhas}
+              onRefresh={() => setCaixinhas(getCaixinhas(userId || 1))}
+              onCreateTransaction={async (tipo, valor, descricao) => {
+                if (userId) {
+                  await api.createTransaction(userId, {
+                    tipo,
+                    valor,
+                    descricao,
+                    status: "CONCLUIDA",
+                    data: hojeStr,
+                  });
+                  qc.invalidateQueries({ queryKey: ["transactions", userId] });
+                  toast("Movimentação registrada no extrato da conta!", "success");
+                }
+              }}
+            />
+          ) : (
+            <>
+              {/* Card de Acesso Rápido às Caixinhas no modo Extrato */}
+              <div
+                onClick={() => setAbaPrincipal("caixinhas")}
+                className="rounded-xl border border-fin/30 bg-fin/5 p-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-fin/10 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-fin/15 text-fin border border-fin/20">
+                    <PiggyBank className="size-4.5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground flex items-center gap-2">
+                      <span>Caixinhas Separadas:</span>
+                      <span className="text-fin font-bold font-display">{brl(totalCaixinhas)}</span>
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {caixinhas.length} caixinha(s) com dinheiro reservado (ex: Reserva de Emergência). Clique para guardar ou resgatar.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs border-fin/30 text-fin hover:bg-fin/15 shrink-0"
+                >
+                  Abrir Caixinhas
+                </Button>
+              </div>
+
+              {/* Card do Saldo e Gráfico */}
+              <Card className="border-fin/30 bg-fin/5">
             <div className="grid grid-cols-3 gap-3 text-center">
               <div>
                 <p className="text-[11px] text-muted-foreground">Saldo Inicial</p>
@@ -1704,6 +1817,8 @@ function FinanceiroPage() {
               </ul>
             )}
           </Card>
+            </>
+          )}
         </>
       )}
 
