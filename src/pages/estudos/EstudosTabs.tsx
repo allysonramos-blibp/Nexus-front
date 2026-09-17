@@ -4,6 +4,7 @@ import { Tabs } from "@/components/ui/Tabs";
 export type EstudosTab =
   | "planos"
   | "questoes"
+  | "caderno-anotacoes"
   | "caderno-erros"
   | "revisoes"
   | "simulados"
@@ -13,6 +14,7 @@ export type EstudosTab =
 const ROUTES: Record<EstudosTab, string> = {
   planos: "/estudos",
   questoes: "/estudos/questoes",
+  "caderno-anotacoes": "/estudos/caderno-anotacoes",
   "caderno-erros": "/estudos/caderno-erros",
   revisoes: "/estudos/revisoes",
   simulados: "/estudos/simulados",
@@ -23,6 +25,7 @@ const ROUTES: Record<EstudosTab, string> = {
 const ITEMS: { value: EstudosTab; label: string }[] = [
   { value: "planos", label: "Meus Planos" },
   { value: "questoes", label: "Questões" },
+  { value: "caderno-anotacoes", label: "Caderno de Anotações" },
   { value: "caderno-erros", label: "Caderno de Erros" },
   { value: "revisoes", label: "Revisões" },
   { value: "simulados", label: "Simulados" },

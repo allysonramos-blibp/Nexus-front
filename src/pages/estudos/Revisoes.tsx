@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarClock, FileEdit, BookOpen, CheckCircle2, Sparkles } from "lucide-react";
+import { CalendarClock, FileEdit, BookOpen, CheckCircle2, Sparkles, BookMarked } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { api, errorReasonLabel, type StudyError } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
@@ -19,6 +20,7 @@ function isAtrasado(e: StudyError) {
 }
 
 export default function RevisoesPage() {
+  const navigate = useNavigate();
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["pending-reviews"],
     queryFn: api.listPendingReviews,
@@ -39,7 +41,7 @@ export default function RevisoesPage() {
 
       {!isLoading && !error && (
         <>
-          <Card className="flex items-center justify-between gap-3 p-4 bg-surface-raised/40">
+          <Card className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-surface-raised/40">
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-xl bg-study/15 text-study">
                 <CalendarClock className="size-5" />
@@ -54,15 +56,25 @@ export default function RevisoesPage() {
               </div>
             </div>
 
-            {ordenadas.length > 0 && (
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
               <Button
                 size="sm"
-                onClick={() => setRevisando(ordenadas[0])}
-                className="shrink-0 gap-1.5"
+                variant="outline"
+                onClick={() => navigate("/estudos/caderno-anotacoes")}
+                className="gap-1.5 text-xs shrink-0"
               >
-                <BookOpen className="size-3.5" /> Iniciar Revisão
+                <BookMarked className="size-3.5 text-study" /> Meu Caderno de Anotações
               </Button>
-            )}
+              {ordenadas.length > 0 && (
+                <Button
+                  size="sm"
+                  onClick={() => setRevisando(ordenadas[0])}
+                  className="shrink-0 gap-1.5 text-xs"
+                >
+                  <BookOpen className="size-3.5" /> Iniciar Revisão
+                </Button>
+              )}
+            </div>
           </Card>
 
           {ordenadas.length === 0 && (

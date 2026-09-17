@@ -26,6 +26,7 @@ const Planos = lazy(() => import("@/pages/estudos/Planos"));
 const PlanoDetalhe = lazy(() => import("@/pages/estudos/PlanoDetalhe"));
 const Questoes = lazy(() => import("@/pages/estudos/Questoes"));
 const CadernoDeErros = lazy(() => import("@/pages/estudos/CadernoDeErros"));
+const CadernoAnotacoes = lazy(() => import("@/pages/estudos/CadernoAnotacoes"));
 const Revisoes = lazy(() => import("@/pages/estudos/Revisoes"));
 const Simulados = lazy(() => import("@/pages/estudos/Simulados"));
 const SimuladoDetalhe = lazy(() => import("@/pages/estudos/SimuladoDetalhe"));
@@ -133,6 +134,16 @@ export default function App() {
                     <ProtectedRoute>
                       <ModuleUpgradeGuard moduleKey="estudos">
                         <CadernoDeErros />
+                      </ModuleUpgradeGuard>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/estudos/caderno-anotacoes"
+                  element={
+                    <ProtectedRoute>
+                      <ModuleUpgradeGuard moduleKey="estudos">
+                        <CadernoAnotacoes />
                       </ModuleUpgradeGuard>
                     </ProtectedRoute>
                   }
