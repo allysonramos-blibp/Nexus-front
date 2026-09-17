@@ -1290,6 +1290,16 @@ export const api = {
     );
   },
 
+  deleteWorkout: (
+    workoutId: number,
+  ) =>
+    request<void>(
+      `/workouts/${workoutId}`,
+      {
+        method: "DELETE",
+      },
+    ),
+
   getGoal: (
     userId: number,
   ) =>
