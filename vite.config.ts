@@ -45,6 +45,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -77,11 +80,13 @@ export default defineConfig({
         ],
       },
       devOptions: {
-        enabled: true,
-        type: "module",
+        enabled: false,
       },
     }),
   ],
   resolve: { alias: { "@": path.resolve(__dirname, "./src") } },
-  server: { port: 5173 },
+  server: {
+    port: 3000,
+    host: "0.0.0.0",
+  },
 });

@@ -6,6 +6,28 @@
     <title>Nexus — Gestão de Vida, Estudos & Finanças</title>
     <meta name="description" content="Finanças, estudo para o edital e treinos em um painel dark pensado para foco." />
     
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <script>
+      // Desativa e limpa service worker antigo que estiver travando a atualização do app
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (var i = 0; i < registrations.length; i++) {
+            registrations[i].unregister();
+          }
+        });
+      }
+      if ('caches' in window) {
+        caches.keys().then(function(keys) {
+          for (var j = 0; j < keys.length; j++) {
+            caches.delete(keys[j]);
+          }
+        });
+      }
+    </script>
+    
     <!-- PWA & Mobile Meta Tags -->
     <meta name="theme-color" content="#0b0f19" />
     <meta name="mobile-web-app-capable" content="yes" />
