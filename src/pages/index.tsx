@@ -289,35 +289,35 @@ function Today() {
             </div>
 
             {/* Linha de KPIs Adaptativos (apenas módulos liberados) */}
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 min-w-0">
               {/* Card 1: Tarefas */}
-              <div className="rounded-xl border border-border/70 bg-surface-raised/60 p-3.5">
+              <div className="rounded-xl border border-border/70 bg-surface-raised/60 p-3.5 min-w-0">
                 <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                   Tarefas
                   <Target className="size-3.5 text-dash" />
                 </p>
-                <p className="mt-2 font-display text-xl font-bold text-foreground">
+                <p className="mt-2 font-display text-xl font-bold text-foreground truncate">
                   {pendentes.length}{" "}
                   <span className="text-xs font-normal text-muted-foreground">
                     / {allTasks.length}
                   </span>
                 </p>
-                <p className="mt-1 text-[11px] text-muted-foreground">
+                <p className="mt-1 text-[11px] text-muted-foreground truncate">
                   {concluidas.length} concluídas
                 </p>
               </div>
 
               {/* Card 2: Estudos (somente se permitido) */}
               {canEstudos && (
-                <div className="rounded-xl border border-study/20 bg-study/5 p-3.5">
+                <div className="rounded-xl border border-study/20 bg-study/5 p-3.5 min-w-0">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-study flex items-center justify-between">
                     Edital Dominado
                     <Brain className="size-3.5 text-study" />
                   </p>
-                  <p className="mt-2 font-display text-xl font-bold text-foreground">
+                  <p className="mt-2 font-display text-xl font-bold text-foreground truncate">
                     {pctEdital}%
                   </p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
+                  <p className="mt-1 text-[11px] text-muted-foreground truncate">
                     {dominados} de {totalEdital} tópicos
                   </p>
                 </div>
@@ -325,18 +325,18 @@ function Today() {
 
               {/* Card 3: Treinos (somente se permitido) */}
               {canTreinos && (
-                <div className="rounded-xl border border-gym/20 bg-gym/5 p-3.5">
+                <div className="rounded-xl border border-gym/20 bg-gym/5 p-3.5 min-w-0">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-gym flex items-center justify-between">
                     Frequência Físico
                     <Dumbbell className="size-3.5 text-gym" />
                   </p>
-                  <p className="mt-2 font-display text-xl font-bold text-foreground">
+                  <p className="mt-2 font-display text-xl font-bold text-foreground truncate">
                     {feitosNaSemana}{" "}
                     <span className="text-xs font-normal text-muted-foreground">
                       / {metaSemanal || "4"}
                     </span>
                   </p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
+                  <p className="mt-1 text-[11px] text-muted-foreground truncate">
                     meta da semana
                   </p>
                 </div>
@@ -344,7 +344,7 @@ function Today() {
 
               {/* Card 4: Finanças (somente se permitido) */}
               {canFinancas && (
-                <div className="rounded-xl border border-fin/20 bg-fin/5 p-3.5">
+                <div className="rounded-xl border border-fin/20 bg-fin/5 p-3.5 min-w-0">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-fin flex items-center justify-between">
                     Saldo Atual
                     <Wallet className="size-3.5 text-fin" />
@@ -352,7 +352,7 @@ function Today() {
                   <p className="mt-2 font-display text-xl font-bold text-foreground truncate">
                     {brl(saldo)}
                   </p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
+                  <p className="mt-1 text-[11px] text-muted-foreground truncate">
                     {list.length} lançamentos
                   </p>
                 </div>
@@ -360,15 +360,15 @@ function Today() {
 
               {/* Card alternativo se o usuário tiver poucos módulos: Indicador de Revisões ou Status */}
               {canEstudos && !canTreinos && !canFinancas && (
-                <div className="rounded-xl border border-border/70 bg-surface-raised/60 p-3.5">
+                <div className="rounded-xl border border-border/70 bg-surface-raised/60 p-3.5 min-w-0">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                     Revisões Pendentes
                     <Clock className="size-3.5 text-amber-400" />
                   </p>
-                  <p className="mt-2 font-display text-xl font-bold text-foreground">
+                  <p className="mt-2 font-display text-xl font-bold text-foreground truncate">
                     {totalRevisoesPendentes}
                   </p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
+                  <p className="mt-1 text-[11px] text-muted-foreground truncate">
                     {totalRevisoesPendentes > 0 ? "Aguardando revisão" : "Em dia"}
                   </p>
                 </div>
@@ -384,58 +384,58 @@ function Today() {
           >
             {/* Coluna de Foco & Tarefas */}
             <Card
-              className={`flex flex-col gap-5 p-6 ${
+              className={`flex flex-col gap-5 p-4 sm:p-6 min-w-0 max-w-full overflow-hidden ${
                 canTreinos || canFinancas
                   ? "lg:col-span-2"
                   : "lg:col-span-7"
               }`}
             >
-              <div className="flex items-center justify-between">
-                <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-                  <Zap className="size-5 text-dash" />
-                  Foco do Dia
+              <div className="flex items-center justify-between gap-2 min-w-0">
+                <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground truncate min-w-0">
+                  <Zap className="size-5 text-dash shrink-0" />
+                  <span>Foco do Dia</span>
                 </h2>
-                <span className="rounded-full bg-surface-raised px-3 py-1 text-xs text-muted-foreground border border-border">
+                <span className="rounded-full bg-surface-raised px-2.5 sm:px-3 py-1 text-xs text-muted-foreground border border-border shrink-0 whitespace-nowrap">
                   {pendentes.length} pendentes
                 </span>
               </div>
 
               {foco ? (
-                <div className="rounded-xl border border-dash/40 bg-dash/10 p-5 sm:p-6 transition-all">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs uppercase tracking-[0.2em] font-semibold text-dash">
+                <div className="rounded-xl border border-dash/40 bg-dash/10 p-4 sm:p-6 transition-all min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs uppercase tracking-[0.2em] font-semibold text-dash shrink-0">
                       Faça isto agora
                     </p>
-                    <span className="text-[11px] font-medium text-muted-foreground bg-surface px-2 py-0.5 rounded border border-border">
+                    <span className="text-[11px] font-medium text-muted-foreground bg-surface px-2 py-0.5 rounded border border-border shrink-0 whitespace-nowrap">
                       Prioridade {priorityLabel[foco.prioridade]}
                     </span>
                   </div>
-                  <p className="mt-3 font-display text-xl sm:text-2xl font-semibold text-foreground leading-snug">
+                  <p className="mt-3 font-display text-lg sm:text-2xl font-semibold text-foreground leading-snug break-words">
                     {foco.titulo}
                   </p>
                   {foco.descricao && (
-                    <p className="mt-2 text-xs text-muted-foreground line-clamp-2">
+                    <p className="mt-2 text-xs text-muted-foreground line-clamp-2 break-words">
                       {foco.descricao}
                     </p>
                   )}
-                  <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                  <div className="mt-4 flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-muted-foreground">
                     {foco.dataLimite && (
                       <span className="inline-flex items-center gap-1.5">
-                        <Clock className="size-3.5" /> Prazo: {foco.dataLimite}
+                        <Clock className="size-3.5 shrink-0" /> Prazo: {foco.dataLimite}
                       </span>
                     )}
                     {foco.ehTopicoEdital && (
                       <span className="inline-flex items-center gap-1.5 text-study">
-                        <Brain className="size-3.5" /> Tópico do Edital
+                        <Brain className="size-3.5 shrink-0" /> Tópico do Edital
                       </span>
                     )}
                   </div>
                   <Button
                     onClick={() => complete.mutate(foco)}
                     loading={complete.isPending}
-                    className="mt-5 w-full sm:w-auto bg-dash hover:opacity-90 text-xs font-semibold text-white px-6"
+                    className="mt-5 w-full sm:w-auto bg-dash hover:opacity-90 text-xs font-semibold text-white px-6 shadow-sm"
                   >
-                    <Check className="size-3.5 mr-1.5" /> Concluir Tarefa
+                    <Check className="size-3.5 mr-1.5 shrink-0" /> Concluir Tarefa
                   </Button>
                 </div>
               ) : (
@@ -454,15 +454,15 @@ function Today() {
 
               {/* Lista das próximas tarefas */}
               {restantes.length > 0 && (
-                <div className="mt-2 flex flex-col gap-2">
+                <div className="mt-2 flex flex-col gap-2 min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                     Próximas no radar
                   </p>
-                  <ul className="flex flex-col gap-2">
+                  <ul className="flex flex-col gap-2 min-w-0">
                     {restantes.map((t) => (
                       <li
                         key={t.id}
-                        className="flex items-center gap-3 rounded-lg border border-border/70 bg-surface-raised px-4 py-3 transition-colors hover:border-border"
+                        className="flex items-center gap-2.5 sm:gap-3 rounded-lg border border-border/70 bg-surface-raised px-3 sm:px-4 py-3 transition-colors hover:border-border min-w-0"
                       >
                         <button
                           onClick={() => complete.mutate(t)}
@@ -471,10 +471,10 @@ function Today() {
                         >
                           <Check className="size-3.5" />
                         </button>
-                        <span className="flex-1 text-xs sm:text-sm font-medium text-foreground truncate">
+                        <span className="flex-1 min-w-0 text-xs sm:text-sm font-medium text-foreground truncate">
                           {t.titulo}
                         </span>
-                        <span className="text-[11px] text-muted-foreground shrink-0">
+                        <span className="text-[11px] text-muted-foreground shrink-0 whitespace-nowrap">
                           {t.dataLimite ?? priorityLabel[t.prioridade]}
                         </span>
                       </li>
@@ -486,7 +486,7 @@ function Today() {
 
             {/* Painel Lateral Direito (renderizado estritamente conforme permissões) */}
             <div
-              className={`flex flex-col gap-5 ${
+              className={`flex flex-col gap-5 min-w-0 ${
                 canTreinos || canFinancas ? "" : "lg:col-span-5"
               }`}
             >

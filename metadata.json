@@ -1,0 +1,6 @@
+{
+  "name": "Nexus — Gestão de Vida, Estudos & Finanças",
+  "description": "Finanças, estudo para o edital e treinos em um painel pensado para foco.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

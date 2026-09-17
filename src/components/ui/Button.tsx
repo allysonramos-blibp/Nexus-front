@@ -6,7 +6,7 @@ export type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive" | 
 export type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-dash text-primary-foreground hover:opacity-90",
+  primary: "bg-dash text-white hover:opacity-90",
   secondary: "bg-surface-raised text-foreground hover:bg-accent",
   outline: "border border-border bg-transparent text-foreground hover:bg-surface-raised",
   ghost: "bg-transparent text-muted-foreground hover:bg-surface-raised hover:text-foreground",
