@@ -3,13 +3,11 @@ import { NotificationCenterModal } from "@/components/NotificationCenterModal";
 import { useNotificationScheduler } from "@/lib/notifications";
 import { useState } from "react";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
-import { useAiChat } from "@/contexts/AiChatContext";
 import { AiChatPopup, AiChatFab } from "@/components/AiChatPopup";
 import { Link, useNavigate } from "@/lib/router-compat";
 import { useEffect } from "react";
 import { 
   Bell,
-  Bot, 
   Brain, 
   Dumbbell, 
   LayoutDashboard, 
@@ -39,7 +37,6 @@ export function AppShell({
 }) {
   const { user, ready, signOut } = useAuth();
   const navigate = useNavigate();
-  const { openChat } = useAiChat();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   useNotificationScheduler();
 
@@ -110,14 +107,6 @@ export function AppShell({
     },
     { to: "/tarefas", label: "Tarefas", icon: ListChecks, accent: "text-dash", visible: true },
     { to: "/planos", label: "Planos & Preços", icon: Sparkles, accent: "text-dash", visible: true },
-    { 
-      to: "/ia", 
-      label: "IA", 
-      icon: Bell,
-  Bot, 
-      accent: "text-dash", 
-      visible: isMasterAdmin || user.moduloIaExtracao !== false 
-    },
     { to: "/perfil", label: "Perfil", icon: User, accent: "text-muted-foreground", visible: true },
     // Apenas allysonr510@gmail.com ou ROLE_ADMIN vê o Painel Admin!
     { 
@@ -154,36 +143,18 @@ export function AppShell({
             </button>
           </div>
 
-          {navItems.map((item) => {
-            if (item.to === "/ia") {
-              return (
-                <button
-                  key={item.to}
-                  type="button"
-                  onClick={() => openChat()}
-                  className="flex w-full items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground cursor-pointer"
-                >
-                  <item.icon className={`size-4 ${item.accent}`} />
-                  {item.label}
-                  <span className="ml-auto rounded-full bg-study/15 px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider text-study border border-study/20">
-                    Popup
-                  </span>
-                </button>
-              );
-            }
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                activeOptions={{ exact: item.to === "/" }}
-                className="flex items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground"
-                activeProps={{ className: "bg-surface-raised text-foreground font-semibold" }}
-              >
-                <item.icon className={`size-4 ${item.accent}`} />
-                {item.label}
-              </Link>
-            );
-          })}
+          {navItems.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              activeOptions={{ exact: item.to === "/" }}
+              className="flex items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground"
+              activeProps={{ className: "bg-surface-raised text-foreground font-semibold" }}
+            >
+              <item.icon className={`size-4 ${item.accent}`} />
+              {item.label}
+            </Link>
+          ))}
         </div>
 
         <div>
@@ -226,7 +197,7 @@ export function AppShell({
         </div>
       </main>
 
-      <BottomNav items={navItems} onOpenAi={() => openChat()} />
+      <BottomNav items={navItems} />
       <AiChatFab />
       <AiChatPopup />
       <OfflineIndicator />
