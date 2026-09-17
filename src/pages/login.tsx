@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { api, DEFAULT_API_URL, getApiBaseUrl, isMixedContent, pingApi, setApiBaseUrl } from "@/lib/api";
+import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/contexts/ToastContext";
 import { Button } from "@/components/ui/Button";
@@ -17,31 +17,9 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
-  const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
-  const [blocked, setBlocked] = useState(false);
 
   const redirectTo = (location.state as { from?: string } | null)?.from ?? "/";
 
-  useEffect(() => {
-    setApiUrl(getApiBaseUrl());
-    setBlocked(isMixedContent());
-  }, []);
-
-  async function testConnection() {
-    setApiBaseUrl(apiUrl);
-    setBlocked(isMixedContent(apiUrl));
-    setTesting(true);
-    setTestResult(null);
-    try {
-      setTestResult({ ok: true, msg: await pingApi(apiUrl) });
-    } catch (err) {
-      setTestResult({ ok: false, msg: err instanceof Error ? err.message : "Falhou" });
-    } finally {
-      setTesting(false);
-    }
-  }
 
   useEffect(() => {
     if (ready && user) navigate(redirectTo, { replace: true });
@@ -135,41 +113,6 @@ function LoginPage() {
           </Button>
         </form>
 
-        <details className="mt-6 rounded-lg border border-border bg-surface-raised p-3 text-xs" open={blocked}>
-          <summary className="cursor-pointer text-muted-foreground">Conexão com a API</summary>
-          <label className="mt-3 block text-muted-foreground" htmlFor="apiUrl">
-            URL base
-          </label>
-          <input
-            id="apiUrl"
-            value={apiUrl}
-            onChange={(e) => setApiUrl(e.target.value)}
-            spellCheck={false}
-            className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs outline-none focus:border-dash"
-          />
-          <button
-            type="button"
-            onClick={testConnection}
-            disabled={testing}
-            className="mt-2 w-full rounded-lg border border-dash/40 bg-dash/10 py-2 font-semibold text-dash disabled:opacity-50"
-          >
-            {testing ? "Testando…" : "Salvar e testar conexão"}
-          </button>
-          {testResult && (
-            <p className={`mt-2 ${testResult.ok ? "text-fin" : "text-destructive"}`}>
-              {testResult.msg}
-            </p>
-          )}
-          {blocked && (
-            <p className="mt-2 leading-relaxed text-muted-foreground">
-              Este preview roda em HTTPS, então o navegador bloqueia chamadas para{" "}
-              <code>http://localhost</code>. Exponha sua API por HTTPS (ex.:{" "}
-              <code>ngrok http 8080</code>) e cole a URL acima, terminando em{" "}
-              <code>/api</code>. No Spring, libere CORS para{" "}
-              <code>{typeof window !== "undefined" ? window.location.origin : ""}</code>.
-            </p>
-          )}
-        </details>
 
         <button
           onClick={() => {
