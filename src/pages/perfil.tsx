@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { CircleUserRound, CheckCircle2, XCircle, LogOut, Shield, Sparkles, FileText, BellRing, Presentation, Download } from "lucide-react";
+import { Link } from "react-router-dom";
+import { CircleUserRound, CheckCircle2, XCircle, LogOut, Shield, Sparkles, FileText, BellRing, Presentation, Download, Share2 } from "lucide-react";
 import { ExecutiveReportModal } from "@/components/ExecutiveReportModal";
 import { NotificationCenterModal } from "@/components/NotificationCenterModal";
 import { AppShell } from "@/components/AppShell";
@@ -203,6 +204,12 @@ function PerfilPage() {
           >
             <FileText className="size-3.5 text-dash" /> Abrir no Navegador
           </a>
+          <Link
+            to="/marketing"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors text-indigo-400"
+          >
+            <Share2 className="size-3.5" /> Kit de Divulgação & Redes Sociais
+          </Link>
         </div>
       </Card>
 

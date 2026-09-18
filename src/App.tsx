@@ -29,6 +29,7 @@ const Revisoes = lazy(() => import("@/pages/estudos/Revisoes"));
 const Simulados = lazy(() => import("@/pages/estudos/Simulados"));
 const SimuladoDetalhe = lazy(() => import("@/pages/estudos/SimuladoDetalhe"));
 const Desempenho = lazy(() => import("@/pages/estudos/Desempenho"));
+const Marketing = lazy(() => import("@/pages/marketing"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -227,6 +228,8 @@ export default function App() {
                     </AdminRoute>
                   }
                 />
+                <Route path="/marketing" element={<Marketing />} />
+                <Route path="/social" element={<Marketing />} />
                 <Route
                   path="*"
                   element={
