@@ -228,8 +228,22 @@ export default function App() {
                     </AdminRoute>
                   }
                 />
-                <Route path="/marketing" element={<Marketing />} />
-                <Route path="/social" element={<Marketing />} />
+                <Route
+                  path="/marketing"
+                  element={
+                    <AdminRoute>
+                      <Marketing />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/social"
+                  element={
+                    <AdminRoute>
+                      <Marketing />
+                    </AdminRoute>
+                  }
+                />
                 <Route
                   path="*"
                   element={

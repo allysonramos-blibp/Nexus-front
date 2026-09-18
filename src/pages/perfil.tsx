@@ -171,47 +171,49 @@ function PerfilPage() {
         </Card>
       </div>
 
-      <Card className="space-y-3 border-dash/30 bg-surface">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-dash/15 text-dash">
-              <Presentation className="size-4" />
-            </span>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Apresentação da Arquitetura do Sistema (PDF)</h3>
-              <p className="text-xs text-muted-foreground">Dossiê técnico em slides executivos A4 (Frontend SPA/PWA + Backend Spring Boot)</p>
+      {isMasterAdmin && (
+        <Card className="space-y-3 border-dash/30 bg-surface">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 rounded-xl bg-dash/15 text-dash">
+                <Presentation className="size-4" />
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Apresentação da Arquitetura do Sistema (PDF)</h3>
+                <p className="text-xs text-muted-foreground">Dossiê técnico em slides executivos A4 (Visível apenas para seu perfil)</p>
+              </div>
             </div>
+            <Badge variant="info">Slide Deck A4</Badge>
           </div>
-          <Badge variant="info">Slide Deck A4</Badge>
-        </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          Baixe a apresentação técnica completa do ecossistema Nexus contendo topologia distribuída, stack React 19/Vite/Tailwind v4, Spring Boot 4/Java 21, modelos relacionais PostgreSQL, pipeline de OCR de bancas de concurso e matriz de endpoints.
-        </p>
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => downloadArchitecturePdf()}
-            className="text-xs gap-1.5"
-          >
-            <Download className="size-3.5" /> Baixar Apresentação da Arquitetura (PDF)
-          </Button>
-          <a
-            href="/nexus-arquitetura-completa.pdf"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-border bg-surface-raised hover:bg-border transition-colors text-foreground"
-          >
-            <FileText className="size-3.5 text-dash" /> Abrir no Navegador
-          </a>
-          <Link
-            to="/marketing"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors text-indigo-400"
-          >
-            <Share2 className="size-3.5" /> Kit de Divulgação & Redes Sociais
-          </Link>
-        </div>
-      </Card>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Baixe a apresentação técnica completa do ecossistema Nexus contendo topologia distribuída, stack React 19/Vite/Tailwind v4, Spring Boot 4/Java 21, modelos relacionais PostgreSQL, pipeline de OCR de bancas de concurso e matriz de endpoints.
+          </p>
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => downloadArchitecturePdf()}
+              className="text-xs gap-1.5"
+            >
+              <Download className="size-3.5" /> Baixar Apresentação da Arquitetura (PDF)
+            </Button>
+            <a
+              href="/nexus-arquitetura-completa.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-border bg-surface-raised hover:bg-border transition-colors text-foreground"
+            >
+              <FileText className="size-3.5 text-dash" /> Abrir no Navegador
+            </a>
+            <Link
+              to="/marketing"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors text-indigo-400"
+            >
+              <Share2 className="size-3.5" /> Kit de Divulgação & Redes Sociais
+            </Link>
+          </div>
+        </Card>
+      )}
 
       <Card className="space-y-3">
         <div className="flex items-center gap-2">
