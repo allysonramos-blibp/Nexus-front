@@ -92,7 +92,7 @@ function TopicRow({
       </div>
 
       <div className="flex items-center gap-1.5 flex-wrap justify-end shrink-0">
-        {/* Treinar questões diretamente */}
+
         <Link
           to={`/estudos/questoes?planId=${planId}&subjectId=${subjectId}&topicId=${topic.id}&mode=resolve`}
           className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
@@ -102,7 +102,6 @@ function TopicRow({
           <span>Treinar</span>
         </Link>
 
-        {/* Gerar questões com IA para este tópico */}
         <button
           type="button"
           onClick={() => setGerarIaOpen(true)}
@@ -113,7 +112,6 @@ function TopicRow({
           <span className="text-[11px]">IA</span>
         </button>
 
-        {/* Colar questões */}
         <button
           type="button"
           onClick={() => setColarOpen(true)}
@@ -124,7 +122,6 @@ function TopicRow({
           <span className="text-[11px]">Colar</span>
         </button>
 
-        {/* Editar */}
         <button
           aria-label={`Editar ${topic.nome}`}
           onClick={onEdit}
@@ -134,7 +131,6 @@ function TopicRow({
           <Pencil className="size-3.5" />
         </button>
 
-        {/* Excluir */}
         <button
           aria-label={`Excluir ${topic.nome}`}
           onClick={() => setConfirming(true)}
@@ -278,7 +274,7 @@ function SubjectCard({
 
   return (
     <Card className="transition-all hover:border-border">
-      {/* Cabeçalho da Matéria - Desenhado para não encavalar no mobile */}
+
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2 min-w-0">
           <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -379,7 +375,6 @@ function SubjectCard({
           )}
         </div>
 
-        {/* Linha de ferramentas da matéria */}
         {!editingSubject && (
           <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-border/40">
             <Button
@@ -424,7 +419,6 @@ function SubjectCard({
         )}
       </div>
 
-      {/* Lista expandida de assuntos */}
       {expanded && (
         <div className="mt-3 border-t border-border/70 pt-3">
           {topics.isLoading && <Loading label="Carregando assuntos…" />}
@@ -485,7 +479,6 @@ function SubjectCard({
         </div>
       )}
 
-      {/* Diálogos */}
       <ConfirmDialog
         open={deletingSubject}
         onClose={() => setDeletingSubject(false)}
@@ -647,7 +640,6 @@ export default function PlanoDetalhePage() {
     }
   };
 
-
   const createSubject = useMutation({
     mutationFn: async () => {
       const subject = await api.createSubject(planId, { nome: newSubjectName.trim() });
@@ -701,7 +693,6 @@ export default function PlanoDetalhePage() {
       {plano.isLoading && <Loading />}
       {plano.error && <ErrorState error={plano.error} onRetry={() => plano.refetch()} />}
 
-      {/* Cartão de Resumo do Plano e Progresso */}
       {plano.data && (
         <Card className="flex flex-col gap-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -724,7 +715,6 @@ export default function PlanoDetalhePage() {
               )}
             </div>
 
-            {/* Ações do cabeçalho do plano */}
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 to={`/estudos/questoes?planId=${planId}&mode=resolve`}
@@ -744,7 +734,6 @@ export default function PlanoDetalhePage() {
             </div>
           </div>
 
-          {/* Barra de Progresso Visual e Métricas */}
           <div className="flex flex-col gap-2 rounded-xl bg-surface-raised/50 p-3 border border-border/60">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-foreground">Progresso do Edital</span>
@@ -800,7 +789,6 @@ export default function PlanoDetalhePage() {
         </Card>
       )}
 
-      {/* Barra de Matérias e Ações */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
@@ -849,7 +837,6 @@ export default function PlanoDetalhePage() {
           </div>
         </div>
 
-        {/* Campo de Busca Rápida de Matérias e Assuntos */}
         {(subjects.data?.length ?? 0) > 0 && (
           <div className="relative">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -912,7 +899,6 @@ export default function PlanoDetalhePage() {
         </div>
       )}
 
-      {/* Diálogo de Nova Matéria com Checkbox de Criar "Geral" automático */}
       <Dialog
         open={newSubjectOpen}
         onClose={() => setNewSubjectOpen(false)}
@@ -953,7 +939,6 @@ export default function PlanoDetalhePage() {
         {createSubject.error && <ErrorState error={createSubject.error} compact className="mt-2" />}
       </Dialog>
 
-      {/* Diálogo de Edição do Plano */}
       {plano.data && (
         <PlanoDialog
           open={editPlanoOpen}
@@ -962,7 +947,6 @@ export default function PlanoDetalhePage() {
         />
       )}
 
-      {/* Diálogo de Estruturar Edital com IA */}
       {Number.isFinite(planId) && (
         <SugerirEditalIaDialog
           open={sugerirEditalOpen}
@@ -973,7 +957,6 @@ export default function PlanoDetalhePage() {
         />
       )}
 
-      {/* Diálogos de Importação de PDF e Gabarito */}
       {Number.isFinite(planId) && (
         <>
           <PlanImportarPdfDialog
@@ -988,7 +971,7 @@ export default function PlanoDetalhePage() {
           />
         </>
       )}
-      {/* Diálogo de Gerenciamento e Exclusão de Matérias em Lote */}
+
       <Dialog
         open={bulkDeleteOpen}
         onClose={() => !deletingProgress && setBulkDeleteOpen(false)}
@@ -1095,7 +1078,7 @@ export default function PlanoDetalhePage() {
                             Suspeita (PDF)
                           </Badge>
                         )}
-                        
+
                       </div>
                     </div>
                   );

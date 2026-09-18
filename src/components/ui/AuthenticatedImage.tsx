@@ -3,11 +3,6 @@ import { getAuthToken } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
-/**
- * O backend exige JWT até para servir a imagem do treino (ownership checado no
- * endpoint) — uma tag <img src="..."> comum não consegue mandar o header
- * Authorization, então buscamos com fetch() e trocamos por um object URL local.
- */
 export function AuthenticatedImage({
   src,
   alt,

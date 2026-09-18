@@ -47,28 +47,24 @@ export function ExecutiveReportModal({
   const hasTreinos = user?.moduloTreinos !== false || isMasterAdmin;
   const hasFinancas = user?.moduloFinancas !== false || isMasterAdmin;
 
-  // Carregar dados de tarefas
   const tasksQuery = useQuery<Task[]>({
     queryKey: ["tasks", userId, "report"],
     queryFn: () => api.listTasks(userId!),
     enabled: isOpen && !!userId,
   });
 
-  // Carregar revisões pendentes se permitido
   const pendingReviewsQuery = useQuery<PendingReviewResponse | null>({
     queryKey: ["study-pending-reviews-report"],
     queryFn: () => api.listPendingReviews().catch(() => null),
     enabled: isOpen && !!userId && hasEstudos,
   });
 
-  // Carregar treinos se permitido
   const workoutsQuery = useQuery<Workout[]>({
     queryKey: ["workouts", userId, "report"],
     queryFn: () => api.listWorkouts(userId!),
     enabled: isOpen && !!userId && hasTreinos,
   });
 
-  // Carregar transações se permitido
   const transactionsQuery = useQuery<FinancialTransaction[]>({
     queryKey: ["transactions", userId, "report"],
     queryFn: () => api.listTransactions(userId!),
@@ -81,7 +77,6 @@ export function ExecutiveReportModal({
   const allWorkouts = workoutsQuery.data ?? [];
   const allTransactions = transactionsQuery.data ?? [];
 
-  // 1. Cálculos de Tarefas
   const totalTasks = allTasks.length;
   const concludedTasks = allTasks.filter((t: Task) => isTaskConcluded(t)).length;
   const pendingTasks = totalTasks - concludedTasks;
@@ -91,7 +86,6 @@ export function ExecutiveReportModal({
     (t: Task) => !isTaskConcluded(t) && t.prioridade === "ALTA"
   ).length;
 
-  // 2. Cálculos de Estudos
   const totalEdital = allTasks.filter((t: Task) => t.ehTopicoEdital).length;
   const dominatedTopics = allTasks.filter(
     (t: Task) => t.ehTopicoEdital && t.status === "DOMINADO"
@@ -100,7 +94,6 @@ export function ExecutiveReportModal({
     totalEdital > 0 ? Math.round((dominatedTopics / totalEdital) * 100) : 0;
   const pendingRevCount = pendingReviewsQuery.data?.totalPendentes ?? 0;
 
-  // 3. Cálculos de Treinos
   const now = new Date();
   const day = (now.getDay() + 6) % 7;
   const startOfWeek = new Date(now);
@@ -112,7 +105,6 @@ export function ExecutiveReportModal({
   }).length;
   const lastWorkout = allWorkouts[0]?.grupoMuscular || "Sem registro";
 
-  // 4. Cálculos de Finanças
   const income = allTransactions
     .filter((t: FinancialTransaction) => t.tipo === "RECEITA")
     .reduce((acc: number, t: FinancialTransaction) => acc + Number(t.valor), 0);
@@ -121,7 +113,6 @@ export function ExecutiveReportModal({
     .reduce((acc: number, t: FinancialTransaction) => acc + Number(t.valor), 0);
   const balance = income - expense;
 
-  // Diagnóstico Inteligente
   let diagnostic = "Desempenho consistente registrado no período.";
   if (taskCompletionRate >= 75) {
     diagnostic =
@@ -202,7 +193,7 @@ export function ExecutiveReportModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-sm overflow-y-auto">
       <div className="relative w-full max-w-3xl rounded-2xl bg-surface border border-border shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
-        {/* Modal Header */}
+
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/80 bg-surface-raised/40">
           <div className="flex items-center gap-2.5">
             <span className="p-2 rounded-xl bg-dash/15 text-dash">
@@ -225,12 +216,11 @@ export function ExecutiveReportModal({
           </button>
         </div>
 
-        {/* Modal Body / Report Preview */}
         <div
           id="nexus-executive-report-preview"
           className="p-6 space-y-6 max-h-[72vh] overflow-y-auto"
         >
-          {/* Header Card */}
+
           <div className="p-4 rounded-xl border border-border/70 bg-surface-raised/60 flex flex-wrap items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -258,7 +248,6 @@ export function ExecutiveReportModal({
             </span>
           </div>
 
-          {/* Section 1: Produtividade & Tarefas */}
           <div className="space-y-2.5">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="size-4 text-dash" />
@@ -301,7 +290,6 @@ export function ExecutiveReportModal({
             </div>
           </div>
 
-          {/* Section 2: Estudos (se liberado) */}
           {hasEstudos && (
             <div className="space-y-2.5">
               <div className="flex items-center gap-2">
@@ -337,7 +325,6 @@ export function ExecutiveReportModal({
             </div>
           )}
 
-          {/* Section 3: Treinos (se liberado) */}
           {hasTreinos && (
             <div className="space-y-2.5">
               <div className="flex items-center gap-2">
@@ -367,7 +354,6 @@ export function ExecutiveReportModal({
             </div>
           )}
 
-          {/* Section 4: Finanças (se liberado) */}
           {hasFinancas && (
             <div className="space-y-2.5">
               <div className="flex items-center gap-2">
@@ -401,7 +387,6 @@ export function ExecutiveReportModal({
             </div>
           )}
 
-          {/* AI Diagnostic Box */}
           <div className="p-4 rounded-xl border border-dash/30 bg-dash/5 space-y-1.5">
             <div className="flex items-center gap-2 text-dash text-xs font-semibold uppercase tracking-wider">
               <TrendingUp className="size-3.5" /> Diagnóstico da Inteligência Nexus
@@ -412,7 +397,6 @@ export function ExecutiveReportModal({
           </div>
         </div>
 
-        {/* Modal Footer Actions */}
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-t border-border/80 bg-surface-raised/30">
           <p className="text-xs text-muted-foreground hidden sm:block">
             Formato vetor A4 pronto para arquivo ou impressão

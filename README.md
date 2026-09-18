@@ -1,6 +1,6 @@
 # 🚀 Nexus Web — Ecossistema de Alta Performance (Frontend PWA)
 
-> **Plataforma unificada de alta performance para gestão de estudos para concursos, produtividade diária, rotina de treinos e finanças pessoais.**
+> **Plataforma unificada de alta densidade para gestão de estudos para concursos públicos, produtividade diária, treinos de musculação e finanças pessoais com Caixinhas & Metas.**
 
 <p align="center">
   <img src="https://img.shields.io/badge/React-19.0.0-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
@@ -18,300 +18,240 @@
 ## 📌 Sumário
 
 1. [Visão Geral](#-visão-geral)
-2. [Diferenciais & Funcionalidades](#-diferenciais--funcionalidades)
-3. [Arquitetura & Tecnologias](#-arquitetura--tecnologias)
-4. [Telas & Módulos do Sistema](#-telas--módulos-do-sistema)
-5. [PWA & Notificações Nativas](#-pwa--notificações-nativas)
-6. [Gerador de Relatórios Executivos em PDF](#-gerador-de-relatórios-executivos-em-pdf)
-7. [Como Executar Localmente](#-como-executar-localmente)
-8. [Variáveis de Ambiente](#-variáveis-de-ambiente)
-9. [Build & Deploy](#-build--deploy)
-10. [Segurança & Autenticação](#-segurança--autenticação)
-11. [Estrutura de Pastas](#-estrutura-de-pastas)
+2. [Módulos do Sistema](#-módulos-do-sistema)
+3. [Arquitetura & Estrutura de Pastas](#-arquitetura--estrutura-de-pastas)
+4. [Auditoria & Análise de Segurança](#-auditoria--análise-de-segurança)
+5. [Caixinhas & Metas Financeiras](#-caixinhas--metas-financeiras)
+6. [PWA, Cache & Notificações](#-pwa-cache--notificações)
+7. [Relatórios Executivos em PDF](#-relatórios-executivos-em-pdf)
+8. [Como Executar Localmente](#-como-executar-localmente)
+9. [Variáveis de Ambiente](#-variáveis-de-ambiente)
+10. [Build & Deploy na Vercel](#-build--deploy-na-vercel)
+11. [Documentação do Backend](#-documentação-do-backend)
 
 ---
 
 ## 🌟 Visão Geral
 
-O **Nexus Web** é uma Single Page Application (SPA) progressiva de alta densidade visual e técnica. Projetado para quem busca alto rendimento nos estudos e na vida pessoal, o Nexus consolida em uma única interface intuitiva:
+O **Nexus Web** é uma Single Page Application (SPA) progressiva de alta performance concebida para concurseiros, atletas e pessoas que buscam disciplina e alta produtividade.
 
-- 🎯 **Rotina de Produtividade:** Foco do dia, checklist de prioridades e gestão de prazos.
-- 📚 **Preparação para Concursos Públicos:** Editais verticalizados, resolução de questões com gabarito comentado, caderno de erros inteligente, repetição espaçada e simulados completos com cronômetro.
-- 🏋️ **Consistência em Treinos:** Frequência semanal, divisão muscular (ABC/ABCD), controle de séries/repetições/cargas e registro fotográfico.
-- 💰 **Controle Financeiro:** Balanço de receitas, despesas, contas a pagar/receber e saldo consolidado.
-- 🤖 **Copilot de Inteligência Artificial:** Tutor inteligente flutuante disponível em qualquer tela e extração automática de questões a partir de PDFs de bancas examinadoras.
-- 📑 **Relatórios Executivos:** Exportação em vetor A4 para acompanhamento gerencial e auditoria de progresso pessoal.
-
----
-
-## ✨ Diferenciais & Funcionalidades
-
-### 1. 🎯 Dashboard Dinâmico (`/`)
-- Saudação inteligente personalizada com cálculo de período do dia.
-- Painel "Foco Único" destacando a prioridade crítica do dia.
-- Widget de progresso em tempo real do edital de concurso com cálculo de taxa de domínio.
-- Cards rápidos de resumo financeiro e meta de treinos da semana.
-- Feed de atividades e pendências com conclusão em 1 clique.
-
-### 2. 📚 Módulo de Estudos & Concursos
-- **Planos de Estudos:** Cadastro de editais, definição de datas-alvo e metas de horas disponíveis.
-- **Árvore Curricular:** Estruturação hierárquica `Plano ➔ Matéria ➔ Assunto`.
-- **Banco de Questões & Simulação:**
-  - Resolução interativa com gabaritos detalhados.
-  - Simulados cronometrados com trava de alternativa para auditoria fiel de pontuação.
-  - Indicador de "Marcar para revisar" e estatísticas de acerto por matéria.
-- **Caderno de Erros Inteligente:** Registro automático de erros para fixação por repetição espaçada.
-- **Importador de PDFs:** Upload de provas em PDF com estruturação automática de questões e gabaritos via IA.
-
-### 3. 🏋️ Módulo de Treinos & Fisiologia
-- Registro diário de treinos por grupo muscular (Peito, Costas, Pernas, etc.).
-- Detalhamento de exercícios com séries, repetições e carga (kg).
-- Upload de fotos de evolução física com suporte a volume persistente.
-- Acompanhamento da meta semanal de treinos com indicador de streak.
-
-### 4. 💰 Módulo Financeiro Pessoal
-- Lançamentos de receitas e despesas com categorização.
-- Gestão de contas a pagar e receber com confirmação rápida de status (`PENDENTE` / `CONCLUIDA`).
-- Indicador visual dinâmico de saldo líquido mensal.
-
-### 5. 🤖 Assistente Virtual Flutuante (AI Copilot)
-- Botão flutuante acessível em qualquer tela com interface estilo modal/drawer.
-- Conexão direta com a API de IA com contexto acadêmico e pedagógico.
-- Atalhos rápidos para geração de perguntas de teste sobre o edital.
-
-### 6. 📑 Relatório Executivo em PDF (1-Clique)
-- Emissão oficial instantânea em vetor A4 formatado para impressão ou arquivamento digital.
-- Compilação dos dados de tarefas, progresso de matérias, frequência física e balanço financeiro.
-- Diagnóstico automático de desempenho gerado com base nos dados reais do usuário.
-
-### 7. 🔔 Central de Notificações Web Push & PWA
-- Totalmente instalável no smartphone (iOS e Android) e no desktop como aplicativo nativo.
-- Suporte a cache offline via Service Worker (Workbox).
-- Gerenciamento de alertas diários e teste prático de notificações locais.
-
-### 8. 🛡️ Controle Comercial & Níveis de Acesso (RBAC)
-- Sistema granular de liberação de módulos (`moduloEstudos`, `moduloTreinos`, `moduloFinancas`, `moduloIaExtracao`).
-- Suporte a planos `PRO` e `ENTERPRISE`.
-- Painel seguro de Master Admin com visão completa de usuários e limites de IA.
+O sistema elimina a necessidade de múltiplos aplicativos avulsos ao integrar:
+- **Gestão de Tarefas & Produtividade:** Foco único diário, tarefas por prioridade e cronômetro Pomodoro.
+- **Preparação para Concursos:** Edital verticalizado, simulados cronometrados com travamento de gabarito, caderno de erros para repetição espaçada e importação de provas em PDF com IA.
+- **Treinos de Academia:** Fichas de treino divididas (A, B, C, D), registro de séries, repetições e cargas, com upload de fotos de evolução física.
+- **Finanças & Caixinhas:** Fluxo de caixa mensal, gráficos de projeção diária, divisão de gastos por categoria e sistema de **Caixinhas de Reserva** (estilo bancos digitais).
+- **Assistente IA Integrado:** Chat flutuante em todas as telas conectado ao Google Gemini para tirar dúvidas pedagógicas e analisar questões.
 
 ---
 
-## 🛠️ Arquitetura & Tecnologias
+## 📦 Módulos do Sistema
+
+### 1. 🎯 Cockpit Executivo (`/`)
+- Saudação contextual automática com base no horário do dia.
+- Painel "Foco Único" destacando a meta mais crítica do dia.
+- Widget de progresso do edital em tempo real com taxa de domínio de matérias.
+- Indicador consolidado de patrimônio líquido (saldo em conta + caixinhas).
+- Feed de atividades recentes e pendências financeiras e de treino.
+
+### 2. 📚 Concursos & Estudos (`/estudos`)
+- **Edital Verticalizado:** Criação hierárquica `Edital ➔ Matéria ➔ Tópico` com pesos e barras de domínio.
+- **Banco de Questões:** Resolução com alternativas interativas, estatísticas de acerto e explicação comentada.
+- **Simulados Auditados:** Provas com temporizador decrescente, trava de alternativas e cálculo percentual de nota final.
+- **Caderno de Erros:** Repetição espaçada baseada em FSRS das questões erradas em simulados anteriores.
+- **Importador de PDFs:** Upload de provas ou editais com extração automatizada de tópicos via Inteligência Artificial.
+
+### 3. 🏋️ Treinos & Fisiologia (`/treinos`)
+- Divisão de fichas de treino por grupos musculares (Peito, Costas, Pernas, Ombros, Braços).
+- Registro detalhado de exercícios com controle de séries, repetições e progressão de carga (kg).
+- Histórico visual de evolução corporal com galeria de fotos e registro do peso (kg).
+- Indicador de frequência semanal (streak) para manutenção do hábito.
+
+### 4. 💰 Finanças Pessoais & Caixinhas (`/financeiro`)
+- **Saldo Atual & Projeção:** Saldo inicial, atual e previsto para o final do mês.
+- **Gráfico de Fluxo de Caixa Diário:** Visualização interativa dia a dia de entradas e saídas.
+- **Gastos por Categoria:** Gráfico Donut de despesas com badges coloridos e percentuais.
+- **Caixinhas & Metas:** Separação de dinheiro da conta corrente em caixinhas de reserva (ex: Reserva de Emergência de R$ 1.000,00 a 100% CDI).
+- **Extrato & Contas:** Lançamentos com parcelamento, status `PENDENTE` ou `CONCLUIDA`, filtros rápidos e busca textual.
+
+### 5. 🤖 Tutor de Inteligência Artificial Flutuante
+- Botão flutuante acessível em todas as telas da aplicação.
+- Integração direta e segura com modelos Google Gemini (Gemini 2.5 Flash / Lite).
+- Alternância automática multi-modelo caso ocorra sobrecarga temporária da API do Google.
+
+### 6. 🛡️ Painel de Master Admin (`/admin`)
+- Listagem completa de usuários cadastrados com pesquisa instantânea.
+- Controle granular de papéis (`USER`, `ADMIN`, `MASTER_ADMIN`).
+- Ativação ou desativação de acesso em 1 clique.
+- Gerenciamento comercial de módulos contratados (`moduloEstudos`, `moduloTreinos`, `moduloFinancas`, `moduloIaExtracao`).
+
+---
+
+## 📂 Arquitetura & Estrutura de Pastas
 
 ```
-                  ┌─────────────────────────────────┐
-                  │      Nexus Web Frontend         │
-                  │   React 19 + TypeScript + Vite  │
-                  │      Tailwind CSS v4 + PWA      │
-                  └───────────────┬─────────────────┘
-                                  │
-                   HTTPS / REST API (Bearer JWT)
-                                  │
-                  ┌───────────────▼─────────────────┐
-                  │          Nexus API              │
-                  │    Spring Boot 4.1 + Java 21    │
-                  └───────┬─────────────────┬───────┘
-                          │                 │
-              ┌───────────▼─────┐     ┌─────▼───────────┐
-              │   PostgreSQL    │     │  Anthropic / AI │
-              │  Banco de Dados │     │  Processamento  │
-              └─────────────────┘     └─────────────────┘
+nexus-web/
+├── public/                     # Favicons, ícones do PWA e manifest.webmanifest
+├── src/
+│   ├── components/             # Componentes reutilizáveis do sistema
+│   │   ├── ui/                 # Primitivas de UI (Button, Card, Dialog, Select, etc.)
+│   │   ├── AiChatPopup.tsx     # Janela flutuante do assistente de inteligência artificial
+│   │   ├── AppShell.tsx        # Shell de navegação lateral, header e responsividade
+│   │   ├── CaixinhasSection.tsx# Gestor de Caixinhas de Reserva e Metas Financeiras
+│   │   ├── CheckoutModal.tsx   # Modal de contratação SaaS com PIX e Cartão
+│   │   ├── ErrorBoundary.tsx   # Captura global de erros de renderização
+│   │   ├── GlobalSearchModal.tsx# Busca universal rápida por atalho de teclado
+│   │   ├── NotificationCenterModal.tsx # Central de permissões e agendamento push
+│   │   └── ReceiptModal.tsx    # Modal de emissão de recibo comercial
+│   ├── contexts/
+│   │   └── ToastContext.tsx    # Provedor global de notificações estilo toast
+│   ├── hooks/
+│   │   └── useNotificationScheduler.ts # Agendador nativo de lembretes no navegador
+│   ├── lib/
+│   │   ├── api.ts              # Cliente HTTP centralizado e tipagem completa de dados
+│   │   ├── auth.tsx            # Contexto de autenticação, sessão JWT e controle RBAC
+│   │   ├── caixinhasStorage.ts # Motor de persistência local das Caixinhas de Reserva
+│   │   ├── geminiDirectService.ts # Conexão direta com Google Gemini com failover inteligente
+│   │   ├── generateExecutiveReportPdf.ts # Emissor de relatório oficial de desempenho em A4
+│   │   ├── generateReceiptPdf.ts # Emissor de comprovante de pagamento via jsPDF
+│   │   └── utils.ts            # Utilitários de classes Tailwind e formatação
+│   ├── pages/                  # Telas roteadas da aplicação
+│   │   ├── admin.tsx           # Painel de controle e governança de usuários
+│   │   ├── configuracoes.tsx   # Preferências de perfil, URL da API e exportação
+│   │   ├── dashboard.tsx       # Cockpit inicial executivo
+│   │   ├── estudos.tsx         # Módulo de concursos, matérias e caderno de erros
+│   │   ├── financeiro.tsx      # Módulo financeiro completo e caixinhas
+│   │   ├── login.tsx           # Fluxo de autenticação e criação de contas
+│   │   ├── simulado.tsx        # Interface focada de simulado cronometrado
+│   │   └── treinos.tsx         # Fichas de musculação e fotos de evolução
+│   ├── App.tsx                 # Roteamento principal com guards de segurança
+│   ├── main.tsx                # Ponto de entrada com limpeza preventiva de Service Worker
+│   └── styles.css              # Estilos globais e tokens de cor do Tailwind CSS v4
+├── index.html                  # HTML base com meta tags, PWA e pré-carregamento de fontes
+├── package.json                # Dependências do projeto e scripts de build
+├── tsconfig.json               # Configurações do compilador TypeScript
+├── vercel.json                 # Regras de roteamento SPA e cabeçalhos de segurança na Vercel
+├── vite.config.ts              # Configuração do Vite, alias @ e PWA
+├── README.md                   # Este manual do Frontend
+└── README-BACKEND.md           # Especificação técnica completa do Backend REST
 ```
 
-| Camada | Tecnologia | Função |
-|---|---|---|
-| **Core Framework** | React 19 + TypeScript 5.7+ | Renderização reativa, tipagem estrita e DX moderna |
-| **Build Tool** | Vite 6 | Compilação ultrarrápida, HMR e otimização de bundles |
-| **Estilização** | Tailwind CSS v4 | Design system unificado com tema escuro e suporte a design tokens |
-| **Gerenciamento de Estado** | TanStack Query v5 (React Query) | Cache assíncrono, refetch inteligente e mutations otimistas |
-| **PWA & Offline** | Vite PWA Plugin + Workbox | Service worker, manifest PWA e estratégias de cache |
-| **Roteamento** | React Router DOM v7 (compat layer) | Navegação client-side fluida com SPA fallback |
-| **Relatórios** | jsPDF | Geração de PDFs vetoriais A4 direto no navegador |
-| **Ícones** | Lucide React | Biblioteca completa e consistente de ícones vetoriais |
+---
+
+## 🛡️ Auditoria & Análise de Segurança
+
+### 1. Proteção contra Cross-Site Scripting (XSS)
+- Todo conteúdo dinâmico (enunciados de questões, comentários de gabarito e textos de IA) é sanitizado via biblioteca `DOMPurify` ou renderizado por meio de nós seguros do React, impedindo injeção de tags `<script>` ou eventos `onload`/`onerror`.
+
+### 2. Autenticação JWT e Gerenciamento de Tokens
+- O token JWT recebido no login é mantido sob `nexus.token` no `localStorage`.
+- O cliente HTTP (`api.ts`) anexa automaticamente o cabeçalho `Authorization: Bearer <token>` em todas as requisições autenticadas.
+- Caso o servidor retorne status `401 Unauthorized`, um evento global customizado (`nexus:unauthorized`) é disparado, deslogando a sessão e redirecionando o usuário para `/login` de forma transparente.
+
+### 3. Controle de Acesso Baseado em Funções (RBAC)
+- O componente `ProtectedRoute` valida se o usuário possui a role necessária antes de renderizar páginas restritas.
+- O componente `SubscriptionGuard` bloqueia o acesso caso a conta esteja com plano expirado ou sem permissão para o módulo em questão (`moduloEstudos`, `moduloTreinos`, `moduloFinancas`, `moduloIaExtracao`).
+
+### 4. Isolamento de Chaves de API
+- A chave da API do Google Gemini é gerenciada prioritariamente pelo backend. O frontend também permite inserção opcional de chave pessoal do usuário armazenada localmente sem nunca ser enviada a servidores intermediários.
 
 ---
 
-## 🖥️ Telas & Rotas
+## 🐷 Caixinhas & Metas Financeiras
 
-| Rota | Tela | Funcionalidade Principal |
-|---|---|---|
-| `/` | **Hoje (Dashboard)** | Visão unificada diária, foco do dia, progresso do edital, meta de treinos e finanças |
-| `/login` | **Autenticação** | Login seguro com JWT, cadastro de usuário e seletor dinâmico de API |
-| `/tarefas` | **Produtividade** | Kanban e lista de tarefas cotidianas e tópicos do edital |
-| `/estudos` | **Hub de Estudos** | Gestão de planos, matérias, cronograma e materiais de apoio |
-| `/estudos/planos/:id` | **Detalhe do Edital** | Gestão de disciplinas, assuntos e árvore de tópicos |
-| `/estudos/questoes` | **Banco de Questões** | Resolução interativa, gabarito instantâneo e comentários |
-| `/estudos/caderno-erros`| **Caderno de Erros** | Análise de gaps de aprendizagem e re-execução de questões |
-| `/estudos/revisoes` | **Revisões Espaçadas** | Fila de tópicos para revisão baseada no histórico de erros |
-| `/estudos/simulados` | **Simulados** | Configuração, execução com cronômetro regressivo e análise de performance |
-| `/estudos/desempenho` | **Analytics** | Gráficos de acerto por matéria, evolução temporal e assertividade |
-| `/treinos` | **Musculação** | Diário de treinos, montagem de séries/repetições/cargas e fotos |
-| `/financeiro` | **Finanças** | Lançamentos, fluxo de receitas e despesas, contas pendentes |
-| `/perfil` | **Perfil & Assinatura** | Dados da conta, plano contratado, gerador de relatório e notificações |
+Inspirado no conceito dos bancos digitais modernos, o recurso de **Caixinhas** permite separar o dinheiro do dia a dia da conta corrente:
+
+- **Reserva de Emergência Automática:** Já inicia com uma caixinha de R$ 1.000,00 guardados e meta de R$ 5.000,00.
+- **Guardar & Resgatar:** Modais intuitivos com botões de atalho rápido (+R$ 50, +R$ 100, +R$ 200, +R$ 500) e sincronização opcional com o extrato bancário da conta.
+- **Metas Visuais:** Barra de progresso percentual dinâmica e cálculo do montante restante para atingir o objetivo.
+- **Personalização:** Criação de caixinhas ilimitadas com escolha de ícones temáticos e paleta de cores customizadas.
 
 ---
 
-## 📱 PWA & Notificações Nativas
+## 📲 PWA, Cache & Notificações
 
-O Nexus foi estruturado com padrão **PWA (Progressive Web App)**:
-
-- **Instalação Nativa:** Adicione à tela inicial no iOS (Safari ➔ Compartilhar ➔ Adicionar à Tela de Início) ou Android/Chrome (botão de instalação automática).
-- **Trabalho Offline:** Telas e assets estáticos ficam armazenados em cache local através do Workbox Service Worker.
-- **Central de Push:** Permite configurar notificações no dispositivo para lembrar de revisões de concurso, treinos e contas a pagar.
+- **Instalação Nativa:** O Nexus pode ser instalado no iOS (via "Adicionar à Tela de Início"), Android e Desktop Chrome/Edge.
+- **Estratégia de Cache Seguro:** Foi implementado no arquivo `main.tsx` um mecanismo que desregistra Service Workers legados ao detectar novas versões, garantindo que o usuário nunca fique preso a versões em cache desatualizadas após um deploy na Vercel.
+- **Notificações Web Push:** Agendamento inteligente no navegador para lembrar horários de estudos, treinos da academia e vencimento de contas a pagar.
 
 ---
 
-## 📑 Gerador de Relatórios Executivos em PDF
+## 📑 Relatórios Executivos em PDF
 
-Localizado tanto no topo do Dashboard (`/`) quanto na tela de Perfil (`/perfil`), o gerador de relatórios permite:
-1. Visualizar um preview interativo na tela.
-2. Imprimir com formatação profissional via folha de estilo dedicada `@media print`.
-3. Fazer download de um arquivo `.pdf` formatado no padrão A4 oficial com cabeçalho institucional, dados do usuário e métricas consolidadas dos módulos contratados.
+O sistema conta com um motor vetorial nativo em `jsPDF`:
+- **Relatório Executivo A4:** Gera um dossiê completo de auditoria do usuário contendo o total de matérias concluídas, horas de estudo, taxa de acerto em simulados, frequência na academia e balanço financeiro.
+- **Comprovante de Pagamento:** Emissão de recibos de assinatura do plano com código de pedido e dados cadastrais.
 
 ---
 
-## 🚀 Como Executar Localmente
+## 💻 Como Executar Localmente
 
 ### Pré-requisitos
-- **Node.js**: v18.0.0 ou superior (recomendado Node 20+)
-- **npm** ou **bun** instalado
+- Node.js versão 20 ou superior
+- Gerenciador de pacotes `npm` ou `bun`
 
-### Passo a Passo
+### Passos
 
-1. **Clone o repositório:**
-   ```bash
-   git clone https://github.com/allysonramos-blibp/Nexus-front.git
-   cd Nexus-front
-   ```
+1. Clone o repositório:
+```bash
+git clone https://github.com/allysonramos-blibp/Nexus-front.git
+cd Nexus-front
+```
 
-2. **Instale as dependências:**
-   ```bash
-   npm install
-   ```
+2. Instale as dependências:
+```bash
+npm install
+```
 
-3. **Configure as variáveis de ambiente:**
-   ```bash
-   cp .env.example .env
-   ```
-   Edite o arquivo `.env` para apontar para a sua instância da Nexus API:
-   ```env
-   VITE_API_URL=http://localhost:8080/api
-   ```
+3. Crie o arquivo `.env` a partir do modelo:
+```bash
+cp .env.example .env
+```
 
-4. **Inicie o servidor de desenvolvimento:**
-   ```bash
-   npm run dev
-   ```
-   A aplicação estará acessível em: `http://localhost:5173`
+4. Inicie o servidor de desenvolvimento:
+```bash
+npm run dev
+```
+Acesse a aplicação no navegador em `http://localhost:3000`.
 
 ---
 
-## ⚙️ Variáveis de Ambiente
+## 🔑 Variáveis de Ambiente
 
-| Variável | Padrão | Descrição |
-|---|---|---|
-| `VITE_API_URL` | `http://localhost:8080/api` | URL base do backend Nexus (Spring Boot). Pode ser trocada dinamicamente na tela de login |
+Crie um arquivo `.env` na raiz do projeto com as seguintes chaves:
 
-> 💡 **Dica de Desenvolvimento:** Na tela de login há uma opção de teste de ping da API e um campo para trocar a URL base em tempo de execução, facilitando testes com túneis como ngrok (`https://abc.ngrok-free.app/api`).
+```env
+# URL da API Backend (ex: Render ou localhost)
+VITE_API_URL=https://nexus-api-bgsf.onrender.com/api
+
+# Chave opcional do Google Gemini para chamadas diretas client-side
+VITE_GEMINI_API_KEY=
+```
 
 ---
 
-## 📦 Build & Deploy
+## 🚀 Build & Deploy na Vercel
 
-### Build de Produção
-```bash
-npm run build
-```
-O comando gera os arquivos estáticos e otimizados na pasta `dist/`.
+O projeto possui um arquivo `vercel.json` configurado para reescrita de rotas SPA:
 
-### Pré-visualização Local do Build
-```bash
-npm run preview
-```
-
-### Hospedagens Recomendadas (Vercel, Netlify, Cloudflare Pages, Nginx)
-
-Por se tratar de uma SPA com roteamento dinâmico via browser, configure o servidor para redirecionar todas as requisições não-estáticas para o `index.html`.
-
-#### Configuração Nginx:
-```nginx
-server {
-    listen 80;
-    server_name nexus.seudominio.com;
-    root /var/www/nexus-front/dist;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Cache agressivo para assets estáticos
-    location /assets/ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
+```json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
 ```
 
----
-
-## 🔒 Segurança & Autenticação
-
-- **Autenticação Stateless JWT:** O token recebido no login é anexado automaticamente em todas as requisições HTTP (`Authorization: Bearer <token>`).
-- **Auto-Logout em Expiração:** Se a API responder com status HTTP `401`, a sessão local é encerrada com segurança e o usuário é redirecionado ao login.
-- **Sanitização de Dados:** Proteção contra injeção em inputs e manipulação de formulários.
-- **Isolamento de Tenant:** Todas as requisições utilizam o contexto do usuário autenticado no token da API, garantindo isolamento total de registros.
-
----
-
-## 📂 Estrutura de Pastas
-
+Para gerar a compilação de produção manualmente:
+```bash
+npm run build
 ```
-nexus-front/
-├── public/                  # Ícones PWA, favicon, manifest.webmanifest
-├── src/
-│   ├── components/          # Componentes reutilizáveis (AppShell, Modais, Cards)
-│   │   ├── ui/              # Design System base (Button, Input, Badge, Dialog)
-│   │   ├── ExecutiveReportModal.tsx   # Modal e preview do relatório A4
-│   │   ├── NotificationCenterModal.tsx # Central de push notifications
-│   │   ├── AiChatFloating.tsx         # Chat flutuante com IA
-│   │   └── PwaInstallBanner.tsx       # Banner inteligente de instalação PWA
-│   ├── pages/               # Telas da aplicação
-│   │   ├── index.tsx        # Dashboard "Hoje"
-│   │   ├── login.tsx        # Autenticação e boas-vindas
-│   │   ├── tarefas.tsx      # Central de Tarefas & Edital
-│   │   ├── financeiro.tsx   # Gestão financeira
-│   │   ├── treinos.tsx      # Diário de treinos e fisiologia
-│   │   ├── estudos.tsx      # Hub de estudos para concursos
-│   │   ├── questoes.tsx     # Banco e resolução de questões
-│   │   ├── simulados.tsx    # Simulado com cronômetro
-│   │   ├── caderno-erros.tsx# Repetição espaçada e caderno de erros
-│   │   ├── perfil.tsx       # Configurações de conta e assinatura
-│   │   └── admin.tsx        # Painel Master Admin (gestão de planos)
-│   ├── lib/                 # Integrações, helpers e utilitários
-│   │   ├── api.ts           # Cliente HTTP fortemente tipado
-│   │   ├── auth.tsx         # Contexto de autenticação e sessão
-│   │   ├── exportPdfReport.ts # Motor de geração de PDF em vetor A4
-│   │   ├── notifications.ts # Driver de notificações nativas
-│   │   └── router-compat.tsx# Abstração de roteamento
-│   ├── styles.css           # Configurações do Tailwind v4 e estilos de impressão
-│   └── main.tsx             # Entry point da aplicação React
-├── index.html               # Entry point HTML com metatags PWA
-├── package.json             # Dependências e scripts
-├── tsconfig.json            # Configuração TypeScript
-└── vite.config.ts           # Configurações do Vite e plugin PWA
-```
+Os arquivos otimizados e minificados serão gerados na pasta `/dist`.
+
+Ao realizar `git push origin main`, a **Vercel** detecta o commit e dispara a esteira de CI/CD automaticamente.
 
 ---
 
-## 👨‍💻 Autor
+## 📖 Documentação do Backend
 
-Desenvolvido por **Allyson Ramos**  
-- **GitHub:** [@allysonramos-blibp](https://github.com/allysonramos-blibp)  
-- **Email:** allysonr510@gmail.com  
-
----
-
-<p align="center">
-  <sub>Nexus Platform © Todos os direitos reservados. Foco, consistência e alta performance.</sub>
-</p>
+Para consultar a especificação completa de banco de dados (PostgreSQL), endpoints REST, modelo de segurança JWT e Dockerfile da API, consulte o arquivo:
+👉 **[README-BACKEND.md](./README-BACKEND.md)**

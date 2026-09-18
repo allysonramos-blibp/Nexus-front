@@ -9,8 +9,6 @@ import { AdminRoute } from "@/components/AdminRoute";
 import { ModuleUpgradeGuard } from "@/components/ModuleUpgradeGuard";
 import { Loading } from "@/components/ui/Loading";
 
-// Cada rota vira seu próprio chunk (code splitting) — a pessoa só baixa o código da
-// tela de Estudos/Simulados/etc quando de fato navega para lá, não no carregamento inicial.
 const Hoje = lazy(() => import("@/pages/index"));
 const Login = lazy(() => import("@/pages/login"));
 const EsqueciSenha = lazy(() => import("@/pages/esqueci-senha"));
@@ -35,8 +33,7 @@ const Desempenho = lazy(() => import("@/pages/estudos/Desempenho"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Evita refetch imediato toda vez que a pessoa volta pra uma tela já visitada
-      // há pouco — os dados continuam "frescos" por 30s antes de buscar de novo.
+
       staleTime: 30_000,
       retry: 1,
     },

@@ -4,7 +4,6 @@ import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import "./styles.css";
 
-// Garante que nenhum Service Worker antigo ou cache do navegador mantenha uma versão desatualizada
 if (typeof window !== "undefined" && "serviceWorker" in navigator) {
   navigator.serviceWorker.getRegistrations().then((registrations) => {
     for (const registration of registrations) {

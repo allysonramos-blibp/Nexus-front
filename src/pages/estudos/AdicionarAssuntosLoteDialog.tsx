@@ -27,7 +27,6 @@ export function AdicionarAssuntosLoteDialog({
   const { toast } = useToast();
   const [rawText, setRawText] = useState("");
 
-  // Extrai linhas limpas (remove numerações do edital como "1. ", "1 - ", "• ", etc)
   const parsedTopics = useMemo(() => {
     if (!rawText.trim()) return [];
     return rawText

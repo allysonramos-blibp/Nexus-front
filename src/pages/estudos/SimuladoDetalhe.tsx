@@ -172,7 +172,7 @@ export default function SimuladoDetalhePage() {
         </Link>
       }
     >
-      {/* CRIADO — ainda não começou */}
+
       {exam.status === "CRIADO" && (
         <Card className="flex flex-col items-center gap-3 py-10 text-center">
           <Badge variant="info">{mockExamStatusLabel[exam.status]}</Badge>
@@ -187,7 +187,6 @@ export default function SimuladoDetalhePage() {
         </Card>
       )}
 
-      {/* EM_ANDAMENTO — execução */}
       {exam.status === "EM_ANDAMENTO" && question && (
         <div className="flex flex-col gap-4">
           <Card className="flex flex-wrap items-center justify-between gap-3">
@@ -305,7 +304,6 @@ export default function SimuladoDetalhePage() {
         </div>
       )}
 
-      {/* FINALIZADO — resultado e análise */}
       {exam.status === "FINALIZADO" && (
         <div className="flex flex-col gap-5">
           <div className="grid gap-4 sm:grid-cols-3">

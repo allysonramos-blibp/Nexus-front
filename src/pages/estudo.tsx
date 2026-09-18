@@ -5,7 +5,6 @@ import { AppShell, ErrorNote } from "@/components/AppShell";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
-
 function EstudoPage() {
   const { user } = useAuth();
   const qc = useQueryClient();

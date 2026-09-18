@@ -107,7 +107,7 @@ export function SearchableSelect<T extends string | number = string | number>({
         className="max-w-lg p-4 sm:p-5"
       >
         <div className="flex flex-col gap-3">
-          {/* Campo de Busca Rápida */}
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -129,7 +129,6 @@ export function SearchableSelect<T extends string | number = string | number>({
             )}
           </div>
 
-          {/* Opção Padrão / Geral (se houver) */}
           {emptyOptionLabel && !search.trim() && (
             <button
               type="button"
@@ -152,7 +151,6 @@ export function SearchableSelect<T extends string | number = string | number>({
             </button>
           )}
 
-          {/* Lista de Opções */}
           <div className="max-h-[55vh] overflow-y-auto space-y-1.5 pr-1 divide-y divide-border/20">
             {filteredOptions.length === 0 ? (
               <div className="py-8 text-center text-xs text-muted-foreground">

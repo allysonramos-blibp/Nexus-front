@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CircleUserRound, CheckCircle2, XCircle, LogOut, Shield, Sparkles, FileText, BellRing } from "lucide-react";
+import { CircleUserRound, CheckCircle2, XCircle, LogOut, Shield, Sparkles, FileText, BellRing, Presentation, Download } from "lucide-react";
 import { ExecutiveReportModal } from "@/components/ExecutiveReportModal";
 import { NotificationCenterModal } from "@/components/NotificationCenterModal";
 import { AppShell } from "@/components/AppShell";
@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { downloadArchitecturePdf } from "@/lib/generateArchitecturePresentationPdf";
 
 function PerfilPage() {
   const { user, signOut } = useAuth();
@@ -18,7 +19,7 @@ function PerfilPage() {
 
   return (
     <AppShell title="Perfil & Assinatura" subtitle="Sua conta">
-      {/* Dados do Usuário */}
+
       <Card className="flex items-center gap-4">
         <span className="flex size-14 items-center justify-center rounded-full bg-dash/15 text-dash">
           <CircleUserRound className="size-7" />
@@ -34,7 +35,6 @@ function PerfilPage() {
         </div>
       </Card>
 
-      {/* Plano e Assinatura */}
       <Card className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -54,7 +54,6 @@ function PerfilPage() {
           </div>
         </div>
 
-        {/* Grade de Módulos Liberados para Este Usuário */}
         <div className="pt-2 border-t border-border/60">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
             Módulos Contratados na sua Assinatura:
@@ -115,7 +114,6 @@ function PerfilPage() {
           </div>
         </div>
 
-        {/* Consumo de Créditos de IA */}
         <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs">
           <span className="text-muted-foreground">Créditos de extração de PDF utilizados:</span>
           <span className="font-semibold text-foreground">
@@ -124,7 +122,6 @@ function PerfilPage() {
         </div>
       </Card>
 
-      {/* Relatórios & Notificações */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card className="space-y-3">
           <div className="flex items-center gap-2">
@@ -173,7 +170,42 @@ function PerfilPage() {
         </Card>
       </div>
 
-      {/* Segurança & Sessão */}
+      <Card className="space-y-3 border-dash/30 bg-surface">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="p-2 rounded-xl bg-dash/15 text-dash">
+              <Presentation className="size-4" />
+            </span>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Apresentação da Arquitetura do Sistema (PDF)</h3>
+              <p className="text-xs text-muted-foreground">Dossiê técnico em slides executivos A4 (Frontend SPA/PWA + Backend Spring Boot)</p>
+            </div>
+          </div>
+          <Badge variant="info">Slide Deck A4</Badge>
+        </div>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Baixe a apresentação técnica completa do ecossistema Nexus contendo topologia distribuída, stack React 19/Vite/Tailwind v4, Spring Boot 4/Java 21, modelos relacionais PostgreSQL, pipeline de OCR de bancas de concurso e matriz de endpoints.
+        </p>
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => downloadArchitecturePdf()}
+            className="text-xs gap-1.5"
+          >
+            <Download className="size-3.5" /> Baixar Apresentação da Arquitetura (PDF)
+          </Button>
+          <a
+            href="/nexus-arquitetura-completa.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-border bg-surface-raised hover:bg-border transition-colors text-foreground"
+          >
+            <FileText className="size-3.5 text-dash" /> Abrir no Navegador
+          </a>
+        </div>
+      </Card>
+
       <Card className="space-y-3">
         <div className="flex items-center gap-2">
           <Shield className="size-4 text-dash" />

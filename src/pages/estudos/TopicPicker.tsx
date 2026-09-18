@@ -53,7 +53,7 @@ export function TopicPicker({
   const subjectOptions = (subjects.data ?? []).map((s) => ({
     value: s.id,
     label: s.nome,
-    
+
   }));
 
   const topicOptions = (topics.data ?? []).map((t) => ({

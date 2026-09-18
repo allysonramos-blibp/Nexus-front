@@ -157,10 +157,10 @@ function TransactionItemCard({
           : "border-border/60 bg-surface-raised/40 hover:border-border"
       }`}
     >
-      {/* Linha Superior: Ícone + Título & Metadados + Valor */}
+
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0 flex-1">
-          {/* Ícone de Tipo/Categoria */}
+
           <div
             className={`flex size-10 shrink-0 items-center justify-center rounded-xl transition-transform ${
               t.tipo === "RECEITA"
@@ -194,7 +194,6 @@ function TransactionItemCard({
             )}
           </div>
 
-          {/* Informações da Transação */}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="font-semibold text-foreground text-sm leading-snug break-words">
@@ -249,7 +248,6 @@ function TransactionItemCard({
           </div>
         </div>
 
-        {/* Valor em destaque à direita */}
         <div className="text-right shrink-0">
           <span
             className={`font-display text-base font-bold tracking-tight block ${
@@ -272,7 +270,6 @@ function TransactionItemCard({
         </div>
       </div>
 
-      {/* Linha Inferior: Status detalhado + Ações Rápidas */}
       <div className="mt-3 pt-2.5 border-t border-border/50 flex items-center justify-between gap-2">
         <div className="text-[11px] text-muted-foreground truncate">
           {isPendente ? (
@@ -1119,7 +1116,7 @@ function FinanceiroPage() {
         </div>
       }
     >
-      {/* Barra de navegação de meses */}
+
       <div className="flex items-center justify-between gap-4 mb-1">
         <div className="flex items-center gap-2">
           <button
@@ -1152,7 +1149,6 @@ function FinanceiroPage() {
         )}
       </div>
 
-      {/* Alertas de Vencimento (Destaque se houver contas vencidas ou a vencer em breve) */}
       {(vencidasGeral.length > 0 || vencendoEmBreve.length > 0) && (
         <div className="flex flex-col gap-2 mb-2">
           {vencidasGeral.length > 0 && (
@@ -1214,7 +1210,7 @@ function FinanceiroPage() {
 
       {!isLoading && !error && (
         <>
-          {/* Navegação entre Extrato & Lançamentos e Caixinhas & Metas */}
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex rounded-xl border border-border bg-surface p-1 max-w-fit shadow-xs">
               <button
@@ -1246,7 +1242,6 @@ function FinanceiroPage() {
               </button>
             </div>
 
-            {/* Resumo de Patrimônio Líquido Global (Conta + Caixinhas) */}
             <div className="flex items-center gap-2 text-xs bg-surface-raised/80 border border-border/70 px-3 py-1.5 rounded-xl shadow-xs">
               <span className="text-muted-foreground">Patrimônio Total:</span>
               <span className="font-bold font-display text-foreground">{brl(saldoAtual + totalCaixinhas)}</span>
@@ -1277,7 +1272,7 @@ function FinanceiroPage() {
             />
           ) : (
             <>
-              {/* Card de Acesso Rápido às Caixinhas no modo Extrato */}
+
               <div
                 onClick={() => setAbaPrincipal("caixinhas")}
                 className="rounded-xl border border-fin/30 bg-fin/5 p-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-fin/10 transition-colors"
@@ -1305,7 +1300,6 @@ function FinanceiroPage() {
                 </Button>
               </div>
 
-              {/* Card do Saldo e Gráfico */}
               <Card className="border-fin/30 bg-fin/5">
             <div className="grid grid-cols-3 gap-3 text-center">
               <div>
@@ -1331,7 +1325,6 @@ function FinanceiroPage() {
             </div>
           </Card>
 
-          {/* Resumo do Mês, Comparativo e Pendentes */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card>
               <div className="flex items-center justify-between">
@@ -1392,7 +1385,6 @@ function FinanceiroPage() {
               )}
             </Card>
 
-            {/* Comparativo Mês a Mês */}
             <Card>
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
@@ -1535,7 +1527,6 @@ function FinanceiroPage() {
             </Card>
           </div>
 
-          {/* Gráfico de Gastos por Categoria */}
           <Card>
             <div className="flex items-center justify-between">
               <div>
@@ -1611,7 +1602,6 @@ function FinanceiroPage() {
             )}
           </Card>
 
-          {/* Lista Completa de Lançamentos com Busca e Filtros */}
           <Card>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
               <div>
@@ -1663,7 +1653,6 @@ function FinanceiroPage() {
               </div>
             </div>
 
-            {/* Barra de Filtros e Busca */}
             <div className="flex flex-wrap items-center gap-3 pt-3">
               <div className="relative flex-1 min-w-[14rem]">
                 <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -1697,7 +1686,6 @@ function FinanceiroPage() {
               />
             </div>
 
-            {/* Resumo rápido dos dados filtrados */}
             {(tabFiltro !== "todas" || searchQuery.trim() !== "") && filteredTransactions.length > 0 && (
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface-raised/70 border border-border/70 px-3 py-2 text-xs">
                 <span className="text-muted-foreground">
@@ -1721,7 +1709,6 @@ function FinanceiroPage() {
               </div>
             )}
 
-            {/* Listagem de Transações */}
             {concluidasMes.length === 0 && pendentesMes.length === 0 ? (
               <EmptyState
                 icon={Wallet}
@@ -1751,7 +1738,7 @@ function FinanceiroPage() {
                   const dayHeader = formatDayHeader(group.date, hojeStr);
                   return (
                     <div key={group.date} className="flex flex-col gap-2">
-                      {/* Cabeçalho do Dia */}
+
                       <div className="flex items-center justify-between px-1">
                         <div className="flex items-center gap-2">
                           <span
@@ -1766,7 +1753,6 @@ function FinanceiroPage() {
                           </span>
                         </div>
 
-                        {/* Balanço consolidado do dia */}
                         <div className="flex items-center gap-2 text-xs font-semibold">
                           {group.totalReceita > 0 && (
                             <span className="text-fin">+{brl(group.totalReceita)}</span>
@@ -1777,7 +1763,6 @@ function FinanceiroPage() {
                         </div>
                       </div>
 
-                      {/* Itens do Dia */}
                       <ul className="flex flex-col gap-2.5">
                         {group.transactions.map((t) => (
                           <TransactionItemCard

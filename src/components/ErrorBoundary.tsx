@@ -10,12 +10,6 @@ interface State {
   error: Error | null;
 }
 
-/**
- * Pega qualquer erro de render não tratado em qualquer tela e mostra uma UI de
- * fallback, em vez de deixar a página inteira em branco. Não substitui o tratamento
- * de erro de cada tela (loading/empty/error dos dados) — isso é a última rede de
- * segurança, para bugs de programação mesmo.
- */
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { error: null };
 
@@ -24,7 +18,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    // eslint-disable-next-line no-console
+
     console.error("Erro não tratado capturado pelo ErrorBoundary:", error, info.componentStack);
   }
 

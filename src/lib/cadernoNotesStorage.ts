@@ -1,14 +1,11 @@
-/**
- * Armazenamento local persistente para anotações detalhadas de estudo
- * e mapa mental / resumo do Caderno de Erros e Revisões.
- */
+
 
 export interface CadernoItemNote {
   errorId: number;
   questionId: number;
-  resumoRegra?: string; // O que memorizar (ex: "Art. 5º, XI - flagrante delito...")
-  comoNaoErrar?: string; // A pegadinha da questão
-  anotacaoLivre?: string; // Anotações complementares do aluno
+  resumoRegra?: string;
+  comoNaoErrar?: string;
+  anotacaoLivre?: string;
   atualizadoEm: string;
 }
 

@@ -9,11 +9,6 @@ import { Badge } from "@/components/ui/Badge";
 const LETTERS = ["A", "B", "C", "D", "E"];
 const DIFFICULTIES: QuestionDifficulty[] = ["FACIL", "MEDIA", "DIFICIL"];
 
-/**
- * Card de edição de uma questão em rascunho (vinda de extração por PDF). Usado tanto pelo
- * importador antigo (por Assunto já aberto) quanto pelo novo importador por Plano — nenhuma
- * lógica de edição de questão é duplicada entre os dois fluxos.
- */
 export function QuestaoDraftCard({
   draft,
   index,

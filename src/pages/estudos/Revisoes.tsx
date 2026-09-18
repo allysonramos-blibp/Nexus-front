@@ -29,7 +29,7 @@ export default function RevisoesPage() {
   const [revisando, setRevisando] = useState<StudyError | null>(null);
 
   const itens = data?.itens ?? [];
-  // Atrasadas primeiro — são as que já deviam ter sido revisadas.
+
   const ordenadas = [...itens].sort((a, b) => Number(isAtrasado(b)) - Number(isAtrasado(a)));
 
   return (
@@ -92,11 +92,11 @@ export default function RevisoesPage() {
                 const savedNote = getCadernoNote(e.id);
 
                 return (
-                  <Card 
-                    key={e.id} 
+                  <Card
+                    key={e.id}
                     className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:border-dash/40 transition-colors"
                   >
-                    <div 
+                    <div
                       className="min-w-0 flex-1 cursor-pointer w-full"
                       onClick={() => setRevisando(e)}
                     >

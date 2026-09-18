@@ -8,7 +8,6 @@ type LinkProps = Omit<ComponentProps<"a">, "href"> & {
   activeProps?: { className?: string };
 };
 
-/** Link compatível com a API que as telas usavam (to / activeProps / activeOptions). */
 export function Link({ to, className, activeProps, activeOptions, children, ...rest }: LinkProps) {
   return (
     <NavLink
@@ -24,7 +23,6 @@ export function Link({ to, className, activeProps, activeOptions, children, ...r
   );
 }
 
-/** navigate({ to: "/login" }) ou navigate("/login"). */
 export function useNavigate() {
   const navigate = useRouterNavigate();
   return (opts: string | { to: string; replace?: boolean }) =>

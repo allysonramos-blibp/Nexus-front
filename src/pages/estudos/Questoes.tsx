@@ -558,7 +558,6 @@ export default function QuestoesPage() {
         }}
       />
 
-      {/* MODO RESOLUÇÃO (TREINO / SIMULADO) */}
       {mode === "resolve" && (
         <>
           {questionsQuery.isLoading && <Loading label="Carregando questões para o treino…" />}
@@ -585,7 +584,6 @@ export default function QuestoesPage() {
         </>
       )}
 
-      {/* MODO LISTA DE QUESTÕES */}
       {mode === "list" && (
         <>
           {planoId == null && (
@@ -656,7 +654,7 @@ export default function QuestoesPage() {
 
           {planoId != null && !questionsQuery.isLoading && list.length > 0 && (
             <>
-              {/* Barra de Ações com Ferramentas Rápidas */}
+
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface p-3 rounded-xl border border-border/80 shadow-xs">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="info">{list.length} questão(ões)</Badge>
@@ -712,7 +710,6 @@ export default function QuestoesPage() {
                 </div>
               </div>
 
-              {/* Lista de Questões Cadastradas */}
               <div className="flex flex-col gap-2">
                 {list.map((q, i) => {
                   const isCE =
@@ -779,7 +776,6 @@ export default function QuestoesPage() {
         </>
       )}
 
-      {/* Modal: Escolher Destino quando em modo Geral */}
       <Dialog
         open={Boolean(chooseDestinoOpen)}
         onClose={() => setChooseDestinoOpen(null)}
@@ -807,7 +803,7 @@ export default function QuestoesPage() {
             options={(subjects.data ?? []).map((s) => ({
               value: s.id,
               label: s.nome,
-              
+
             }))}
             placeholder="Selecione uma matéria…"
             searchPlaceholder="Buscar matéria..."
@@ -830,7 +826,6 @@ export default function QuestoesPage() {
         </div>
       </Dialog>
 
-      {/* Modal 1: Formulário Manual */}
       {targetTopicForAction != null && (
         <QuestaoForm
           key={editing?.id ?? "new"}
@@ -844,7 +839,6 @@ export default function QuestoesPage() {
         />
       )}
 
-      {/* Modal 2: Colar Texto Rápido */}
       {targetTopicForAction != null && (
         <ColarTextoRapidoDialog
           open={colarOpen}
@@ -857,7 +851,6 @@ export default function QuestoesPage() {
         />
       )}
 
-      {/* Modal 3: Gerar Questões Inéditas com IA */}
       {targetTopicForAction != null && (
         <GerarQuestoesIaDialog
           open={gerarIaOpen}
@@ -871,7 +864,6 @@ export default function QuestoesPage() {
         />
       )}
 
-      {/* Modal 4: Importar de PDF */}
       {targetTopicForAction != null && (
         <ImportarPdfDialog
           open={importOpen}
@@ -883,7 +875,6 @@ export default function QuestoesPage() {
         />
       )}
 
-      {/* Diálogo de Confirmação de Exclusão */}
       <ConfirmDialog
         open={Boolean(deleting)}
         onClose={() => setDeleting(null)}

@@ -157,7 +157,6 @@ export function ImportarPdfDialog({
             </div>
           )}
 
-          {/* Barra de Filtros e Status */}
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/80 pb-2">
             <div className="flex items-center gap-1.5">
               <button

@@ -6,15 +6,15 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { AiChatPopup, AiChatFab } from "@/components/AiChatPopup";
 import { Link, useNavigate } from "@/lib/router-compat";
 import { useEffect } from "react";
-import { 
+import {
   Bell,
-  Brain, 
-  Dumbbell, 
-  LayoutDashboard, 
-  ListChecks, 
-  LogOut, 
-  Shield, 
-  User, 
+  Brain,
+  Dumbbell,
+  LayoutDashboard,
+  ListChecks,
+  LogOut,
+  Shield,
+  User,
   Wallet,
   Sparkles
 } from "lucide-react";
@@ -52,11 +52,10 @@ export function AppShell({
     );
   }
 
-  const isMasterAdmin = 
-    user.email === "allysonr510@gmail.com" || 
+  const isMasterAdmin =
+    user.email === "allysonr510@gmail.com" ||
     user.role === "ROLE_ADMIN";
 
-  // Se o usuário estiver suspenso, exibe aviso e bloqueia visualização
   if (user.active === false && !isMasterAdmin) {
     return (
       <div className="glow-field flex min-h-screen flex-col items-center justify-center p-6 text-center">
@@ -81,40 +80,39 @@ export function AppShell({
     );
   }
 
-  // Monta os itens de navegação baseados nas permissões REAIS do usuário
   const navItems = [
     { to: "/", label: "Hoje", icon: LayoutDashboard, accent: "text-dash", visible: true },
-    { 
-      to: "/estudos", 
-      label: "Estudos", 
-      icon: Brain, 
-      accent: "text-study", 
-      visible: isMasterAdmin || user.moduloEstudos !== false 
+    {
+      to: "/estudos",
+      label: "Estudos",
+      icon: Brain,
+      accent: "text-study",
+      visible: isMasterAdmin || user.moduloEstudos !== false
     },
-    { 
-      to: "/treinos", 
-      label: "Treinos", 
-      icon: Dumbbell, 
-      accent: "text-gym", 
-      visible: isMasterAdmin || user.moduloTreinos !== false 
+    {
+      to: "/treinos",
+      label: "Treinos",
+      icon: Dumbbell,
+      accent: "text-gym",
+      visible: isMasterAdmin || user.moduloTreinos !== false
     },
-    { 
-      to: "/financeiro", 
-      label: "Financeiro", 
-      icon: Wallet, 
-      accent: "text-fin", 
-      visible: isMasterAdmin || user.moduloFinancas !== false 
+    {
+      to: "/financeiro",
+      label: "Financeiro",
+      icon: Wallet,
+      accent: "text-fin",
+      visible: isMasterAdmin || user.moduloFinancas !== false
     },
     { to: "/tarefas", label: "Tarefas", icon: ListChecks, accent: "text-dash", visible: true },
     { to: "/planos", label: "Planos & Preços", icon: Sparkles, accent: "text-dash", visible: true },
     { to: "/perfil", label: "Perfil", icon: User, accent: "text-muted-foreground", visible: true },
-    // Apenas allysonr510@gmail.com ou ROLE_ADMIN vê o Painel Admin!
-    { 
-      to: "/admin", 
-      label: "Admin SaaS", 
-      icon: Shield, 
-      accent: "text-amber-400", 
-      visible: isMasterAdmin 
+
+    {
+      to: "/admin",
+      label: "Admin SaaS",
+      icon: Shield,
+      accent: "text-amber-400",
+      visible: isMasterAdmin
     },
   ].filter((item) => item.visible);
 

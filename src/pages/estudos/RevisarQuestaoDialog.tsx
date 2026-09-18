@@ -1,12 +1,12 @@
 import { isGabaritoMatch, formatGabaritoDisplay } from "@/lib/gabaritoUtils";
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { 
-  ArrowRight, 
-  Sparkles, 
-  FileEdit, 
-  Save, 
-  HelpCircle, 
+import {
+  ArrowRight,
+  Sparkles,
+  FileEdit,
+  Save,
+  HelpCircle,
   RotateCcw,
   BookOpen,
   CheckCircle2,
@@ -26,11 +26,6 @@ import { getCadernoNote, saveCadernoNote } from "@/lib/cadernoNotesStorage";
 
 const LETTERS = ["A", "B", "C", "D", "E"];
 
-/**
- * Reabre a questão de um item pendente de revisão. 
- * Agora conta com painel de anotações persistentes, explicação didática da IA e consulta
- * ao comentário da questão enquanto estuda.
- */
 export function RevisarQuestaoDialog({
   open,
   onClose,
@@ -48,7 +43,6 @@ export function RevisarQuestaoDialog({
   const [submitted, setSubmitted] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
 
-  // Notas de estudo
   const [resumoRegra, setResumoRegra] = useState("");
   const [comoNaoErrar, setComoNaoErrar] = useState("");
   const [isSaved, setIsSaved] = useState(false);
@@ -120,9 +114,9 @@ export function RevisarQuestaoDialog({
   }
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={handleClose} 
+    <Dialog
+      open={open}
+      onClose={handleClose}
       title="Sessão de Revisão Ativa"
       description="Resolva novamente para consolidar na memória de longo prazo e faça suas anotações."
       className="max-w-2xl"
@@ -132,7 +126,7 @@ export function RevisarQuestaoDialog({
 
       {q && studyError && (
         <div className="flex max-h-[72vh] flex-col gap-4 overflow-y-auto pr-1">
-          {/* Tags de contexto */}
+
           <div className="flex flex-wrap items-center gap-1.5">
             <Badge variant="default">{q.subjectNome}</Badge>
             {q.topicNome && <Badge variant="default">{q.topicNome}</Badge>}
@@ -145,14 +139,12 @@ export function RevisarQuestaoDialog({
             )}
           </div>
 
-          {/* Enunciado */}
           <div className="rounded-xl border border-border/80 bg-surface-raised/30 p-3.5">
             <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
               {q.enunciado}
             </p>
           </div>
 
-          {/* Alternativas de Resposta */}
           <div className="flex flex-col gap-2">
             {q.alternativas.map((alt, i) => (
               <QuestionOption
@@ -166,7 +158,6 @@ export function RevisarQuestaoDialog({
             ))}
           </div>
 
-          {/* Feedback Pós-Envio */}
           {submitted && (
             <div
               className={`rounded-xl border p-4 text-sm ${
@@ -211,7 +202,6 @@ export function RevisarQuestaoDialog({
             </div>
           )}
 
-          {/* Seção de Anotações & Ajuda com IA */}
           <div className="rounded-xl border border-border/80 bg-surface-raised/40 p-3.5 flex flex-col gap-2.5">
             <div className="flex items-center justify-between">
               <button
@@ -272,7 +262,6 @@ export function RevisarQuestaoDialog({
             )}
           </div>
 
-          {/* Rodapé com botões de ação */}
           <div className="flex justify-between items-center pt-2">
             {!submitted ? (
               <Button

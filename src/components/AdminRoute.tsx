@@ -3,13 +3,6 @@ import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
 import { Loading } from "@/components/ui/Loading";
 
-/**
- * Guarda rigorosa para a rota de administração (/admin).
- * Apenas 'allysonr510@gmail.com' ou usuários com role 'ROLE_ADMIN'
- * são autorizados a carregar e visualizar esta tela.
- * Qualquer outro usuário é redirecionado instantaneamente para a home (/),
- * impedindo vazamento de dados de outros usuários ou painel de controle.
- */
 export function AdminRoute({ children }: { children: ReactNode }) {
   const { user, ready } = useAuth();
 

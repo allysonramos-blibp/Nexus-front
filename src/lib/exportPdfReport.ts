@@ -42,11 +42,9 @@ export function generateExecutivePdf(data: ReportData) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  // Background Header Dark Accent
-  doc.setFillColor(11, 15, 25); // Dark Slate #0b0f19
+  doc.setFillColor(11, 15, 25);
   doc.rect(0, 0, pageWidth, 42, "F");
 
-  // Nexus Logo & Title
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
@@ -57,7 +55,6 @@ export function generateExecutivePdf(data: ReportData) {
   doc.setTextColor(148, 163, 184);
   doc.text("RELATÓRIO EXECUTIVO DE PERFORMANCE & DISCIPLINA", 16, 25);
 
-  // Badge Plano
   doc.setFillColor(30, 41, 59);
   doc.roundedRect(pageWidth - 65, 12, 49, 8, 2, 2, "F");
   doc.setTextColor(248, 250, 252);
@@ -70,7 +67,6 @@ export function generateExecutivePdf(data: ReportData) {
   doc.setFontSize(8);
   doc.text("Emissão: " + data.generatedAt, pageWidth - 16, 28, { align: "right" });
 
-  // Informações do Usuário
   let y = 52;
   doc.setTextColor(15, 23, 42);
   doc.setFont("helvetica", "bold");
@@ -83,13 +79,11 @@ export function generateExecutivePdf(data: ReportData) {
   doc.text("Aluno: " + data.userName, 16, y + 6);
   doc.text("Identificador: " + data.userEmail, 16, y + 11);
 
-  // Linha divisória
   y += 18;
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.4);
   doc.line(16, y, pageWidth - 16, y);
 
-  // SEÇÃO 1: PRODUTIVIDADE & TAREFAS
   y += 8;
   doc.setTextColor(15, 23, 42);
   doc.setFont("helvetica", "bold");
@@ -100,7 +94,6 @@ export function generateExecutivePdf(data: ReportData) {
   const boxHeight = 18;
   y += 4;
 
-  // Box 1
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
   doc.roundedRect(16, y, boxWidth, boxHeight, 2, 2, "FD");
@@ -112,7 +105,6 @@ export function generateExecutivePdf(data: ReportData) {
   doc.setTextColor(15, 23, 42);
   doc.text(String(data.tasks.concluded) + " / " + String(data.tasks.total), 20, y + 14);
 
-  // Box 2
   doc.roundedRect(16 + boxWidth + 4, y, boxWidth, boxHeight, 2, 2, "FD");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
@@ -123,7 +115,6 @@ export function generateExecutivePdf(data: ReportData) {
   doc.setTextColor(16, 185, 129);
   doc.text(String(data.tasks.completionRate) + "%", 20 + boxWidth + 4, y + 14);
 
-  // Box 3
   doc.roundedRect(16 + (boxWidth + 4) * 2, y, boxWidth, boxHeight, 2, 2, "FD");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
@@ -136,7 +127,6 @@ export function generateExecutivePdf(data: ReportData) {
 
   y += boxHeight + 8;
 
-  // SEÇÃO 2: ESTUDOS & EDITAL (SE ATIVO)
   if (data.studies) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
@@ -171,7 +161,6 @@ export function generateExecutivePdf(data: ReportData) {
     y += boxHeight + 8;
   }
 
-  // SEÇÃO 3: TREINOS & FÍSICO (SE ATIVO)
   if (data.workouts) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
@@ -206,7 +195,6 @@ export function generateExecutivePdf(data: ReportData) {
     y += boxHeight + 8;
   }
 
-  // SEÇÃO 4: FINANÇAS PESSOAIS (SE ATIVO)
   if (data.finance) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
@@ -218,7 +206,6 @@ export function generateExecutivePdf(data: ReportData) {
     doc.setFillColor(248, 250, 252);
     doc.setDrawColor(226, 232, 240);
 
-    // Receitas
     doc.roundedRect(16, y, fBoxWidth, boxHeight, 2, 2, "FD");
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
@@ -229,7 +216,6 @@ export function generateExecutivePdf(data: ReportData) {
     doc.setTextColor(16, 185, 129);
     doc.text("R$ " + data.finance.income.toFixed(2), 20, y + 14);
 
-    // Despesas
     doc.roundedRect(16 + fBoxWidth + 4, y, fBoxWidth, boxHeight, 2, 2, "FD");
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
@@ -240,7 +226,6 @@ export function generateExecutivePdf(data: ReportData) {
     doc.setTextColor(239, 68, 68);
     doc.text("R$ " + data.finance.expense.toFixed(2), 20 + fBoxWidth + 4, y + 14);
 
-    // Saldo Líquido
     doc.roundedRect(16 + (fBoxWidth + 4) * 2, y, fBoxWidth, boxHeight, 2, 2, "FD");
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
@@ -254,7 +239,6 @@ export function generateExecutivePdf(data: ReportData) {
     y += boxHeight + 8;
   }
 
-  // DIAGNÓSTICO E AUDITORIA DA IA
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(15, 23, 42);
@@ -272,7 +256,6 @@ export function generateExecutivePdf(data: ReportData) {
   const splitText = doc.splitTextToSize(data.diagnostic, pageWidth - 42);
   doc.text(splitText, 21, y + 7);
 
-  // Rodapé do Documento
   doc.setFontSize(8);
   doc.setTextColor(148, 163, 184);
   doc.text("Nexus Ecosystem — Plataforma Integrada de Gestão de Vida, Estudos & Alta Performance", 16, pageHeight - 12);

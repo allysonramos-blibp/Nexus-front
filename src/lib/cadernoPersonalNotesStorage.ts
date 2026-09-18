@@ -1,8 +1,4 @@
-/**
- * Armazenamento local persistente para o Caderno de Anotações e Revisões Personalizadas.
- * Permite ao estudante criar suas próprias fichas com matérias, planos de estudo,
- * ideias próprias/mnemônicos, pegadinhas e resumos esquematizados.
- */
+
 
 export interface CadernoPersonalNote {
   id: string;

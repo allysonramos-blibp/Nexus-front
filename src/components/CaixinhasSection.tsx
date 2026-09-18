@@ -47,7 +47,6 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
   const [modalCaixinhaOpen, setModalCaixinhaOpen] = useState(false);
   const [editingCaixinha, setEditingCaixinha] = useState<Caixinha | null>(null);
 
-  // Form de Criar/Editar Caixinha
   const [formNome, setFormNome] = useState("");
   const [formSaldoInicial, setFormSaldoInicial] = useState("");
   const [formMeta, setFormMeta] = useState("");
@@ -55,7 +54,6 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
   const [formIcone, setFormIcone] = useState<Caixinha["icone"]>("shield");
   const [formCor, setFormCor] = useState("#10b981");
 
-  // Modal de Movimentação (Guardar / Resgatar)
   const [movModalOpen, setMovModalOpen] = useState(false);
   const [movCaixinha, setMovCaixinha] = useState<Caixinha | null>(null);
   const [movTipo, setMovTipo] = useState<"DEPOSITO" | "RESGATE">("DEPOSITO");
@@ -63,11 +61,9 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
   const [movObs, setMovObs] = useState("");
   const [movSyncExtrato, setMovSyncExtrato] = useState(false);
 
-  // Modal de Histórico de Movimentações
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [historyCaixinha, setHistoryCaixinha] = useState<Caixinha | null>(null);
 
-  // Modal de Confirmação de Exclusão
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deletingCaixinha, setDeletingCaixinha] = useState<Caixinha | null>(null);
 
@@ -186,7 +182,7 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
 
   return (
     <div className="space-y-4">
-      {/* Header das Caixinhas */}
+
       <Card className="border-border/80 bg-surface">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
@@ -222,7 +218,6 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
         </div>
       </Card>
 
-      {/* Grid de Caixinhas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {caixinhas.map((c) => {
           const metaAtingida = c.metaValor && c.metaValor > 0 ? (c.saldo / c.metaValor) * 100 : null;
@@ -234,7 +229,7 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
               className="relative flex flex-col justify-between border-border/80 bg-surface-raised hover:border-border transition-all"
             >
               <div>
-                {/* Cabeçalho da Caixinha */}
+
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <div
@@ -257,7 +252,6 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
                     </div>
                   </div>
 
-                  {/* Ações Rápidas: Histórico, Editar, Excluir */}
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       type="button"
@@ -292,7 +286,6 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
                   </div>
                 </div>
 
-                {/* Saldo Atual Guardado */}
                 <div className="mt-4 rounded-xl border border-border/60 bg-surface/80 p-3.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Valor Guardado</span>
@@ -304,7 +297,6 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
                     {brl(c.saldo)}
                   </p>
 
-                  {/* Progresso da Meta */}
                   {c.metaValor && c.metaValor > 0 ? (
                     <div className="mt-3 space-y-1.5 pt-2 border-t border-border/50">
                       <div className="flex items-center justify-between text-xs">
@@ -330,7 +322,6 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
                 </div>
               </div>
 
-              {/* Botões de Guardar e Resgatar */}
               <div className="mt-4 grid grid-cols-2 gap-2 pt-2 border-t border-border/60">
                 <Button
                   size="sm"
@@ -355,7 +346,6 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
         })}
       </div>
 
-      {/* Modal Criar / Editar Caixinha */}
       <Dialog
         open={modalCaixinhaOpen}
         onClose={() => setModalCaixinhaOpen(false)}
@@ -403,7 +393,6 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
             onChange={(e) => setFormDescricao(e.target.value)}
           />
 
-          {/* Seleção de Ícone */}
           <div>
             <label className="text-xs text-muted-foreground block mb-1.5">Ícone da Caixinha</label>
             <div className="grid grid-cols-4 gap-2">
@@ -425,7 +414,6 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
             </div>
           </div>
 
-          {/* Seleção de Cor */}
           <div>
             <label className="text-xs text-muted-foreground block mb-1.5">Cor Temática</label>
             <div className="flex items-center gap-2.5">
@@ -459,7 +447,6 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
         </form>
       </Dialog>
 
-      {/* Modal Guardar ou Resgatar Dinheiro */}
       <Dialog
         open={movModalOpen}
         onClose={() => setMovModalOpen(false)}
@@ -485,7 +472,6 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
               autoFocus
             />
 
-            {/* Atalhos Rápidos de Valor */}
             <div className="flex items-center gap-1.5 mt-2">
               {[50, 100, 200, 500].map((v) => (
                 <button
@@ -555,7 +541,6 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
         </form>
       </Dialog>
 
-      {/* Modal de Histórico de Movimentações */}
       <Dialog
         open={historyModalOpen}
         onClose={() => setHistoryModalOpen(false)}
@@ -613,7 +598,6 @@ export function CaixinhasSection({ userId, caixinhas, onRefresh, onCreateTransac
         </div>
       </Dialog>
 
-      {/* Modal de Confirmação de Exclusão */}
       <Dialog
         open={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}

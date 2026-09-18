@@ -14,7 +14,7 @@ const EXPIRES_AT_STORAGE_KEY = "nexus.expiresAt";
 interface AuthState {
   user: UserResponse | null;
   ready: boolean;
-  /** Recebe a resposta completa do login (token + usuário) e inicia a sessão. */
+
   signIn: (auth: AuthResponse) => void;
   signOut: () => void;
 }
@@ -26,7 +26,7 @@ function readStoredUser(): UserResponse | null {
     const expiresAtRaw = window.localStorage.getItem(EXPIRES_AT_STORAGE_KEY);
     const expiresAt = expiresAtRaw ? Number(expiresAtRaw) : null;
     if (expiresAt && Date.now() >= expiresAt) {
-      // Sessão expirada enquanto o app estava fechado — não restaura.
+
       return null;
     }
     const raw = window.localStorage.getItem(USER_STORAGE_KEY);
@@ -52,7 +52,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(local);
     setReady(true);
 
-    // Se estiver logado, atualiza dados frescos (módulos, status) da API /auth/me
     const token = window.localStorage.getItem("nexus.token");
     if (token && local) {
       const baseUrl = window.localStorage.getItem("nexus.api_url") || "https://nexus-api-bgsf.onrender.com/api";

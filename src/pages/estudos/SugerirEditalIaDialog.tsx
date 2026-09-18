@@ -35,7 +35,7 @@ export function SugerirEditalIaDialog({
   const [loadingAi, setLoadingAi] = useState(false);
   const [grade, setGrade] = useState<SubjectSuggestion[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<Record<number, boolean>>({});
-  const [selectedTopics, setSelectedTopics] = useState<Record<string, boolean>>({}); // key: `${subIdx}-${topIdx}`
+  const [selectedTopics, setSelectedTopics] = useState<Record<string, boolean>>({});
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [savingProgress, setSavingProgress] = useState<{ current: number; total: number } | null>(null);
 

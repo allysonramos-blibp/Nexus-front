@@ -1,10 +1,10 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { api, type ChatMessage } from "@/lib/api";
-import { 
-  getCustomGeminiKey, 
-  setCustomGeminiKey, 
-  askGeminiDirect 
+import {
+  getCustomGeminiKey,
+  setCustomGeminiKey,
+  askGeminiDirect
 } from "@/lib/geminiDirectService";
 
 interface AiChatContextValue {
@@ -35,7 +35,7 @@ export function AiChatProvider({ children }: { children: ReactNode }) {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) return JSON.parse(saved);
     } catch {
-      // ignore
+
     }
     return [];
   });
@@ -47,7 +47,7 @@ export function AiChatProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(-30)));
     } catch {
-      // ignore
+
     }
   }, [history]);
 
@@ -82,7 +82,7 @@ export function AiChatProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {
-      // ignore
+
     }
   };
 
@@ -112,11 +112,10 @@ export function AiChatProvider({ children }: { children: ReactNode }) {
 
     const text = content.trim();
     const userMsg: ChatMessage = { role: "user", content: text };
-    
-    // Se a última mensagem for um userMsg com o mesmo texto e não tiver sido respondida, não duplica
+
     let currentHistory = [...history];
     if (currentHistory.length > 0 && currentHistory[currentHistory.length - 1].role === "user" && currentHistory[currentHistory.length - 1].content === text) {
-      // Já está no histórico
+
     } else {
       currentHistory = [...currentHistory, userMsg];
       setHistory(currentHistory);
@@ -125,7 +124,7 @@ export function AiChatProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
 
     try {
-      // Envia histórico anterior (sem a pergunta atual)
+
       const previousMessages = currentHistory.slice(0, -1);
       const reply = await performChatRequest(text, previousMessages);
 

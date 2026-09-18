@@ -1,16 +1,16 @@
 import { useState, useRef, useEffect } from "react";
-import { 
-  Bot, 
-  X, 
-  Send, 
-  User, 
-  Sparkles, 
-  Trash2, 
-  Maximize2, 
-  Minimize2, 
-  ChevronDown, 
-  Key, 
-  Check, 
+import {
+  Bot,
+  X,
+  Send,
+  User,
+  Sparkles,
+  Trash2,
+  Maximize2,
+  Minimize2,
+  ChevronDown,
+  Key,
+  Check,
   ExternalLink,
   ShieldCheck
 } from "lucide-react";
@@ -90,7 +90,7 @@ export function AiChatPopup() {
           : "bottom-20 right-4 sm:bottom-6 sm:right-6 w-[92vw] sm:w-[420px] h-[600px] max-h-[85vh]"
       }`}
     >
-      {/* Header do Chat */}
+
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-study/10">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="size-8 rounded-xl bg-study/20 text-study flex items-center justify-center shrink-0 border border-study/30">
@@ -153,7 +153,6 @@ export function AiChatPopup() {
         </div>
       </div>
 
-      {/* Painel Expansível de Chave Gratuita Google AI Studio */}
       {showConfigKey && (
         <div className="border-b border-border bg-surface-raised/80 p-3.5 text-xs text-foreground flex flex-col gap-2 animate-in fade-in">
           <div className="flex items-center justify-between">
@@ -192,7 +191,6 @@ export function AiChatPopup() {
         </div>
       )}
 
-      {/* Área de Mensagens */}
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-4 flex flex-col gap-3.5 scroll-smooth"
@@ -303,7 +301,6 @@ export function AiChatPopup() {
         )}
       </div>
 
-      {/* Input de Mensagem */}
       <form
         onSubmit={handleSubmit}
         className="p-3 border-t border-border bg-surface-raised/40 flex items-center gap-2"

@@ -87,7 +87,7 @@ export async function dispatchNativeNotification(
   };
 
   try {
-    // Tenta primeiro via Service Worker (mais confiável em dispositivos móveis/PWA)
+
     if ("serviceWorker" in navigator) {
       try {
         const reg = await Promise.race([
@@ -103,7 +103,6 @@ export async function dispatchNativeNotification(
       }
     }
 
-    // Fallback nativo
     new Notification(title, defaultOptions);
     return true;
   } catch (err) {
@@ -155,7 +154,6 @@ export async function sendTestNotification(): Promise<boolean> {
   });
 }
 
-// Histórico de disparos diários
 function getSentLog(): Record<string, number> {
   try {
     const raw = localStorage.getItem(SENT_LOG_KEY);
@@ -170,7 +168,6 @@ function markAsSent(key: string): void {
     const log = getSentLog();
     log[key] = Date.now();
 
-    // Limpar logs com mais de 5 dias
     const cutoff = Date.now() - 5 * 24 * 60 * 60 * 1000;
     const cleaned: Record<string, number> = {};
     for (const [k, timestamp] of Object.entries(log)) {
@@ -184,10 +181,6 @@ function markAsSent(key: string): void {
   }
 }
 
-/**
- * Avalia as regras de horário e dispara os lembretes caso o horário já tenha chegado.
- * Se force = true, dispara todos os lembretes ativos imediatamente ignorando o relógio.
- */
 export async function checkAndDispatchScheduledReminders(
   force: boolean = false
 ): Promise<ReminderType[]> {

@@ -10,14 +10,14 @@ export function SaldoChart({
   color = "var(--fin)",
 }: {
   pontos: SaldoPonto[];
-  /** Índice em `pontos` até onde a linha é "realizado" (sólida); depois disso é projeção (tracejada). */
+
   indiceHoje: number;
   height?: number;
   color?: string;
 }) {
   if (pontos.length < 2) return null;
 
-  const width = 100; // viewBox percentual — escala com o container via preserveAspectRatio
+  const width = 100;
   const values = pontos.map((p) => p.saldo);
   const min = Math.min(...values, 0);
   const max = Math.max(...values, 0);

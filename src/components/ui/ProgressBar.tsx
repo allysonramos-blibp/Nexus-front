@@ -11,7 +11,7 @@ export function ProgressBar({
   max?: number;
   className?: string;
   trackClassName?: string;
-  /** Cor da barra preenchida — aceita qualquer valor CSS de cor (ex.: "var(--fin)"). */
+
   accent?: string;
 }) {
   const pct = Math.max(0, Math.min(100, (value / max) * 100));

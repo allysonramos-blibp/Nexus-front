@@ -43,7 +43,7 @@ export function PlanoDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  /** Quando presente, o diálogo edita esse plano; senão, cria um novo. */
+
   plano: StudyPlan | null;
 }) {
   const qc = useQueryClient();

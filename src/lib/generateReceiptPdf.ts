@@ -37,15 +37,12 @@ export function generateReceiptPdf(data: ReceiptData) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  // Background Header Dark #0b0f19
   doc.setFillColor(11, 15, 25);
   doc.rect(0, 0, pageWidth, 45, "F");
 
-  // Top Accent Bar
   doc.setFillColor(56, 189, 248);
   doc.rect(0, 0, pageWidth, 3, "F");
 
-  // Nexus Logo
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
@@ -57,7 +54,6 @@ export function generateReceiptPdf(data: ReceiptData) {
   doc.text("GESTAO DE VIDA, ESTUDOS, TREINOS & FINANCAS", 18, 26);
   doc.text("https://nexus-front-phi.vercel.app", 18, 31);
 
-  // Status Badge Right
   doc.setFillColor(16, 185, 129);
   doc.roundedRect(pageWidth - 65, 15, 47, 10, 2, 2, "F");
   doc.setFont("helvetica", "bold");

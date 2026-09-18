@@ -65,7 +65,6 @@ export function QuestaoForm({
   const [banca, setBanca] = useState(question?.banca ?? "");
   const [ano, setAno] = useState<string>(question?.ano ? String(question.ano) : "");
 
-  // Atualizar estado quando mudar a prop question
   useEffect(() => {
     if (question) {
       const isCE =
@@ -158,7 +157,7 @@ export function QuestaoForm({
       }
     >
       <div className="flex max-h-[68vh] flex-col gap-3.5 overflow-y-auto pr-1">
-        {/* Seletor de Modelo de Questão */}
+
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold text-muted-foreground">
             Formato da Questão:
@@ -201,7 +200,6 @@ export function QuestaoForm({
           }
         />
 
-        {/* Bloco de Alternativas */}
         {tipoQuestao === "CERTO_ERRADO" ? (
           <div className="flex flex-col gap-2 p-3.5 rounded-xl border border-border/80 bg-surface-raised/40">
             <div className="flex items-center justify-between">

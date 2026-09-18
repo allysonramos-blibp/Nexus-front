@@ -1,18 +1,20 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { 
-  Users, 
-  ShieldCheck, 
-  CheckCircle2, 
-  Ban, 
-  Search, 
-  Layers, 
-  TrendingUp, 
+import {
+  Users,
+  ShieldCheck,
+  CheckCircle2,
+  Ban,
+  Search,
+  Layers,
+  TrendingUp,
   FolderKanban,
   RefreshCw,
   SlidersHorizontal,
-  Bot
+  Bot,
+  Download
 } from "lucide-react";
+import { downloadArchitecturePdf } from "@/lib/generateArchitecturePresentationPdf";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -51,31 +53,28 @@ export default function AdminPage() {
   const [selectedPlanFilter, setSelectedPlanFilter] = useState<string>("ALL");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("ALL");
 
-  // Modal de gerenciamento de módulos do usuário
   const [selectedUserForModal, setSelectedUserForModal] = useState<AdminUser | null>(null);
 
-  // Busca dados REAIS da API Spring Boot (/api/admin/users)
-  const { 
-    data: users = [], 
-    isLoading, 
-    error, 
-    refetch, 
-    isFetching 
+  const {
+    data: users = [],
+    isLoading,
+    error,
+    refetch,
+    isFetching
   } = useQuery({
     queryKey: ["admin-users"],
     queryFn: () => api.listAdminUsers(),
   });
 
-  // Mutação para atualizar status (Ativar / Suspender)
   const statusMutation = useMutation({
     mutationFn: ({ id, nextStatus }: { id: number; nextStatus: string }) =>
       api.updateAdminUserStatus(id, nextStatus),
     onSuccess: (_, variables) => {
       queryClient.setQueryData(["admin-users"], (old: AdminUser[] | undefined) => {
         if (!old) return [];
-        return old.map((u) => 
-          u.id === variables.id ? { 
-            ...u, 
+        return old.map((u) =>
+          u.id === variables.id ? {
+            ...u,
             status: variables.nextStatus as AdminUser["status"],
             active: variables.nextStatus === "ATIVO"
           } : u
@@ -140,22 +139,32 @@ export default function AdminPage() {
   const totalPlanosCriados = users.reduce((acc: number, u: AdminUser) => acc + (u.totalPlanos || 0), 0);
 
   return (
-    <AppShell 
-      title="Painel SaaS" 
+    <AppShell
+      title="Painel SaaS"
       subtitle="Gerenciamento de Assinantes & Módulos"
       actions={
-        <Button 
-          variant="secondary" 
-          onClick={() => refetch()} 
-          disabled={isFetching}
-          className="gap-2 text-xs"
-        >
-          <RefreshCw className={`size-3.5 ${isFetching ? "animate-spin" : ""}`} />
-          Sincronizar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => downloadArchitecturePdf()}
+            className="gap-1.5 text-xs"
+          >
+            <Download className="size-3.5 text-dash" />
+            PDF da Arquitetura
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="gap-2 text-xs"
+          >
+            <RefreshCw className={`size-3.5 ${isFetching ? "animate-spin" : ""}`} />
+            Sincronizar
+          </Button>
+        </div>
       }
     >
-      {/* Cards de Métricas em Tempo Real */}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="flex items-center gap-4 border-border/80 bg-surface">
           <span className="flex size-11 items-center justify-center rounded-xl bg-dash/15 text-dash">
@@ -198,7 +207,6 @@ export default function AdminPage() {
         </Card>
       </div>
 
-      {/* Tabela de Gerenciamento Real */}
       <Card className="p-6 border-border/80 bg-surface">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
           <div>
@@ -284,7 +292,7 @@ export default function AdminPage() {
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-1.5">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            u.role === "ROLE_ADMIN" 
+                            u.role === "ROLE_ADMIN"
                               ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
                               : "bg-surface-raised text-muted-foreground border border-border"
                           }`}>
@@ -387,7 +395,6 @@ export default function AdminPage() {
         )}
       </Card>
 
-      {/* Modal Popup para Configuração Granular de Módulos */}
       <AdminModulesModal
         isOpen={Boolean(selectedUserForModal)}
         user={selectedUserForModal}

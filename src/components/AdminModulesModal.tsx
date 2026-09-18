@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
-import { 
-  X, 
-  Brain, 
-  Dumbbell, 
-  Wallet, 
-  Bot, 
-  Check, 
-  ShieldCheck, 
-  User, 
-  AlertTriangle 
+import {
+  X,
+  Brain,
+  Dumbbell,
+  Wallet,
+  Bot,
+  Check,
+  ShieldCheck,
+  User,
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -90,7 +90,7 @@ export function AdminModulesModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs">
       <div className="w-full max-w-lg rounded-2xl border border-border bg-surface p-6 shadow-2xl">
-        {/* Header */}
+
         <div className="flex items-start justify-between border-b border-border pb-4">
           <div className="flex items-center gap-3">
             <span className="flex size-10 items-center justify-center rounded-xl bg-dash/15 text-dash">
@@ -111,7 +111,6 @@ export function AdminModulesModal({
           </button>
         </div>
 
-        {/* Form Content */}
         <div className="mt-5 space-y-4">
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
@@ -133,7 +132,6 @@ export function AdminModulesModal({
               Liberar ou Bloquear Módulos
             </p>
 
-            {/* Modulo Estudos */}
             <div className="flex items-center justify-between rounded-xl border border-border bg-surface-raised/40 p-3">
               <div className="flex items-center gap-3">
                 <span className="flex size-8 items-center justify-center rounded-lg bg-study/15 text-study">
@@ -152,7 +150,6 @@ export function AdminModulesModal({
               />
             </div>
 
-            {/* Modulo Treinos */}
             <div className="flex items-center justify-between rounded-xl border border-border bg-surface-raised/40 p-3">
               <div className="flex items-center gap-3">
                 <span className="flex size-8 items-center justify-center rounded-lg bg-gym/15 text-gym">
@@ -171,7 +168,6 @@ export function AdminModulesModal({
               />
             </div>
 
-            {/* Modulo Finanças */}
             <div className="flex items-center justify-between rounded-xl border border-border bg-surface-raised/40 p-3">
               <div className="flex items-center gap-3">
                 <span className="flex size-8 items-center justify-center rounded-lg bg-fin/15 text-fin">
@@ -190,7 +186,6 @@ export function AdminModulesModal({
               />
             </div>
 
-            {/* Modulo IA & PDF */}
             <div className="rounded-xl border border-border bg-surface-raised/40 p-3 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -235,7 +230,6 @@ export function AdminModulesModal({
           </div>
         </div>
 
-        {/* Footer Actions */}
         <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-4">
           <Button variant="secondary" onClick={onClose} disabled={isSaving}>
             Cancelar

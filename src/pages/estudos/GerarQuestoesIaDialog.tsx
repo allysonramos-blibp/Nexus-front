@@ -305,7 +305,6 @@ Retorne APENAS um array JSON estrito no seguinte formato, sem texto adicional:
                   {d.enunciado}
                 </p>
 
-                {/* Seleção do Gabarito */}
                 <div className="flex flex-col gap-1.5 pt-1">
                   <span className="text-[11px] font-semibold text-muted-foreground">
                     Gabarito Oficial:

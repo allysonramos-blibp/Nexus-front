@@ -46,14 +46,12 @@ export default function CadernoAnotacoesPage() {
   const [notes, setNotes] = useState<CadernoPersonalNote[]>(() => listCadernoPersonalNotes());
   const [viewMode, setViewMode] = useState<ViewMode>("escrever");
 
-  // Carrega planos do backend para sugestão/autocomplete
   const { data: studyPlans } = useQuery({
     queryKey: ["study-plans"],
     queryFn: api.listStudyPlans,
     staleTime: 60_000,
   });
 
-  // Estado do formulário
   const [editingId, setEditingId] = useState<string | null>(null);
   const [titulo, setTitulo] = useState("");
   const [materia, setMateria] = useState("");
@@ -63,17 +61,14 @@ export default function CadernoAnotacoesPage() {
   const [resumoEsquematizado, setResumoEsquematizado] = useState("");
   const [nivelImportancia, setNivelImportancia] = useState<"alta" | "media" | "baixa">("alta");
 
-  // Filtros e busca
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMateria, setFilterMateria] = useState("todas");
   const [filterPlano, setFilterPlano] = useState("todos");
 
-  // Modais e visualização
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(notes[0]?.id || null);
   const [deleteCandidate, setDeleteCandidate] = useState<CadernoPersonalNote | null>(null);
   const [revealedPegadinhas, setRevealedPegadinhas] = useState<Record<string, boolean>>({});
 
-  // Lista de matérias e planos únicos existentes nas anotações + sugestões padrão
   const availableMaterias = useMemo(() => {
     const defaultList = [
       "Direito Administrativo",
@@ -99,7 +94,6 @@ export default function CadernoAnotacoesPage() {
     return Array.from(set).sort();
   }, [notes, studyPlans]);
 
-  // Filtragem
   const filteredNotes = useMemo(() => {
     return notes.filter((n) => {
       const matchSearch =
@@ -230,7 +224,6 @@ export default function CadernoAnotacoesPage() {
     <AppShell title="Caderno de Anotações & Revisões" subtitle="Estudos">
       <EstudosTabs active="caderno-anotacoes" />
 
-      {/* Barra de estatísticas e visualizações */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 bg-surface-raised/40 border border-border/80 rounded-2xl">
         <div className="flex items-center gap-3">
           <div className="flex size-11 items-center justify-center rounded-xl bg-study/15 text-study shrink-0">
@@ -249,7 +242,6 @@ export default function CadernoAnotacoesPage() {
           </div>
         </div>
 
-        {/* Seletor de Modo */}
         <div className="flex flex-wrap items-center gap-1.5 bg-surface p-1 rounded-xl border border-border shrink-0">
           <button
             onClick={() => {
@@ -302,10 +294,9 @@ export default function CadernoAnotacoesPage() {
         </div>
       </div>
 
-      {/* MODO 1: ESCREVER NO CADERNO */}
       {viewMode === "escrever" && (
         <div className="space-y-4">
-          {/* Sugestões rápidas de modelos */}
+
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="text-muted-foreground flex items-center gap-1">
               <Sparkles className="size-3 text-study" /> Modelos rápidos de inspiração:
@@ -358,7 +349,6 @@ export default function CadernoAnotacoesPage() {
                 )}
               </div>
 
-              {/* Título */}
               <div>
                 <label className="block text-xs font-semibold text-foreground mb-1.5">
                   Título da Revisão / Conceito Chave *
@@ -372,7 +362,6 @@ export default function CadernoAnotacoesPage() {
                 />
               </div>
 
-              {/* Matéria e Plano de Estudo */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-foreground mb-1.5">
@@ -416,7 +405,6 @@ export default function CadernoAnotacoesPage() {
                 </div>
               </div>
 
-              {/* Importância */}
               <div className="flex items-center gap-4 text-xs pt-1">
                 <span className="font-semibold text-foreground">Importância para Prova:</span>
                 <label className="inline-flex items-center gap-1.5 cursor-pointer">
@@ -451,9 +439,8 @@ export default function CadernoAnotacoesPage() {
                 </label>
               </div>
 
-              {/* 3 Blocos Essenciais */}
               <div className="space-y-4 pt-2">
-                {/* 1. Minhas Ideias e Mnemônicos */}
+
                 <div className="p-4 rounded-xl border border-dash/30 bg-dash/5 space-y-2">
                   <label className="flex items-center gap-2 text-xs font-bold text-dash">
                     <Lightbulb className="size-4" />
@@ -468,7 +455,6 @@ export default function CadernoAnotacoesPage() {
                   />
                 </div>
 
-                {/* 2. Pegadinhas de Prova */}
                 <div className="p-4 rounded-xl border border-gym/30 bg-gym/5 space-y-2">
                   <label className="flex items-center gap-2 text-xs font-bold text-gym">
                     <AlertTriangle className="size-4" />
@@ -483,7 +469,6 @@ export default function CadernoAnotacoesPage() {
                   />
                 </div>
 
-                {/* 3. Resumo Esquematizado */}
                 <div className="p-4 rounded-xl border border-fin/30 bg-fin/5 space-y-2">
                   <label className="flex items-center gap-2 text-xs font-bold text-fin">
                     <FileText className="size-4" />
@@ -499,7 +484,6 @@ export default function CadernoAnotacoesPage() {
                 </div>
               </div>
 
-              {/* Ação Salvar */}
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
                 <Button type="submit" variant="primary" className="gap-2">
                   <Save className="size-4" />
@@ -511,10 +495,9 @@ export default function CadernoAnotacoesPage() {
         </div>
       )}
 
-      {/* MODO 2: FOLHEAR CADERNO (VISUALIZAÇÃO DE LEITURA) */}
       {viewMode === "folhear" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Sumário Lateral */}
+
           <div className="lg:col-span-4 space-y-3">
             <div className="p-3 bg-surface border border-border rounded-xl space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-foreground">
@@ -569,11 +552,10 @@ export default function CadernoAnotacoesPage() {
             </div>
           </div>
 
-          {/* Página Aberta do Caderno */}
           <div className="lg:col-span-8">
             {activeFolhearNote ? (
               <Card className="p-6 space-y-5 border-study/30 relative">
-                {/* Cabeçalho da Folha */}
+
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
                   <div>
                     <div className="flex flex-wrap items-center gap-2 mb-1.5">
@@ -610,7 +592,6 @@ export default function CadernoAnotacoesPage() {
                   </div>
                 </div>
 
-                {/* Bloco 1: Ideias & Mnemônicos */}
                 {activeFolhearNote.ideiasMnemonic && (
                   <div className="p-4 rounded-xl border border-dash/20 bg-dash/5 space-y-1.5">
                     <h4 className="text-xs font-bold text-dash flex items-center gap-1.5">
@@ -622,7 +603,6 @@ export default function CadernoAnotacoesPage() {
                   </div>
                 )}
 
-                {/* Bloco 2: Pegadinhas */}
                 {activeFolhearNote.pegadinhas && (
                   <div className="p-4 rounded-xl border border-gym/20 bg-gym/5 space-y-1.5">
                     <h4 className="text-xs font-bold text-gym flex items-center gap-1.5">
@@ -634,7 +614,6 @@ export default function CadernoAnotacoesPage() {
                   </div>
                 )}
 
-                {/* Bloco 3: Resumo Esquematizado */}
                 {activeFolhearNote.resumoEsquematizado && (
                   <div className="p-4 rounded-xl border border-fin/20 bg-fin/5 space-y-2">
                     <h4 className="text-xs font-bold text-fin flex items-center gap-1.5">
@@ -646,7 +625,6 @@ export default function CadernoAnotacoesPage() {
                   </div>
                 )}
 
-                {/* Rodapé da Folha */}
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-3 border-t border-border">
                   <span>
                     Criada em: {new Date(activeFolhearNote.criadoEm).toLocaleDateString("pt-BR")}
@@ -678,10 +656,9 @@ export default function CadernoAnotacoesPage() {
         </div>
       )}
 
-      {/* MODO 3: CARDS COM FILTROS */}
       {viewMode === "cards" && (
         <div className="space-y-4">
-          {/* Filtros e Busca */}
+
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -718,7 +695,6 @@ export default function CadernoAnotacoesPage() {
             </select>
           </div>
 
-          {/* Grade de Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredNotes.map((n) => (
               <Card key={n.id} className="p-4 flex flex-col justify-between hover:border-study/40 transition-colors">
@@ -803,7 +779,6 @@ export default function CadernoAnotacoesPage() {
         </div>
       )}
 
-      {/* MODO 4: TREINAR PEGADINHAS (FLASHCARDS DE ARMADILHAS) */}
       {viewMode === "treinar" && (
         <div className="space-y-4 max-w-2xl mx-auto">
           <div className="p-3 bg-gym/10 border border-gym/20 rounded-xl text-xs text-gym flex items-center gap-2">
@@ -830,7 +805,6 @@ export default function CadernoAnotacoesPage() {
                       </Badge>
                     </div>
 
-                    {/* Mnemônico como dica */}
                     {n.ideiasMnemonic && (
                       <div className="p-3 bg-dash/5 rounded-lg border border-dash/20 text-xs">
                         <span className="text-dash font-semibold block mb-0.5">💡 Dica / Raciocínio:</span>
@@ -838,7 +812,6 @@ export default function CadernoAnotacoesPage() {
                       </div>
                     )}
 
-                    {/* Área da Pegadinha Oculta / Revelada */}
                     <div className="p-4 rounded-xl bg-gym/5 border border-gym/30 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-gym flex items-center gap-1.5">
@@ -897,7 +870,6 @@ export default function CadernoAnotacoesPage() {
         </div>
       )}
 
-      {/* Modal de Confirmação de Exclusão */}
       <ConfirmDialog
         open={Boolean(deleteCandidate)}
         title="Excluir Anotação do Caderno"

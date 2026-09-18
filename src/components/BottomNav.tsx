@@ -7,9 +7,6 @@ interface NavItem {
   accent: string;
 }
 
-/**
- * Barra de navegação inferior fixa, só visível abaixo do breakpoint lg.
- */
 export function BottomNav({
   items,
 }: {

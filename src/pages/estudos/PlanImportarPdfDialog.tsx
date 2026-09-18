@@ -19,9 +19,6 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { Badge } from "@/components/ui/Badge";
 import { QuestaoDraftCard } from "./QuestaoDraftCard";
 
-/** Estado local editável de um grupo — começa a partir da estrutura detectada no PDF, mas o usuário
- * pode: trocar pra uma matéria/assunto já existente do plano, renomear o nome sugerido
- * (find-or-create por nome no backend), e mover questões entre grupos. */
 interface GroupState {
   key: string;
   subjectMode: "new" | "existing";
@@ -404,7 +401,6 @@ export function PlanImportarPdfDialog({
             </div>
           )}
 
-          {/* Ação Rápida: Destino Unificado para todas as questões */}
           {extraction && groups.length > 0 && extraction.materiasExistentes.length > 0 && (
             <div className="rounded-lg border border-border bg-surface-raised/60 p-3 flex flex-col gap-2">
               <div className="flex flex-col">

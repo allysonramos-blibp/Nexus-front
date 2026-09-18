@@ -67,7 +67,6 @@ function Today() {
   const userId = user?.id;
   const [reportOpen, setReportOpen] = useState(false);
 
-  // Permissões comerciais e controle de acesso por módulo
   const isMasterAdmin =
     user?.email === "allysonr510@gmail.com" || user?.role === "ROLE_ADMIN";
   const canEstudos = isMasterAdmin || user?.moduloEstudos !== false;
@@ -75,21 +74,18 @@ function Today() {
   const canFinancas = isMasterAdmin || user?.moduloFinancas !== false;
   const canIa = isMasterAdmin || user?.moduloIaExtracao !== false;
 
-  // Tarefas (sempre liberadas no ecossistema de produtividade)
   const tasks = useQuery({
     queryKey: ["tasks", userId, "todas"],
     queryFn: () => api.listTasks(userId!),
     enabled: !!userId,
   });
 
-  // Finanças (APENAS se o módulo estiver permitido para o usuário)
   const transactions = useQuery({
     queryKey: ["transactions", userId],
     queryFn: () => api.listTransactions(userId!),
     enabled: !!userId && canFinancas,
   });
 
-  // Treinos (APENAS se o módulo estiver permitido para o usuário)
   const workouts = useQuery({
     queryKey: ["workouts", userId],
     queryFn: () => api.listWorkouts(userId!),
@@ -102,7 +98,6 @@ function Today() {
     enabled: !!userId && canTreinos,
   });
 
-  // Estudos — pendentes de revisão se o módulo de estudos estiver ativo
   const pendingReviews = useQuery({
     queryKey: ["pendingReviews"],
     queryFn: () => api.listPendingReviews().catch(() => null),
@@ -117,33 +112,28 @@ function Today() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks", userId] }),
   });
 
-  // Loading apenas dos módulos ativos na conta do cliente
   const initialLoading =
     tasks.isLoading ||
     (canFinancas && transactions.isLoading) ||
     (canTreinos && workouts.isLoading);
 
-  // Erro crítico apenas das fontes contratadas
   const criticalError =
     tasks.error ??
     (canFinancas ? transactions.error : null) ??
     (canTreinos ? workouts.error : null);
 
-  // Cálculos de Tarefas
   const allTasks = tasks.data ?? [];
   const pendentes = allTasks.filter((t) => !isTaskConcluded(t));
   const concluidas = allTasks.filter((t) => isTaskConcluded(t));
   const foco = pendentes.find((t) => t.prioridade === "ALTA") ?? pendentes[0];
   const restantes = pendentes.filter((t) => t.id !== foco?.id).slice(0, 5);
 
-  // Cálculos de Finanças (somente se permitido)
   const list = canFinancas ? transactions.data ?? [] : [];
   const saldo = list.reduce(
     (s, t) => s + (t.tipo === "RECEITA" ? Number(t.valor) : -Number(t.valor)),
     0,
   );
 
-  // Cálculos de Treinos (somente se permitido)
   const semana = startOfWeek();
   const treinos = canTreinos ? workouts.data ?? [] : [];
   const feitosNaSemana = treinos.filter(
@@ -152,7 +142,6 @@ function Today() {
   const metaSemanal = goal.data?.metaTreinosPorSemana ?? 0;
   const treinoDeHoje = treinos.find((w) => w.dataTreino === today());
 
-  // Cálculos de Estudos (somente se permitido)
   const dominados = allTasks.filter(
     (t) => t.ehTopicoEdital && t.status === "DOMINADO",
   ).length;
@@ -161,7 +150,6 @@ function Today() {
     totalEdital > 0 ? Math.round((dominados / totalEdital) * 100) : 0;
   const totalRevisoesPendentes = pendingReviews.data?.totalPendentes ?? 0;
 
-  // Ação Dinâmica no topo do Header de acordo com os módulos contratados
   const headerAction = (
     <div className="flex items-center gap-2">
       <Button
@@ -196,7 +184,6 @@ function Today() {
   const greeting = getGreeting();
   const userName = getDisplayName(user?.email);
 
-  // Quantidade de módulos desativados (para exibir sugestão limpa de upgrade)
   const modulosDesativados: { name: string; icon: typeof Dumbbell; desc: string }[] = [];
   if (!canTreinos) {
     modulosDesativados.push({
@@ -236,7 +223,7 @@ function Today() {
         />
       ) : (
         <div className="flex flex-col gap-6">
-          {/* Banner de Saudação e Status Pessoal */}
+
           <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-surface p-6 shadow-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -288,9 +275,8 @@ function Today() {
               </div>
             </div>
 
-            {/* Linha de KPIs Adaptativos (apenas módulos liberados) */}
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 min-w-0">
-              {/* Card 1: Tarefas */}
+
               <div className="rounded-xl border border-border/70 bg-surface-raised/60 p-3.5 min-w-0">
                 <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                   Tarefas
@@ -307,7 +293,6 @@ function Today() {
                 </p>
               </div>
 
-              {/* Card 2: Estudos (somente se permitido) */}
               {canEstudos && (
                 <div className="rounded-xl border border-study/20 bg-study/5 p-3.5 min-w-0">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-study flex items-center justify-between">
@@ -323,7 +308,6 @@ function Today() {
                 </div>
               )}
 
-              {/* Card 3: Treinos (somente se permitido) */}
               {canTreinos && (
                 <div className="rounded-xl border border-gym/20 bg-gym/5 p-3.5 min-w-0">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-gym flex items-center justify-between">
@@ -342,7 +326,6 @@ function Today() {
                 </div>
               )}
 
-              {/* Card 4: Finanças (somente se permitido) */}
               {canFinancas && (
                 <div className="rounded-xl border border-fin/20 bg-fin/5 p-3.5 min-w-0">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-fin flex items-center justify-between">
@@ -358,7 +341,6 @@ function Today() {
                 </div>
               )}
 
-              {/* Card alternativo se o usuário tiver poucos módulos: Indicador de Revisões ou Status */}
               {canEstudos && !canTreinos && !canFinancas && (
                 <div className="rounded-xl border border-border/70 bg-surface-raised/60 p-3.5 min-w-0">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground flex items-center justify-between">
@@ -376,13 +358,12 @@ function Today() {
             </div>
           </div>
 
-          {/* Grid Principal do Dashboard */}
           <div
             className={`grid gap-6 ${
               canTreinos || canFinancas ? "lg:grid-cols-3" : "lg:grid-cols-12"
             }`}
           >
-            {/* Coluna de Foco & Tarefas */}
+
             <Card
               className={`flex flex-col gap-5 p-4 sm:p-6 min-w-0 max-w-full overflow-hidden ${
                 canTreinos || canFinancas
@@ -452,7 +433,6 @@ function Today() {
                 />
               )}
 
-              {/* Lista das próximas tarefas */}
               {restantes.length > 0 && (
                 <div className="mt-2 flex flex-col gap-2 min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
@@ -484,13 +464,12 @@ function Today() {
               )}
             </Card>
 
-            {/* Painel Lateral Direito (renderizado estritamente conforme permissões) */}
             <div
               className={`flex flex-col gap-5 min-w-0 ${
                 canTreinos || canFinancas ? "" : "lg:col-span-5"
               }`}
             >
-              {/* Módulo de Estudos em Destaque (especialmente valioso para perfil focado como Júlia) */}
+
               {canEstudos && (
                 <Card className="p-6">
                   <div className="flex items-center justify-between">
@@ -514,7 +493,6 @@ function Today() {
                     accent="var(--study)"
                   />
 
-                  {/* Ações Rápidas de Estudo */}
                   <div className="mt-4 grid grid-cols-2 gap-2 pt-2 border-t border-border/60">
                     <Link
                       to="/estudos"
@@ -534,7 +512,6 @@ function Today() {
                 </Card>
               )}
 
-              {/* Módulo de Finanças (APENAS se o usuário tiver moduloFinancas !== false) */}
               {canFinancas && (
                 <Card className="p-6">
                   <h2 className="flex items-center gap-2 text-sm font-semibold text-fin">
@@ -556,7 +533,6 @@ function Today() {
                 </Card>
               )}
 
-              {/* Módulo de Treinos (APENAS se o usuário tiver moduloTreinos !== false) */}
               {canTreinos && (
                 <Card className="p-6">
                   <h2 className="flex items-center gap-2 text-sm font-semibold text-gym">
@@ -591,7 +567,6 @@ function Today() {
                 </Card>
               )}
 
-              {/* Sugestão de IA para Estudos ou Rotina */}
               {canIa && (
                 <Card className="p-5 border-primary/20 bg-primary/5">
                   <div className="flex items-center gap-2">
@@ -616,7 +591,6 @@ function Today() {
             </div>
           </div>
 
-          {/* Banner de Expansão de Recursos (apenas para usuários com módulos bloqueados, como a Júlia) */}
           {modulosDesativados.length > 0 && !isMasterAdmin && (
             <div className="rounded-2xl border border-border/80 bg-surface-raised/40 p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

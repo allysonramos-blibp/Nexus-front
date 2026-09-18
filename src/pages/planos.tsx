@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { 
+import {
   Check, Sparkles, Zap, Star, Lock, CreditCard, QrCode
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
@@ -19,7 +19,7 @@ export default function PlanosPage() {
 
   return (
     <AppShell title="Planos & Assinatura" subtitle="Escolha o plano ideal para acelerar sua aprovação e consistência">
-      {/* Banner de Lançamento */}
+
       <div className="relative overflow-hidden rounded-2xl border border-dash/30 bg-gradient-to-r from-dash/15 via-study/10 to-surface-raised p-5 sm:p-6 mb-6">
         <div className="space-y-1 max-w-xl">
           <span className="inline-flex items-center gap-1 rounded-full bg-dash/20 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-dash border border-dash/30">
@@ -34,7 +34,6 @@ export default function PlanosPage() {
         </div>
       </div>
 
-      {/* Alternador de Ciclo: Mensal vs Anual */}
       <div className="flex flex-col items-center justify-center my-6 space-y-2">
         <div className="inline-flex items-center rounded-xl border border-border bg-surface-raised p-1 shadow-sm">
           <button
@@ -68,7 +67,6 @@ export default function PlanosPage() {
         </p>
       </div>
 
-      {/* Grid de Planos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
         {SAAS_PLANS.map((plan) => {
           const price = billingCycle === "YEARLY" ? plan.priceYearly : plan.priceMonthly;
@@ -116,7 +114,6 @@ export default function PlanosPage() {
                   </p>
                 </div>
 
-                {/* Métodos aceitos */}
                 <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground">
                   <span className="flex items-center gap-1 text-emerald-400 font-medium">
                     <QrCode className="size-3" /> PIX Instantâneo
@@ -127,7 +124,6 @@ export default function PlanosPage() {
                   </span>
                 </div>
 
-                {/* Lista de Vantagens */}
                 <div className="mt-5 space-y-3">
                   <p className="text-xs font-semibold text-foreground uppercase tracking-wider">
                     O que está incluso:
@@ -162,7 +158,6 @@ export default function PlanosPage() {
         })}
       </div>
 
-      {/* Modal de Pagamento & Checkout */}
       {selectedPlan && (
         <CheckoutModal
           isOpen={!!selectedPlan}

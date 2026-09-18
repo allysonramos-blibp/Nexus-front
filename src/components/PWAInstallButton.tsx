@@ -8,7 +8,6 @@ export function PWAInstallButton() {
   const [showIOSGuide, setShowIOSGuide] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
 
-  // Já instalado no celular ou desktop como app nativo
   if (isInstalled) {
     return null;
   }
@@ -22,7 +21,6 @@ export function PWAInstallButton() {
     }
   };
 
-  // Fluxo Android / Chrome / Edge / Desktop
   if (isInstallable) {
     return (
       <Button
@@ -38,7 +36,6 @@ export function PWAInstallButton() {
     );
   }
 
-  // Fluxo iOS Safari (iPhone / iPad)
   if (isIOS) {
     return (
       <>

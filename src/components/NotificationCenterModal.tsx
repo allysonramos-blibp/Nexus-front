@@ -111,16 +111,16 @@ export function NotificationCenterModal({
   const isGranted = permission === "granted";
 
   const TIME_OPTIONS = [
-    "06:00", "06:30", "07:00", "07:30", "08:00", "08:30", 
-    "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", 
-    "15:00", "16:00", "17:00", "17:30", "18:00", "19:00", 
+    "06:00", "06:30", "07:00", "07:30", "08:00", "08:30",
+    "09:00", "10:00", "11:00", "12:00", "13:00", "14:00",
+    "15:00", "16:00", "17:00", "17:30", "18:00", "19:00",
     "19:30", "20:00", "21:00", "22:00"
   ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-sm overflow-y-auto">
       <div className="relative w-full max-w-xl rounded-2xl bg-surface border border-border shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
-        {/* Header */}
+
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/80 bg-surface-raised/40">
           <div className="flex items-center gap-2.5">
             <span className="p-2 rounded-xl bg-dash/15 text-dash">
@@ -143,9 +143,8 @@ export function NotificationCenterModal({
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
-          {/* Permission Status Box */}
+
           <div
             className={
               "p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 " +
@@ -211,7 +210,6 @@ export function NotificationCenterModal({
             </div>
           </div>
 
-          {/* Feedback Toast */}
           {feedbackMsg && (
             <div className="p-3.5 rounded-xl bg-fin/15 border border-fin/40 text-fin text-xs flex items-center gap-2 animate-in fade-in duration-200">
               <CheckCircle2 className="size-4 shrink-0" />
@@ -219,7 +217,6 @@ export function NotificationCenterModal({
             </div>
           )}
 
-          {/* Banner de Execução em Segundo Plano */}
           <div className="p-3 rounded-xl bg-dash/5 border border-dash/20 flex items-start gap-2.5 text-xs text-muted-foreground">
             <Sparkles className="size-4 text-dash shrink-0 mt-0.5" />
             <p>
@@ -227,13 +224,11 @@ export function NotificationCenterModal({
             </p>
           </div>
 
-          {/* Configurações de Lembretes */}
           <div className="space-y-3">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Lembretes Programados
             </h3>
 
-            {/* Lembrete de Tarefas */}
             <div className="p-3.5 rounded-xl border border-border/70 bg-surface-raised/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <span className="p-2 rounded-lg bg-dash/10 text-dash shrink-0">
@@ -275,7 +270,6 @@ export function NotificationCenterModal({
               </div>
             </div>
 
-            {/* Lembrete de Estudos */}
             {hasEstudos && (
               <div className="p-3.5 rounded-xl border border-border/70 bg-surface-raised/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -327,7 +321,6 @@ export function NotificationCenterModal({
               </div>
             )}
 
-            {/* Lembrete de Treino */}
             {hasTreinos && (
               <div className="p-3.5 rounded-xl border border-border/70 bg-surface-raised/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -379,7 +372,6 @@ export function NotificationCenterModal({
               </div>
             )}
 
-            {/* Lembrete de Finanças */}
             {hasFinancas && (
               <div className="p-3.5 rounded-xl border border-border/70 bg-surface-raised/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -427,7 +419,6 @@ export function NotificationCenterModal({
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-between px-6 py-3.5 border-t border-border/80 bg-surface-raised/30">
           <p className="text-[11px] text-muted-foreground hidden sm:block">
             Os lembretes tocam com som e vibração no horário escolhido.

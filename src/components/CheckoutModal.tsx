@@ -108,6 +108,7 @@ export function CheckoutModal({
   const PIX_KEY = "34992005737";
   const PIX_RECEIVER = "Allyson Ramos";
   const PIX_CITY = "Uberlândia";
+  const WHATSAPP_NUMBER = "5534992005737";
 
   if (!isOpen) return null;
 
@@ -181,7 +182,10 @@ export function CheckoutModal({
         `Já gerei meu comprovante em PDF e estou enviando aqui para liberação da conta!`
     );
 
-    window.open(`https://wa.me/5534992005737?text=${msg}`, "_blank");
+    window.open(
+      `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${msg}`,
+      "_blank"
+    );
     setStep("CONFIRMED");
   };
 
@@ -215,7 +219,7 @@ export function CheckoutModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-6 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
       <div className="relative w-full max-w-xl rounded-2xl border border-border/80 bg-surface p-5 sm:p-7 shadow-2xl my-auto">
-        {/* Header */}
+
         <div className="flex items-center justify-between pb-4 border-b border-border/60">
           <div className="flex items-center gap-2.5">
             <span className="flex size-9 items-center justify-center rounded-xl bg-dash/15 text-dash">
@@ -240,7 +244,7 @@ export function CheckoutModal({
 
         {step === "CHECKOUT" ? (
           <div className="mt-4 space-y-4 max-h-[75vh] overflow-y-auto pr-1">
-            {/* SELEÇÃO DO PLANO DIRETO NO MODAL */}
+
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 1. Escolha ou Altere o Plano:
@@ -273,7 +277,6 @@ export function CheckoutModal({
               </div>
             </div>
 
-            {/* CICLO DE FATURAMENTO: MENSAL VS ANUAL */}
             <div className="flex items-center justify-between rounded-xl border border-border/70 bg-surface-raised/30 p-2.5">
               <span className="text-xs font-medium text-foreground">
                 Ciclo de Cobrança:
@@ -304,7 +307,6 @@ export function CheckoutModal({
               </div>
             </div>
 
-            {/* RESUMO DE VALORES */}
             <div className="rounded-xl border border-dash/30 bg-dash/5 p-3.5 flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-foreground">
@@ -326,7 +328,6 @@ export function CheckoutModal({
               </div>
             </div>
 
-            {/* SELEÇÃO DO MÉTODO DE PAGAMENTO */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 2. Forma de Pagamento:
@@ -357,7 +358,6 @@ export function CheckoutModal({
               </div>
             </div>
 
-            {/* PAINEL PIX */}
             {paymentMethod === "PIX" ? (
               <div className="rounded-xl border border-border/70 bg-surface-raised/30 p-4 space-y-3.5">
                 <div className="flex items-center justify-between text-xs">
@@ -430,7 +430,6 @@ export function CheckoutModal({
                   <span className="text-[10px] text-muted-foreground">Visa, Master, Elo, Hiper</span>
                 </div>
 
-                {/* Número do Cartão */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-medium text-muted-foreground">
                     Número do Cartão:
@@ -448,7 +447,6 @@ export function CheckoutModal({
                   </div>
                 </div>
 
-                {/* Nome no Cartão */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-medium text-muted-foreground">
                     Nome Impresso no Cartão:
@@ -463,7 +461,6 @@ export function CheckoutModal({
                   />
                 </div>
 
-                {/* Validade e CVV */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-[11px] font-medium text-muted-foreground">
@@ -494,7 +491,6 @@ export function CheckoutModal({
                   </div>
                 </div>
 
-                {/* Parcelas */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-medium text-muted-foreground">
                     Opções de Parcelamento:
@@ -551,7 +547,7 @@ export function CheckoutModal({
             </div>
           </div>
         ) : (
-          /* TELA DE CONFIRMAÇÃO & DOWNLOAD DE COMPROVANTE */
+
           <div className="mt-4 text-center space-y-4 py-4">
             <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
               <ShieldCheck className="size-8" />

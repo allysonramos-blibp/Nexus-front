@@ -38,13 +38,9 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { AuthenticatedImage } from "@/components/ui/AuthenticatedImage";
 import { Dialog } from "@/components/ui/Dialog";
 
-/* =========================================================
- * AUXILIARES DE DATA E SOM
- * ========================================================= */
-
 function startOfWeek(): string {
   const d = new Date();
-  const day = (d.getDay() + 6) % 7; // Segunda = 0
+  const day = (d.getDay() + 6) % 7;
   d.setDate(d.getDate() - day);
   return d.toISOString().slice(0, 10);
 }
@@ -75,7 +71,7 @@ function playTimerChime() {
     if (!AudioContextClass) return;
     const ctx = new AudioContextClass();
     const now = ctx.currentTime;
-    const notes = [440, 554.37, 659.25, 880]; // Lá maior harmônico
+    const notes = [440, 554.37, 659.25, 880];
     notes.forEach((freq, idx) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -89,13 +85,9 @@ function playTimerChime() {
       osc.stop(now + idx * 0.1 + 0.8);
     });
   } catch {
-    // áudio bloqueado ou não suportado
+
   }
 }
-
-/* =========================================================
- * MODELOS RÁPIDOS DE TREINO (FICHA PRONTA)
- * ========================================================= */
 
 interface WorkoutPreset {
   nome: string;
@@ -167,10 +159,6 @@ const PRESETS: WorkoutPreset[] = [
 ];
 
 const emptyExercise: WorkoutExercise = { nome: "", series: 4, repeticoes: 10, carga: null };
-
-/* =========================================================
- * TEMPORIZADOR DE DESCANSO (REST TIMER ENTRE SÉRIES)
- * ========================================================= */
 
 function RestTimerWidget() {
   const [totalSeconds, setTotalSeconds] = useState(60);
@@ -267,7 +255,6 @@ function RestTimerWidget() {
         </div>
       </div>
 
-      {/* Barra de Progresso do Descanso */}
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-raised">
         <div
           className="h-full bg-gym transition-all duration-300"
@@ -275,7 +262,6 @@ function RestTimerWidget() {
         />
       </div>
 
-      {/* Botões Rápidos de Tempo */}
       <div className="mt-3 flex flex-wrap gap-1.5">
         {[30, 45, 60, 90, 120].map((sec) => (
           <button
@@ -619,9 +605,9 @@ function TreinosPage() {
 
   return (
     <AppShell title="Treinos & Físico" subtitle="Consistência na academia e preparação para o TAF">
-      {/* 1. Barra de KPIs Superiores */}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Meta da Semana */}
+
         <Card className="flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
@@ -674,7 +660,6 @@ function TreinosPage() {
           </form>
         </Card>
 
-        {/* Faixa da Semana com Dias Ativos */}
         <Card className="flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
@@ -717,7 +702,6 @@ function TreinosPage() {
           </p>
         </Card>
 
-        {/* Volume de Carga da Semana */}
         <Card className="flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
@@ -747,11 +731,9 @@ function TreinosPage() {
           </div>
         </Card>
 
-        {/* Cronômetro de Descanso Embutido */}
         <RestTimerWidget />
       </div>
 
-      {/* 2. Área Principal: Formulário de Registro + Modelos Rápidos */}
       <div className="mt-5 grid gap-5 lg:grid-cols-12">
         <Card className="lg:col-span-12">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
@@ -789,7 +771,6 @@ function TreinosPage() {
             </div>
           </div>
 
-          {/* Gaveta de Modelos Rápidos (Presets) */}
           {presetsOpen && (
             <div className="my-4 rounded-xl border border-gym/30 bg-gym/5 p-4 animate-in fade-in duration-200">
               <p className="text-xs font-semibold text-gym mb-2 flex items-center gap-1">
@@ -820,7 +801,6 @@ function TreinosPage() {
             </div>
           )}
 
-          {/* Formulário de Criação de Treino */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -844,7 +824,6 @@ function TreinosPage() {
               />
             </div>
 
-            {/* Lista de Exercícios */}
             <div className="flex flex-col gap-2 rounded-xl border border-border/70 bg-surface/50 p-4">
               <div className="flex items-center justify-between pb-2 border-b border-border/50">
                 <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
@@ -910,7 +889,6 @@ function TreinosPage() {
         </Card>
       </div>
 
-      {/* 3. Histórico de Treinos com Busca e Filtros */}
       <Card className="mt-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/60">
           <div>
@@ -923,7 +901,7 @@ function TreinosPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* Seletor de Período */}
+
             <div className="flex rounded-lg bg-surface-raised p-0.5 border border-border text-xs">
               <button
                 type="button"
@@ -954,7 +932,6 @@ function TreinosPage() {
               </button>
             </div>
 
-            {/* Campo de Busca */}
             <div className="relative w-full sm:w-56">
               <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -1022,7 +999,6 @@ function TreinosPage() {
                         )}
                       </div>
 
-                      {/* Lista de Exercícios Executados */}
                       {w.exercicios.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {w.exercicios.map((e, idx) => (
@@ -1037,7 +1013,6 @@ function TreinosPage() {
                         </div>
                       )}
 
-                      {/* Observações livres */}
                       {w.exerciciosExecutados && (
                         <p className="mt-2 text-xs text-muted-foreground leading-relaxed italic">
                           "{w.exerciciosExecutados}"
@@ -1046,7 +1021,6 @@ function TreinosPage() {
                     </div>
                   </div>
 
-                  {/* Ações do Card */}
                   <div className="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
                     <button
                       type="button"
@@ -1068,7 +1042,6 @@ function TreinosPage() {
         )}
       </Card>
 
-      {/* Modal de Calculadora 1RM */}
       <OneRepMaxDialog open={oneRmOpen} onClose={() => setOneRmOpen(false)} />
     </AppShell>
   );

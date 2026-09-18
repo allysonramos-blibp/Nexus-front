@@ -70,7 +70,6 @@ export function ModuleUpgradeGuard({
   const isMasterAdmin =
     user.email === "allysonr510@gmail.com" || user.role === "ROLE_ADMIN";
 
-  // Mapeamento das permissões do usuário
   const hasAccess =
     isMasterAdmin ||
     (moduleKey === "estudos" && user.moduloEstudos !== false) ||

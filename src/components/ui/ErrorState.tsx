@@ -6,11 +6,6 @@ function messageFrom(error: unknown): string {
   return error instanceof Error ? error.message : "Erro inesperado";
 }
 
-/**
- * Estado de erro padrão do Design System. Aceita `onRetry` para telas com ação de
- * "Tentar novamente" (ex.: `refetch` do TanStack Query); sem ele, funciona como uma
- * nota de erro simples — compatível com o antigo `ErrorNote`.
- */
 export function ErrorState({
   error,
   onRetry,
@@ -20,7 +15,7 @@ export function ErrorState({
   error: unknown;
   onRetry?: () => void;
   className?: string;
-  /** Layout de linha única, sem borda tracejada — para caixas de formulário. */
+
   compact?: boolean;
 }) {
   const message = messageFrom(error);

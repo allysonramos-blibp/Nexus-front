@@ -33,7 +33,6 @@ const ITEMS: { value: EstudosTab; label: string }[] = [
   { value: "materiais", label: "Materiais" },
 ];
 
-/** Sub-navegação do módulo Estudos, usada no topo de cada página do hub. */
 export function EstudosTabs({ active }: { active: EstudosTab }) {
   const navigate = useNavigate();
   return (

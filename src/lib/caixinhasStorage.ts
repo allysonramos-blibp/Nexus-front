@@ -2,7 +2,7 @@ export interface CaixinhaMovimentacao {
   id: string;
   tipo: "DEPOSITO" | "RESGATE";
   valor: number;
-  data: string; // YYYY-MM-DD
+  data: string;
   observacao?: string;
 }
 

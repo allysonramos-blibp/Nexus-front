@@ -309,7 +309,6 @@ Não inclua comentários adicionais ou markdown fora do JSON.`;
                   {d.enunciado}
                 </p>
 
-                {/* Alternativas com seleção de gabarito em 1 clique */}
                 <div className="flex flex-col gap-1.5 pt-1">
                   <span className="text-[11px] font-semibold text-muted-foreground">
                     Gabarito (clique na opção para marcar):

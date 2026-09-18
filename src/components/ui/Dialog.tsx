@@ -40,8 +40,6 @@ export function Dialog({
       }
       if (e.key !== "Tab" || !panelRef.current) return;
 
-      // Prende o foco dentro do diálogo: Tab no último elemento volta pro primeiro,
-      // Shift+Tab no primeiro vai pro último — sem isso o Tab escapa pra trás do modal.
       const focusable = panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
       if (focusable.length === 0) return;
       const first = focusable[0];

@@ -1,10 +1,4 @@
-/**
- * Serviço de Inteligência Artificial para o Nexus.
- * Suporta chave gratuita do Google AI Studio com:
- * 1. Descoberta dinâmica de modelos disponíveis
- * 2. Alternância automática imediata quando um modelo estiver em alta demanda (503 / high demand)
- * 3. Fallback inteligente entre Gemini 2.0 Flash, Gemini 1.5 Flash, Gemini Lite e Flash-8B
- */
+
 
 const GEMINI_USER_KEY_STORAGE = "nexus_custom_gemini_api_key";
 const ACTIVE_MODEL_STORAGE = "nexus_active_gemini_model";
@@ -43,9 +37,6 @@ const DEFAULT_FALLBACK_MODELS = [
   "models/gemini-1.5-pro",
 ];
 
-/**
- * Consulta a lista oficial de modelos habilitados para a chave do usuário no Google AI Studio.
- */
 async function discoverCompatibleModels(apiKey: string): Promise<string[]> {
   try {
     const cached = localStorage.getItem(MODELS_LIST_STORAGE);
@@ -56,7 +47,7 @@ async function discoverCompatibleModels(apiKey: string): Promise<string[]> {
       }
     }
   } catch {
-    // ignore
+
   }
 
   try {
@@ -132,8 +123,8 @@ export async function askGeminiDirect(
       role: "user",
       parts: [
         {
-          text: `Você é o Tutor Inteligente do Nexus (preparatório para concursos e estudos de alto rendimento). 
-Responda de forma didática, clara, com exemplos práticos, mnemônicos e foco na retenção do aluno. 
+          text: `Você é o Tutor Inteligente do Nexus (preparatório para concursos e estudos de alto rendimento).
+Responda de forma didática, clara, com exemplos práticos, mnemônicos e foco na retenção do aluno.
 Se for uma questão de concurso, explique a regra jurídica/conceitual, a pegadinha e por que cada alternativa está certa ou errada.
 
 Pergunta do aluno:
@@ -157,7 +148,7 @@ ${prompt}`,
   for (let attempt = 0; attempt < candidateModels.length; attempt++) {
     const modelName = candidateModels[attempt];
     const cleanModelName = modelName.startsWith("models/") ? modelName : `models/${modelName}`;
-    const url = `https://generativelanguage.googleapis.com/v1beta/${cleanModelName}:generateContent?key=${cleanKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/${cleanModelName}:generateContent?key=${apiKey}`;
 
     try {
       const res = await fetch(url, {
@@ -170,11 +161,11 @@ ${prompt}`,
         const data = await res.json();
         const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) {
-          // Salva como modelo ativo padrão para agilizar próximas perguntas
+
           try {
             localStorage.setItem(ACTIVE_MODEL_STORAGE, cleanModelName);
           } catch {
-            // ignore
+
           }
           return text;
         }

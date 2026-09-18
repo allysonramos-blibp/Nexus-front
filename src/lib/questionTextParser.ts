@@ -5,11 +5,8 @@ const LETTERS = ["A", "B", "C", "D", "E"];
 export function parseRawQuestionText(raw: string): QuestionRequest[] {
   if (!raw || !raw.trim()) return [];
 
-  // Normalizar quebras de linha
   const normalized = raw.replace(/\r\n/g, "\n").trim();
 
-  // Tentar identificar se há múltiplos blocos de questões
-  // Padrões de separação: linha com traços (---), "Questão X", ou número no início seguido de banca
   const questionSeparators = [
     /\n\s*(?:[-=_*]{3,})\s*\n/g,
     /\n(?=(?:Quest[ãa]o\s*\d+|\b\d+\s*[\.\-\)])\s*[\:\.\-]?\s*(?:\([A-Za-z]|\b[A-Z]{3,}))/gi,
@@ -33,7 +30,6 @@ export function parseRawQuestionText(raw: string): QuestionRequest[] {
     }
   }
 
-  // Fallback: se os blocos separados não renderam questões válidas, tentar o texto inteiro
   if (results.length === 0) {
     const single = parseSingleBlock(normalized);
     if (single && single.enunciado.length > 0 && single.alternativas.length >= 2) {
@@ -48,7 +44,6 @@ function parseSingleBlock(rawText: string): QuestionRequest | null {
   let text = rawText.trim();
   if (!text) return null;
 
-  // 1. Extrair Explicação / Comentário
   let explicacao: string | null = null;
   const expMatch = text.match(
     /(?:Coment[áa]rio|Explica[çc][ãa]o|Justificativa|Fundamenta[çc][ãa]o|Nota)s?[:\s]+([\s\S]+)$/i,
@@ -58,7 +53,6 @@ function parseSingleBlock(rawText: string): QuestionRequest | null {
     text = text.slice(0, expMatch.index).trim();
   }
 
-  // 2. Extrair Gabarito explícito
   let gabaritoRaw: string | null = null;
   const gabMatch = text.match(
     /(?:Gabarito|Resposta|Resp\.?|Alternativa\s+Correta)[:\s]+([A-Ea-e]|Certo|Errado|C|E)\b/i,
@@ -67,14 +61,13 @@ function parseSingleBlock(rawText: string): QuestionRequest | null {
     gabaritoRaw = gabMatch[1].trim();
     text = text.slice(0, gabMatch.index).trim();
   } else {
-    // Procurar por alternativas marcadas com (X) ou [X]
+
     const markedMatch = text.match(/\(\s*[Xx✓✔]\s*\)\s*(Certo|Errado|[A-Ea-e])\b/i);
     if (markedMatch) {
       gabaritoRaw = markedMatch[1].trim();
     }
   }
 
-  // 3. Extrair Banca e Ano
   let banca: string | null = null;
   let ano: number | null = null;
 
@@ -91,7 +84,6 @@ function parseSingleBlock(rawText: string): QuestionRequest | null {
     ano = parseInt(anoMatch[1], 10);
   }
 
-  // 4. Verificar se é modelo Certo / Errado
   const hasCertoErrado =
     /\b(Certo|Errado)\b/i.test(text) ||
     (gabaritoRaw && ["CERTO", "ERRADO"].includes(gabaritoRaw.toUpperCase()));
@@ -105,12 +97,12 @@ function parseSingleBlock(rawText: string): QuestionRequest | null {
 
   if (isCertoErrado) {
     alternativas = ["Certo", "Errado"];
-    // Remove linhas redundantes de "( ) Certo" ou "( ) Errado"
+
     enunciado = enunciado
       .replace(/(?:\(\s*[Xx ]?\s*\)\s*)?(?:Certo|Errado)\b/gi, "")
       .trim();
   } else {
-    // Múltipla escolha (A, B, C, D, E)
+
     const regexAlt = /(?:^|\n)\s*(?:\(?([A-Ea-e])\)|\b([A-Ea-e])[\.\-\:\)])\s+/g;
     const matches: { index: number; letter: string; end: number }[] = [];
 
@@ -136,7 +128,6 @@ function parseSingleBlock(rawText: string): QuestionRequest | null {
     }
   }
 
-  // 5. Determinar gabarito real correspondente
   let gabarito = "";
   if (gabaritoRaw) {
     const gUp = gabaritoRaw.toUpperCase();
@@ -148,19 +139,17 @@ function parseSingleBlock(rawText: string): QuestionRequest | null {
       if (letterIdx >= 0 && letterIdx < alternativas.length) {
         gabarito = alternativas[letterIdx];
       } else {
-        // Tenta achar alternativa correspondente
+
         const found = alternativas.find((a) => a.trim().toLowerCase() === gabaritoRaw!.toLowerCase());
         if (found) gabarito = found;
       }
     }
   }
 
-  // 6. Limpar enunciado de numerações iniciais (ex: "Questão 1:", "1.")
   enunciado = enunciado
     .replace(/^(?:Quest[ãa]o\s*\d+[\.\:\-]?|\d+[\.\:\-])\s*/i, "")
     .trim();
 
-  // Se não identificou alternativas mas tem enunciado, criar esqueleto para edição rápida
   if (alternativas.length < 2) {
     alternativas = ["Certo", "Errado"];
   }

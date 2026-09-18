@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { 
-  Sparkles, 
-  BookOpen, 
-  CheckCircle2, 
-  HelpCircle, 
-  FileEdit, 
-  AlertTriangle, 
+import {
+  Sparkles,
+  BookOpen,
+  CheckCircle2,
+  HelpCircle,
+  FileEdit,
+  AlertTriangle,
   RotateCcw,
   ExternalLink,
   Save,
@@ -41,25 +41,21 @@ export function CadernoErroDetalheDialog({
   const { openChat } = useAiChat();
 
   const [activeTab, setActiveTab] = useState<"estudo" | "retestar" | "anotacoes">("estudo");
-  
-  // Anotações locais enriquecidas
+
   const [resumoRegra, setResumoRegra] = useState("");
   const [comoNaoErrar, setComoNaoErrar] = useState("");
   const [anotacaoLivre, setAnotacaoLivre] = useState("");
   const [isSaved, setIsSaved] = useState(false);
 
-  // Estado para modo de re-testar
   const [selected, setSelected] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  // Carregar dados da questão completa
   const questionQuery = useQuery({
     queryKey: ["question", studyError?.questionId],
     queryFn: () => api.getQuestion(studyError!.questionId),
     enabled: open && studyError != null,
   });
 
-  // Carregar notas salvas
   useEffect(() => {
     if (studyError) {
       const note = getCadernoNote(studyError.id);
@@ -140,7 +136,7 @@ export function CadernoErroDetalheDialog({
 
       {q && studyError && (
         <div className="flex flex-col gap-4">
-          {/* Navegação entre Abas do Estudo */}
+
           <div className="flex border-b border-border/70 pb-2 gap-1.5 overflow-x-auto">
             <button
               type="button"
@@ -180,7 +176,6 @@ export function CadernoErroDetalheDialog({
             </button>
           </div>
 
-          {/* ABA 1: Estudo da Questão */}
           {activeTab === "estudo" && (
             <div className="flex max-h-[65vh] flex-col gap-3.5 overflow-y-auto pr-1">
               <div className="flex flex-wrap gap-1.5 items-center">
@@ -199,7 +194,6 @@ export function CadernoErroDetalheDialog({
                 </p>
               </div>
 
-              {/* Gabarito oficial detalhado */}
               <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs text-foreground">
                 <div className="flex items-center gap-1.5 font-bold text-emerald-400 text-sm">
                   <CheckCircle2 className="size-4" /> Gabarito Oficial:
@@ -209,7 +203,6 @@ export function CadernoErroDetalheDialog({
                 </p>
               </div>
 
-              {/* Lista de alternativas completa para consulta */}
               <div className="flex flex-col gap-1.5">
                 <p className="text-xs font-semibold text-muted-foreground">Alternativas:</p>
                 {q.alternativas.map((alt, idx) => {
@@ -235,7 +228,6 @@ export function CadernoErroDetalheDialog({
                 })}
               </div>
 
-              {/* Explicação da questão se houver */}
               {q.explicacao && (
                 <div className="rounded-xl border border-border/70 bg-surface-raised/30 p-3 text-xs">
                   <span className="font-bold text-foreground">Comentário / Fundamentação:</span>
@@ -243,7 +235,6 @@ export function CadernoErroDetalheDialog({
                 </div>
               )}
 
-              {/* Pegadinha da banca se houver */}
               {q.pegadinha && (
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
                   <span className="font-bold text-amber-400 flex items-center gap-1">
@@ -253,7 +244,6 @@ export function CadernoErroDetalheDialog({
                 </div>
               )}
 
-              {/* Ações de IA e Estudo Rápido */}
               <div className="mt-1 flex flex-wrap gap-2 pt-2 border-t border-border/60">
                 <Button
                   size="sm"
@@ -291,7 +281,6 @@ export function CadernoErroDetalheDialog({
             </div>
           )}
 
-          {/* ABA 2: Anotações & Lição Aprendida */}
           {activeTab === "anotacoes" && (
             <div className="flex max-h-[65vh] flex-col gap-3 overflow-y-auto pr-1">
               <div className="rounded-xl border border-border/80 bg-surface-raised/40 p-3 text-xs text-muted-foreground">
@@ -348,7 +337,6 @@ export function CadernoErroDetalheDialog({
             </div>
           )}
 
-          {/* ABA 3: Retestar Questão (Resolver de novo) */}
           {activeTab === "retestar" && (
             <div className="flex max-h-[65vh] flex-col gap-3.5 overflow-y-auto pr-1">
               <p className="text-xs text-muted-foreground">

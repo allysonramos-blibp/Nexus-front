@@ -3,13 +3,6 @@ import { cn } from "@/lib/utils";
 
 export type QuestionOptionState = "idle" | "selected" | "correct" | "incorrect";
 
-/**
- * Uma alternativa (A–E) de uma questão. Estados:
- * - idle: nada respondido ainda, clicável.
- * - selected: escolhida pelo usuário, aguardando confirmação (opcional).
- * - correct: gabarito — some verde após responder.
- * - incorrect: a que o usuário errou — fica vermelha após responder.
- */
 export function QuestionOption({
   letter,
   text,

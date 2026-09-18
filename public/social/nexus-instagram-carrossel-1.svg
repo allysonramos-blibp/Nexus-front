@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080" style="background:#0B0F19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <linearGradient id="igAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+    <linearGradient id="cardGradSq" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ambient Light -->
+  <circle cx="540" cy="200" r="400" fill="#2563EB" opacity="0.15" filter="blur(80px)"/>
+
+  <!-- Header -->
+  <rect x="70" y="70" width="160" height="34" rx="17" fill="#1E2945" stroke="#3B82F6" stroke-width="1.5"/>
+  <text x="150" y="92" fill="#93C5FD" font-size="12" font-weight="700" letter-spacing="1" text-anchor="middle">ALL-IN-ONE OS</text>
+
+  <text x="70" y="190" fill="#FFFFFF" font-size="64" font-weight="900" letter-spacing="-1.5">NEXUS</text>
+  <text x="70" y="245" fill="#38BDF8" font-size="30" font-weight="600">Chega de usar 5 aplicativos diferentes.</text>
+  <text x="70" y="295" fill="#94A3B8" font-size="20">Sua vida intelectual, física, financeira e produtiva em um único lugar.</text>
+
+  <!-- 4 Pillars Bento Grid -->
+  <g transform="translate(70, 350)">
+    <!-- Quadrant 1: Estudos -->
+    <rect x="0" y="0" width="450" height="240" rx="20" fill="url(#cardGradSq)" stroke="#334155" stroke-width="1.5"/>
+    <circle cx="50" cy="50" r="22" fill="#10B981" opacity="0.2"/>
+    <text x="50" y="56" fill="#10B981" font-size="20" font-weight="900" text-anchor="middle">📚</text>
+    <text x="90" y="56" fill="#FFFFFF" font-size="24" font-weight="700">Estudos &amp; Simulados</text>
+    <text x="30" y="110" fill="#94A3B8" font-size="16">Edital verticalizado interativo, cronômetro oficial de provas, Caderno de Erros com repetição espaçada.</text>
+    <text x="30" y="195" fill="#10B981" font-size="14" font-weight="700">✓ EXTRAÇÃO VIA PDF E IA</text>
+  </g>
+
+  <g transform="translate(560, 350)">
+    <!-- Quadrant 2: Treinos -->
+    <rect x="0" y="0" width="450" height="240" rx="20" fill="url(#cardGradSq)" stroke="#334155" stroke-width="1.5"/>
+    <circle cx="50" cy="50" r="22" fill="#F59E0B" opacity="0.2"/>
+    <text x="50" y="56" fill="#F59E0B" font-size="20" font-weight="900" text-anchor="middle">⚡</text>
+    <text x="90" y="56" fill="#FFFFFF" font-size="24" font-weight="700">Treinos &amp; Cargas</text>
+    <text x="30" y="110" fill="#94A3B8" font-size="16">Fichas personalizadas (A/B/C/D), evolução de quilagem (kg), histórico de pesagem e galeria corporal.</text>
+    <text x="30" y="195" fill="#F59E0B" font-size="14" font-weight="700">✓ PROGRESSÃO REAL DE CARGA</text>
+  </g>
+
+  <g transform="translate(70, 620)">
+    <!-- Quadrant 3: Finanças -->
+    <rect x="0" y="0" width="450" height="240" rx="20" fill="url(#cardGradSq)" stroke="#334155" stroke-width="1.5"/>
+    <circle cx="50" cy="50" r="22" fill="#8B5CF6" opacity="0.2"/>
+    <text x="50" y="56" fill="#8B5CF6" font-size="20" font-weight="900" text-anchor="middle">💰</text>
+    <text x="90" y="56" fill="#FFFFFF" font-size="24" font-weight="700">Finanças &amp; Caixinhas</text>
+    <text x="30" y="110" fill="#94A3B8" font-size="16">Fluxo de caixa inteligente, Caixinhas de Reserva com metas visuais e segregação de patrimônio.</text>
+    <text x="30" y="195" fill="#8B5CF6" font-size="14" font-weight="700">✓ RESERVA DE EMERGÊNCIA</text>
+  </g>
+
+  <g transform="translate(560, 620)">
+    <!-- Quadrant 4: Foco & Cockpit -->
+    <rect x="0" y="0" width="450" height="240" rx="20" fill="url(#cardGradSq)" stroke="#334155" stroke-width="1.5"/>
+    <circle cx="50" cy="50" r="22" fill="#3B82F6" opacity="0.2"/>
+    <text x="50" y="56" fill="#3B82F6" font-size="20" font-weight="900" text-anchor="middle">🎯</text>
+    <text x="90" y="56" fill="#FFFFFF" font-size="24" font-weight="700">Cockpit &amp; Foco Único</text>
+    <text x="30" y="110" fill="#94A3B8" font-size="16">Elimine a sobrecarga mental: defina sua prioridade absoluta do dia, use o Pomodoro integrado e vença.</text>
+    <text x="30" y="195" fill="#3B82F6" font-size="14" font-weight="700">✓ ZERO DISTRAÇÕES</text>
+  </g>
+
+  <!-- Bottom Call to Action -->
+  <g transform="translate(70, 910)">
+    <rect x="0" y="0" width="940" height="90" rx="24" fill="#1E293B" stroke="#3B82F6" stroke-width="1.5"/>
+    <text x="40" y="52" fill="#FFFFFF" font-size="24" font-weight="700">Experimente agora no seu navegador ou celular</text>
+    <rect x="670" y="20" width="230" height="50" rx="14" fill="#2563EB"/>
+    <text x="785" y="51" fill="#FFFFFF" font-size="18" font-weight="700" text-anchor="middle">ACESSE O APP →</text>
+  </g>
+</svg>

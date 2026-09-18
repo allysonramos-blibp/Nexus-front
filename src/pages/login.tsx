@@ -41,7 +41,6 @@ function LoginPage() {
 
   const redirectTo = (location.state as { from?: string } | null)?.from ?? "/";
 
-  // Preenche e-mail salvo se o usuário optou por lembrar
   useEffect(() => {
     try {
       const saved = localStorage.getItem(REMEMBER_EMAIL_KEY);
@@ -50,16 +49,15 @@ function LoginPage() {
         setRememberMe(true);
       }
     } catch {
-      // Ignora erro em ambientes sem localStorage
+
     }
   }, []);
 
   useEffect(() => {
     if (ready && user) navigate(redirectTo, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [ready, user]);
 
-  // Cálculo sutil de força da senha para o modo cadastro
   const passwordStrength = (() => {
     if (!password) return { score: 0, label: "", color: "" };
     let score = 0;
@@ -80,7 +78,7 @@ function LoginPage() {
     setLoading(true);
 
     try {
-      // Salva ou remove e-mail lembrado
+
       try {
         if (rememberMe && email) {
           localStorage.setItem(REMEMBER_EMAIL_KEY, email);
@@ -88,7 +86,7 @@ function LoginPage() {
           localStorage.removeItem(REMEMBER_EMAIL_KEY);
         }
       } catch {
-        // storage fallback
+
       }
 
       if (mode === "register") {
@@ -123,7 +121,7 @@ function LoginPage() {
 
   return (
     <main className="glow-field relative flex min-h-screen items-center justify-center p-4 sm:p-6 lg:p-10">
-      {/* Luz ambiente de fundo */}
+
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
@@ -132,7 +130,7 @@ function LoginPage() {
       </div>
 
       <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-border/80 bg-surface/95 shadow-2xl backdrop-blur-md grid grid-cols-1 md:grid-cols-12">
-        {/* Painel Esquerdo: Identidade & Proposta de Valor (Visível em md+) */}
+
         <div className="hidden md:flex md:col-span-5 flex-col justify-between p-8 lg:p-10 bg-gradient-to-b from-surface-raised/90 to-surface/90 border-r border-border/60 relative overflow-hidden">
           <div className="relative z-10">
             <div className="flex items-center gap-2.5">
@@ -156,7 +154,6 @@ function LoginPage() {
               </p>
             </div>
 
-            {/* 4 Pilares */}
             <div className="mt-7 flex flex-col gap-3 text-xs">
               <div className="flex items-center gap-3 rounded-lg border border-border/40 bg-surface/60 p-2.5">
                 <div className="flex size-7 items-center justify-center rounded-md bg-dash/15 text-dash">
@@ -208,10 +205,9 @@ function LoginPage() {
           </div>
         </div>
 
-        {/* Painel Direito: Formulário de Autenticação */}
         <div className="col-span-1 md:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-between">
           <div>
-            {/* Header Mobile com Logo */}
+
             <div className="md:hidden flex items-center gap-2 mb-6">
               <div className="flex size-8 items-center justify-center rounded-lg bg-dash/15 text-dash ring-1 ring-dash/30">
                 <Sparkles className="size-4" />
@@ -221,7 +217,6 @@ function LoginPage() {
               </span>
             </div>
 
-            {/* Seletor Segmentado: Entrar vs Criar conta */}
             <div className="grid grid-cols-2 gap-1 rounded-xl bg-surface-raised p-1 border border-border">
               <button
                 type="button"
@@ -301,7 +296,6 @@ function LoginPage() {
                   }
                 />
 
-                {/* Medidor de Força da Senha no Cadastro */}
                 {mode === "register" && password && (
                   <div className="mt-1 flex flex-col gap-1.5">
                     <div className="flex items-center justify-between text-[11px]">
@@ -324,7 +318,6 @@ function LoginPage() {
                 )}
               </div>
 
-              {/* Linha de Opções: Lembrar e Esqueci Senha */}
               <div className="flex items-center justify-between text-xs pt-1">
                 <label
                   htmlFor={rememberMeId}

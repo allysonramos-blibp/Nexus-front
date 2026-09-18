@@ -99,7 +99,6 @@ export default function CadernoDeErrosPage() {
     <AppShell title="Caderno de Erros" subtitle="Estudos">
       <EstudosTabs active="caderno-erros" />
 
-      {/* Cartões de Indicador Rápido */}
       {errors.length > 0 && (
         <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
           <Card className="p-3 sm:p-4">
@@ -117,7 +116,6 @@ export default function CadernoDeErrosPage() {
         </div>
       )}
 
-      {/* Filtros e Barra de Pesquisa */}
       <Card className="grid gap-3 sm:grid-cols-4">
         <div className="sm:col-span-2">
           <Input
@@ -166,7 +164,7 @@ export default function CadernoDeErrosPage() {
                 key={e.id}
                 className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all hover:border-dash/40"
               >
-                <div 
+                <div
                   className="min-w-0 flex-1 cursor-pointer w-full"
                   onClick={() => setSelectedError(e)}
                 >
@@ -189,7 +187,6 @@ export default function CadernoDeErrosPage() {
                     {e.proximaRevisao && <span>Revisão: {e.proximaRevisao}</span>}
                   </div>
 
-                  {/* Resumo da anotação rápida do estudante */}
                   {savedNote?.resumoRegra ? (
                     <div className="mt-2 rounded-lg bg-surface-raised/70 border border-border/70 p-2 text-xs text-foreground/90">
                       <span className="font-semibold text-dash">Memorizar: </span>
@@ -242,7 +239,6 @@ export default function CadernoDeErrosPage() {
         </div>
       )}
 
-      {/* Modal Rico de Estudo, Anotações e Reteste da Questão do Caderno */}
       <CadernoErroDetalheDialog
         key={selectedError?.id ?? "none"}
         open={Boolean(selectedError)}

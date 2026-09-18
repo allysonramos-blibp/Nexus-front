@@ -1,37 +1,16 @@
-/**
- * Cliente HTTP do Nexus — fala com a API Spring Boot.
- * Todas as chamadas rodam no browser.
- */
+
 
 const STORAGE_KEY = "nexus.apiUrl";
 const TOKEN_STORAGE_KEY = "nexus.token";
 
-/** Evento disparado quando a API responde 401. */
 export const UNAUTHORIZED_EVENT = "nexus:unauthorized";
 
-/**
- * Limite de espera para as chamadas de importação de PDF.
- * A extração com IA agora roda em pedaços pequenos com novas
- * tentativas e uma segunda passada de recuperação, o que pode
- * levar vários minutos em provas longas.
- */
-export const PDF_IMPORT_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutos
+export const PDF_IMPORT_TIMEOUT_MS = 15 * 60 * 1000;
 
-// IMPORTANTE: precisa terminar em "/api" — é o prefixo real de todas as rotas do
-// backend (ex.: AuthController mapeia @RequestMapping("/api/auth")). setApiBaseUrl()
-// garante esse sufixo pra qualquer URL customizada que a pessoa digitar na tela de
-// login, mas esse fallback aqui é usado direto (sem passar por setApiBaseUrl) por
-// qualquer navegador que ainda não salvou uma URL customizada — ou seja, por padrão,
-// para todo mundo. Sem o "/api", toda chamada (login incluso) vai pra um caminho que
-// não bate com o permitAll do SecurityConfig, e o Spring Security devolve 401 antes
-// de sequer tentar autenticar.
 export const DEFAULT_API_URL =
   (import.meta.env["VITE_API_URL"] as string | undefined) ??
   "https://nexus-api-bgsf.onrender.com/api";
 
-/**
- * URL base atual da API.
- */
 export function getApiBaseUrl(): string {
   if (typeof window === "undefined") {
     return DEFAULT_API_URL;
@@ -57,9 +36,6 @@ export function setApiBaseUrl(url: string) {
   }
 }
 
-/**
- * Token JWT atual.
- */
 export function getAuthToken(): string | null {
   if (typeof window === "undefined") {
     return null;
@@ -83,9 +59,6 @@ export function clearAuthToken() {
   );
 }
 
-/**
- * Constrói URL para assets retornados pela API.
- */
 export function buildAssetUrl(path: string): string {
   const root = getApiBaseUrl().replace(
     /\/api\/?$/,

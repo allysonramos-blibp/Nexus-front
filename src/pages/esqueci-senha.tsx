@@ -8,7 +8,6 @@ import { api } from "@/lib/api";
 export default function EsqueciSenhaPage() {
   const navigate = useNavigate();
 
-  // Etapa 1: Solicitar código | Etapa 2: Validar código e trocar senha | Etapa 3: Sucesso
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [email, setEmail] = useState("");
   const [token, setToken] = useState("");
@@ -18,7 +17,6 @@ export default function EsqueciSenhaPage() {
   const [error, setError] = useState<string | null>(null);
   const [devCodeHint, setDevCodeHint] = useState<string | null>(null);
 
-  // Solicitar o código de redefinição
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -34,7 +32,7 @@ export default function EsqueciSenhaPage() {
     try {
       const res = await api.forgotPassword(cleanEmail);
       if (res.code) {
-        // Exibe o código na tela para permitir teste ou contingência caso não haja servidor SMTP
+
         setDevCodeHint(res.code);
         setToken(res.code);
       }
@@ -47,7 +45,6 @@ export default function EsqueciSenhaPage() {
     }
   };
 
-  // Enviar a nova senha
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
