@@ -146,6 +146,9 @@ function parseSingleBlock(rawText: string): QuestionRequest | null {
     }
   }
 
+  const numMatch = text.match(/^(?:Quest[ãa]o\s*0*(\d+)|\b0*(\d+)\s*[\.\:\-\)\–\—])/i);
+  const numero = numMatch ? parseInt(numMatch[1] || numMatch[2], 10) : null;
+
   enunciado = enunciado
     .replace(/^(?:Quest[ãa]o\s*\d+[\.\:\-]?|\d+[\.\:\-])\s*/i, "")
     .trim();
@@ -155,6 +158,7 @@ function parseSingleBlock(rawText: string): QuestionRequest | null {
   }
 
   return {
+    numero: numero || null,
     enunciado,
     alternativas,
     gabarito: gabarito || alternativas[0] || "",

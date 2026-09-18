@@ -62,6 +62,7 @@ export function QuestaoForm({
   const [dificuldade, setDificuldade] = useState<QuestionDifficulty>(
     question?.dificuldade ?? "MEDIA",
   );
+  const [numero, setNumero] = useState<string>(question?.numero ? String(question.numero) : "");
   const [banca, setBanca] = useState(question?.banca ?? "");
   const [ano, setAno] = useState<string>(question?.ano ? String(question.ano) : "");
 
@@ -82,6 +83,7 @@ export function QuestaoForm({
       setExplicacao(question.explicacao ?? "");
       setPegadinha(question.pegadinha ?? "");
       setDificuldade(question.dificuldade ?? "MEDIA");
+      setNumero(question.numero ? String(question.numero) : "");
       setBanca(question.banca ?? "");
       setAno(question.ano ? String(question.ano) : "");
     }
@@ -128,7 +130,7 @@ export function QuestaoForm({
         dificuldade,
         banca: banca.trim() || null,
         ano: ano ? Number(ano) : null,
-        numero: question?.numero ?? null,
+        numero: numero.trim() ? parseInt(numero, 10) : null,
       };
       return question ? api.updateQuestion(question.id, body) : api.createQuestion(topicId, body);
     },
@@ -318,7 +320,14 @@ export function QuestaoForm({
           placeholder="Ex.: A banca trocou 'imprescritível' por 'prescritível' para induzir ao erro..."
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Input
+            label="Número (opcional)"
+            type="number"
+            value={numero}
+            placeholder="Ex: 1, 10, 40"
+            onChange={(e) => setNumero(e.target.value)}
+          />
           <Select
             label="Dificuldade"
             value={dificuldade}
