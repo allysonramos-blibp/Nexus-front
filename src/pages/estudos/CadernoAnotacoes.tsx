@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BookOpen,
   PlusCircle,
@@ -19,10 +19,17 @@ import {
   Eye,
   EyeOff,
   Printer,
+  Cloud,
+  CloudCheck,
+  CloudOff,
+  Download,
+  Upload,
+  RefreshCw,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EstudosTabs } from "./EstudosTabs";
 import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { useToast } from "@/contexts/ToastContext";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -30,27 +37,91 @@ import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { ConfirmDialog } from "@/components/ui/Dialog";
+import { Dialog, ConfirmDialog } from "@/components/ui/Dialog";
 import {
   CadernoPersonalNote,
   listCadernoPersonalNotes,
   saveCadernoPersonalNote,
+  updateCadernoPersonalNotesList,
   deleteCadernoPersonalNote,
   recordCadernoNoteReview,
+  encodeCadernoPayload,
+  parseStudyNoteToCaderno,
+  exportCadernoNotesToJson,
+  importCadernoNotesFromJson,
 } from "@/lib/cadernoPersonalNotesStorage";
 
 type ViewMode = "escrever" | "folhear" | "cards" | "treinar";
 
 export default function CadernoAnotacoesPage() {
   const { toast } = useToast();
-  const [notes, setNotes] = useState<CadernoPersonalNote[]>(() => listCadernoPersonalNotes());
+  const { user } = useAuth();
+  const userId = user?.id;
+  const qc = useQueryClient();
+
+  const [notes, setNotes] = useState<CadernoPersonalNote[]>(() => listCadernoPersonalNotes(user?.id));
   const [viewMode, setViewMode] = useState<ViewMode>("escrever");
+
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [importJsonText, setImportJsonText] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: studyPlans } = useQuery({
     queryKey: ["study-plans"],
     queryFn: api.listStudyPlans,
     staleTime: 60_000,
   });
+
+  // Consulta notas salvas no backend na nuvem
+  const serverNotesQuery = useQuery({
+    queryKey: ["notes", userId],
+    queryFn: () => api.listNotes(userId!),
+    enabled: !!userId,
+    staleTime: 15_000,
+  });
+
+  const hasSyncedRef = useRef(false);
+
+  // Sincroniza notas da Nuvem com cache local e sobe notas criadas localmente
+  useEffect(() => {
+    if (serverNotesQuery.data && userId) {
+      const parsedServerNotes = serverNotesQuery.data.map(parseStudyNoteToCaderno);
+      const localNotes = listCadernoPersonalNotes(userId);
+
+      const serverTitles = new Set(parsedServerNotes.map((s) => s.titulo.toLowerCase().trim()));
+
+      // Notas locais que ainda não estão salvas na nuvem
+      const pendingSync = localNotes.filter(
+        (ln) =>
+          !ln.id.startsWith("demo-") &&
+          !ln.backendId &&
+          !serverTitles.has(ln.titulo.toLowerCase().trim())
+      );
+
+      if (pendingSync.length > 0 && !hasSyncedRef.current) {
+        hasSyncedRef.current = true;
+        (async () => {
+          for (const p of pendingSync) {
+            try {
+              const payload = encodeCadernoPayload(p);
+              await api.createNote(userId, p.titulo, payload);
+            } catch (e) {
+              console.warn("Falha ao subir nota local para nuvem:", e);
+            }
+          }
+          qc.invalidateQueries({ queryKey: ["notes", userId] });
+        })();
+      }
+
+      if (parsedServerNotes.length > 0) {
+        const merged = [...parsedServerNotes, ...pendingSync];
+        setNotes(merged);
+        updateCadernoPersonalNotesList(merged, userId);
+      } else if (localNotes.length > 0 && !localNotes.every((n) => n.id.startsWith("demo-"))) {
+        setNotes(localNotes);
+      }
+    }
+  }, [serverNotesQuery.data, userId, qc]);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [titulo, setTitulo] = useState("");
@@ -116,7 +187,7 @@ export default function CadernoAnotacoesPage() {
     return notes.find((n) => n.id === selectedNoteId) || filteredNotes[0] || notes[0] || null;
   }, [selectedNoteId, notes, filteredNotes]);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!titulo.trim()) {
       toast("Informe um título para sua anotação de revisão.", "info");
@@ -127,9 +198,7 @@ export default function CadernoAnotacoesPage() {
       return;
     }
 
-    const saved = saveCadernoPersonalNote({
-      id: editingId || undefined,
-      titulo: titulo.trim(),
+    const payload = encodeCadernoPayload({
       materia: materia.trim(),
       planoEstudo: planoEstudo.trim() || "Geral / Concursos",
       ideiasMnemonic: ideiasMnemonic.trim(),
@@ -138,14 +207,57 @@ export default function CadernoAnotacoesPage() {
       nivelImportancia,
     });
 
-    const updated = listCadernoPersonalNotes();
+    const editingNote = editingId ? notes.find((n) => n.id === editingId) : null;
+    let backendId = editingNote?.backendId;
+
+    // 1. Salva localmente primeiro para resposta instantânea
+    const saved = saveCadernoPersonalNote(
+      {
+        id: editingId || undefined,
+        backendId,
+        titulo: titulo.trim(),
+        materia: materia.trim(),
+        planoEstudo: planoEstudo.trim() || "Geral / Concursos",
+        ideiasMnemonic: ideiasMnemonic.trim(),
+        pegadinhas: pegadinhas.trim(),
+        resumoEsquematizado: resumoEsquematizado.trim(),
+        nivelImportancia,
+      },
+      userId
+    );
+
+    const updated = listCadernoPersonalNotes(userId);
     setNotes(updated);
     setSelectedNoteId(saved.id);
 
-    toast(
-      editingId ? "Anotação atualizada no caderno!" : "Nova revisão registrada com sucesso no Caderno!",
-      "success"
-    );
+    // 2. Salva na nuvem (PostgreSQL) vinculado à conta do usuário
+    if (userId) {
+      try {
+        if (backendId) {
+          await api.updateNote(backendId, userId, titulo.trim(), payload);
+        } else {
+          const res = await api.createNote(userId, titulo.trim(), payload);
+          backendId = res.id;
+          saved.backendId = backendId;
+          saveCadernoPersonalNote(saved, userId);
+        }
+        qc.invalidateQueries({ queryKey: ["notes", userId] });
+        toast(
+          editingId
+            ? "Anotação atualizada e salva na Nuvem com sucesso!"
+            : "Anotação salva na Nuvem da sua conta com sucesso!",
+          "success"
+        );
+      } catch (err) {
+        console.warn("Aviso ao salvar na nuvem:", err);
+        toast("Anotação salva no aparelho. Será sincronizada na nuvem assim que restabelecer conexão.", "info");
+      }
+    } else {
+      toast(
+        editingId ? "Anotação atualizada no caderno!" : "Nova revisão registrada com sucesso no Caderno!",
+        "success"
+      );
+    }
 
     if (!editingId) {
       setTitulo("");
@@ -169,22 +281,98 @@ export default function CadernoAnotacoesPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteCandidate) return;
-    deleteCadernoPersonalNote(deleteCandidate.id);
-    const updated = listCadernoPersonalNotes();
+    const target = deleteCandidate;
+    deleteCadernoPersonalNote(target.id, userId);
+    const updated = listCadernoPersonalNotes(userId);
     setNotes(updated);
-    if (selectedNoteId === deleteCandidate.id) {
+    if (selectedNoteId === target.id) {
       setSelectedNoteId(updated[0]?.id || null);
     }
     setDeleteCandidate(null);
+
+    if (userId && target.backendId) {
+      try {
+        await api.deleteNote(target.backendId);
+        qc.invalidateQueries({ queryKey: ["notes", userId] });
+      } catch (e) {
+        console.warn("Erro ao deletar nota no servidor:", e);
+      }
+    }
     toast("Anotação removida do caderno.", "info");
   };
 
-  const handleMarkReviewed = (id: string) => {
-    recordCadernoNoteReview(id);
-    setNotes(listCadernoPersonalNotes());
+  const handleMarkReviewed = async (id: string) => {
+    recordCadernoNoteReview(id, userId);
+    const updated = listCadernoPersonalNotes(userId);
+    setNotes(updated);
+
+    const note = updated.find((n) => n.id === id);
+    if (userId && note && note.backendId) {
+      try {
+        const payload = encodeCadernoPayload(note);
+        await api.updateNote(note.backendId, userId, note.titulo, payload);
+      } catch {}
+    }
     toast("Revisão registrada! Contagem de fixação atualizada.", "success");
+  };
+
+  const handleExportBackup = () => {
+    const jsonStr = exportCadernoNotesToJson(userId);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `nexus-caderno-anotacoes-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast("Backup das anotações baixado com sucesso!", "success");
+  };
+
+  const handleImportText = () => {
+    if (!importJsonText.trim()) {
+      toast("Cole o conteúdo JSON do backup para restaurar.", "info");
+      return;
+    }
+    const result = importCadernoNotesFromJson(importJsonText, userId);
+    if (result.success) {
+      const refreshed = listCadernoPersonalNotes(userId);
+      setNotes(refreshed);
+      setImportJsonText("");
+      setIsBackupModalOpen(false);
+      toast(`${result.count} anotação(ões) importada(s) com sucesso!`, "success");
+      if (userId) {
+        qc.invalidateQueries({ queryKey: ["notes", userId] });
+      }
+    } else {
+      toast("Formato JSON inválido. Verifique o conteúdo do backup.", "error");
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const content = ev.target?.result as string;
+      if (content) {
+        const result = importCadernoNotesFromJson(content, userId);
+        if (result.success) {
+          const refreshed = listCadernoPersonalNotes(userId);
+          setNotes(refreshed);
+          setIsBackupModalOpen(false);
+          toast(`${result.count} anotação(ões) restaurada(s) com sucesso!`, "success");
+          if (userId) {
+            qc.invalidateQueries({ queryKey: ["notes", userId] });
+          }
+        } else {
+          toast("Arquivo de backup inválido.", "error");
+        }
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
   };
 
   const togglePegadinha = (id: string) => {
@@ -224,73 +412,96 @@ export default function CadernoAnotacoesPage() {
     <AppShell title="Caderno de Anotações & Revisões" subtitle="Estudos">
       <EstudosTabs active="caderno-anotacoes" />
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 bg-surface-raised/40 border border-border/80 rounded-2xl">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 bg-surface-raised/40 border border-border/80 rounded-2xl">
         <div className="flex items-center gap-3">
           <div className="flex size-11 items-center justify-center rounded-xl bg-study/15 text-study shrink-0">
             <BookMarked className="size-6" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
-              Meu Caderno de Anotações Pessoais
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-sm font-bold text-foreground">
+                Meu Caderno de Anotações Pessoais
+              </h2>
               <Badge variant="default" className="text-[11px] font-semibold">
                 {notes.length} fichas salvas
               </Badge>
-            </h2>
+              {userId ? (
+                <Badge variant="success" className="text-[11px] font-medium gap-1 py-0.5 px-2 flex items-center">
+                  <CloudCheck className="size-3" /> Nuvem Ativa ({user?.email})
+                </Badge>
+              ) : (
+                <Badge variant="warning" className="text-[11px] font-medium gap-1 py-0.5 px-2 flex items-center">
+                  <CloudOff className="size-3" /> Somente Local
+                </Badge>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Crie suas próprias anotações com ideias, pegadinhas de prova e resumos esquematizados para revisar sempre que quiser.
+              Crie suas próprias anotações com ideias, pegadinhas de prova e resumos esquematizados salvos e sincronizados na sua conta.
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 bg-surface p-1 rounded-xl border border-border shrink-0">
-          <button
-            onClick={() => {
-              setViewMode("escrever");
-              if (!editingId) {
-                setTitulo("");
-                setIdeiasMnemonic("");
-                setPegadinhas("");
-                setResumoEsquematizado("");
-              }
-            }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-              viewMode === "escrever"
-                ? "bg-dash text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setIsBackupModalOpen(true)}
+            className="text-xs gap-1.5 h-8 bg-surface hover:bg-surface-raised transition-colors"
           >
-            <PlusCircle className="size-3.5" /> Escrever Anotação
-          </button>
-          <button
-            onClick={() => setViewMode("folhear")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-              viewMode === "folhear"
-                ? "bg-dash text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <BookOpen className="size-3.5" /> Folhear Caderno
-          </button>
-          <button
-            onClick={() => setViewMode("cards")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-              viewMode === "cards"
-                ? "bg-dash text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Layers className="size-3.5" /> Ver em Cards
-          </button>
-          <button
-            onClick={() => setViewMode("treinar")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-              viewMode === "treinar"
-                ? "bg-dash text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <AlertTriangle className="size-3.5" /> Treinar Pegadinhas
-          </button>
+            <Download className="size-3.5 text-study" /> Backup / Restaurar
+          </Button>
+
+          <div className="flex flex-wrap items-center gap-1.5 bg-surface p-1 rounded-xl border border-border">
+            <button
+              onClick={() => {
+                setViewMode("escrever");
+                if (!editingId) {
+                  setTitulo("");
+                  setIdeiasMnemonic("");
+                  setPegadinhas("");
+                  setResumoEsquematizado("");
+                }
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                viewMode === "escrever"
+                  ? "bg-dash text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <PlusCircle className="size-3.5" /> Escrever Anotação
+            </button>
+            <button
+              onClick={() => setViewMode("folhear")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                viewMode === "folhear"
+                  ? "bg-dash text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <BookOpen className="size-3.5" /> Folhear Caderno
+            </button>
+            <button
+              onClick={() => setViewMode("cards")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                viewMode === "cards"
+                  ? "bg-dash text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Layers className="size-3.5" /> Ver em Cards
+            </button>
+            <button
+              onClick={() => setViewMode("treinar")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                viewMode === "treinar"
+                  ? "bg-dash text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <AlertTriangle className="size-3.5" /> Treinar Pegadinhas
+            </button>
+          </div>
         </div>
       </div>
 
@@ -879,6 +1090,126 @@ export default function CadernoAnotacoesPage() {
         onConfirm={handleDelete}
         onClose={() => setDeleteCandidate(null)}
       />
+
+      {/* Modal de Backup & Sincronização */}
+      <Dialog
+        open={isBackupModalOpen}
+        onClose={() => setIsBackupModalOpen(false)}
+        title="Backup & Sincronização do Caderno"
+        description="Gerencie a segurança e persistência das suas anotações de estudo."
+        className="max-w-xl"
+        footer={
+          <div className="flex items-center justify-between w-full">
+            <span className="text-[11px] text-muted-foreground">
+              Total: {notes.length} fichas salvas
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => setIsBackupModalOpen(false)}>
+              Fechar
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4 py-2">
+          {/* Status da Conexão */}
+          <div className="p-3.5 rounded-xl border border-border bg-surface-raised/40 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Cloud className="size-4 text-study" />
+                <span className="text-xs font-semibold text-foreground">Status do Armazenamento</span>
+              </div>
+              {userId ? (
+                <Badge variant="success" className="text-[11px]">
+                  Nuvem Conectada (PostgreSQL)
+                </Badge>
+              ) : (
+                <Badge variant="warning" className="text-[11px]">
+                  Somente Memória Local
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {userId ? (
+                <>
+                  Suas anotações são salvas e sincronizadas automaticamente no banco de dados da sua conta (<strong>{user?.email}</strong>). Você pode acessá-las de qualquer aparelho ou navegador ao fazer login.
+                </>
+              ) : (
+                <>
+                  Você está sem login ativo. Suas anotações ficam apenas salvas neste navegador. Faça login para sincronizá-las na nuvem.
+                </>
+              )}
+            </p>
+          </div>
+
+          {/* Exportar Backup */}
+          <div className="p-3.5 rounded-xl border border-border bg-surface space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-xs font-semibold text-foreground">Exportar Arquivo de Backup</h4>
+                <p className="text-[11px] text-muted-foreground">
+                  Gere um arquivo .json seguro com todas as suas fichas, mnemônicos e pegadinhas.
+                </p>
+              </div>
+              <Button size="sm" onClick={handleExportBackup} className="gap-1.5 shrink-0 text-xs">
+                <Download className="size-3.5" /> Baixar Backup (.json)
+              </Button>
+            </div>
+          </div>
+
+          {/* Restaurar Backup */}
+          <div className="p-3.5 rounded-xl border border-border bg-surface space-y-3">
+            <div>
+              <h4 className="text-xs font-semibold text-foreground">Restaurar ou Importar Anotações</h4>
+              <p className="text-[11px] text-muted-foreground">
+                Se você fez anotações em outro navegador ou possui um arquivo de backup, restaure-os aqui.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept=".json,application/json"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                className="gap-1.5 text-xs"
+              >
+                <Upload className="size-3.5 text-study" /> Escolher Arquivo .JSON
+              </Button>
+            </div>
+
+            <div className="space-y-1.5 pt-1">
+              <label className="text-[11px] font-medium text-muted-foreground">
+                Ou cole o texto JSON de backup abaixo:
+              </label>
+              <Textarea
+                rows={3}
+                placeholder='Cole aqui o JSON gerado anteriormente (ex: { "notes": [...] })'
+                value={importJsonText}
+                onChange={(e) => setImportJsonText(e.target.value)}
+                className="font-mono text-xs"
+              />
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleImportText}
+                  disabled={!importJsonText.trim()}
+                  className="text-xs"
+                >
+                  Restaurar Texto
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Dialog>
     </AppShell>
   );
 }
