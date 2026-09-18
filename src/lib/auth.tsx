@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import {
   UNAUTHORIZED_EVENT,
   clearAuthToken,
+  getApiBaseUrl,
+  getAuthToken,
   setAuthToken,
   type AuthResponse,
   type UserResponse,
@@ -52,26 +54,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(local);
     setReady(true);
 
-    const token = window.localStorage.getItem("nexus.token");
+    const token = getAuthToken();
     if (token && local) {
-      const baseUrl = window.localStorage.getItem("nexus.api_url") || "https://nexus-api-bgsf.onrender.com/api";
+      const baseUrl = getApiBaseUrl();
       fetch(`${baseUrl}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .then((res) => res.ok ? res.json() : null)
-      .then((freshUser) => {
-        if (freshUser) {
-          window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(freshUser));
-          setUser(freshUser);
-        }
-      })
-      .catch(() => {});
+        .then((res) => {
+          if (res.status === 401) {
+            signOut();
+            try {
+              window.sessionStorage.setItem(
+                "nexus_auth_message",
+                "Sua sessão expirou por segurança. Faça login novamente para continuar.",
+              );
+            } catch {}
+            return null;
+          }
+          return res.ok ? res.json() : null;
+        })
+        .then((freshUser) => {
+          if (freshUser) {
+            window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(freshUser));
+            setUser(freshUser);
+          }
+        })
+        .catch(() => {});
+    } else if (!token && local) {
+      signOut();
     }
-  }, []);
+  }, [signOut]);
 
   // Qualquer chamada que volte 401 (token ausente/expirado/inválido) encerra a sessão aqui.
   useEffect(() => {
-    const handler = () => signOut();
+    const handler = () => {
+      signOut();
+      try {
+        window.sessionStorage.setItem(
+          "nexus_auth_message",
+          "Sua sessão expirou por segurança. Faça login novamente para continuar.",
+        );
+      } catch {}
+    };
     window.addEventListener(UNAUTHORIZED_EVENT, handler);
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, handler);
   }, [signOut]);

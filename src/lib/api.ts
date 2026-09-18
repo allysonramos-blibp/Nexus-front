@@ -228,6 +228,10 @@ async function request<T>(
       // not json
     }
 
+    if (res.status === 401) {
+      userMsg = "Sua sessão expirou por segurança. Faça login novamente para continuar.";
+    }
+
     throw new ApiError(
       res.status,
       userMsg ||

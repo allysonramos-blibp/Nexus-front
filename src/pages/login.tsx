@@ -43,6 +43,11 @@ function LoginPage() {
 
   useEffect(() => {
     try {
+      const authMsg = sessionStorage.getItem("nexus_auth_message");
+      if (authMsg) {
+        setError(authMsg);
+        sessionStorage.removeItem("nexus_auth_message");
+      }
       const saved = localStorage.getItem(REMEMBER_EMAIL_KEY);
       if (saved) {
         setEmail(saved);
