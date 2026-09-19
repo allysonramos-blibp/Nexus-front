@@ -11,10 +11,12 @@ import {
   FileDown,
   Zap,
   Lock,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth";
 import { generateReceiptPdf, type PlanDetails, type ReceiptData } from "@/lib/generateReceiptPdf";
+import { getKiwifyUrlForPlan, buildKiwifyCheckoutUrl } from "@/lib/kiwifyConfig";
 
 export { type PlanDetails } from "@/lib/generateReceiptPdf";
 
@@ -418,127 +420,95 @@ export function CheckoutModal({
                 </div>
               </div>
             ) : (
-              /* PAINEL CARTÃO DE CRÉDITO */
-              <form
-                onSubmit={handleProcessCardPayment}
-                className="rounded-xl border border-border/70 bg-surface-raised/30 p-4 space-y-3"
-              >
-                <div className="flex items-center justify-between text-xs pb-1">
+              /* PAINEL CARTÃO DE CRÉDITO VIA KIWIFY */
+              <div className="rounded-xl border border-border/70 bg-surface-raised/30 p-4 space-y-4">
+                <div className="flex items-center justify-between text-xs pb-1 border-b border-border/60">
                   <div className="flex items-center gap-1.5 text-foreground font-semibold">
-                    <Lock className="size-3.5 text-emerald-400" /> Processamento Seguro Criptografado
+                    <Lock className="size-3.5 text-emerald-400" /> Checkout Seguro via Kiwify
                   </div>
-                  <span className="text-[10px] text-muted-foreground">Visa, Master, Elo, Hiper</span>
+                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+                    Visa • Master • Elo • Hiper
+                  </span>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[11px] font-medium text-muted-foreground">
-                    Número do Cartão:
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      required
-                      placeholder="0000 0000 0000 0000"
-                      value={cardNumber}
-                      onChange={(e) => handleCardNumberChange(e.target.value)}
-                      className="w-full rounded-lg bg-surface border border-border px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-dash"
-                    />
-                    <CreditCard className="size-4 text-muted-foreground absolute right-3 top-2.5" />
+                <div className="rounded-lg bg-surface p-3.5 border border-border space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Plano Selecionado:</span>
+                    <strong className="text-foreground">{currentPlan.name}</strong>
                   </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-medium text-muted-foreground">
-                    Nome Impresso no Cartão:
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: ALLYSON RAMOS"
-                    value={cardHolder}
-                    onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                    className="w-full rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground uppercase focus:outline-none focus:ring-1 focus:ring-dash"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-medium text-muted-foreground">
-                      Validade (MM/AA):
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="MM/AA"
-                      value={cardExpiry}
-                      onChange={(e) => handleExpiryChange(e.target.value)}
-                      className="w-full rounded-lg bg-surface border border-border px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-dash"
-                    />
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Modalidade:</span>
+                    <span className="font-medium text-foreground">
+                      {currentCycle === "YEARLY" ? "Anual (Até 12x com desconto)" : "Mensal Recorrente"}
+                    </span>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-medium text-muted-foreground">
-                      Código CVV:
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      maxLength={4}
-                      placeholder="123"
-                      value={cardCvv}
-                      onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ""))}
-                      className="w-full rounded-lg bg-surface border border-border px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-dash"
-                    />
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Valor:</span>
+                    <span className="text-sm font-black text-emerald-400">
+                      R$ {finalChargeAmount.toFixed(2).replace(".", ",")}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/50">
+                    <span>E-mail do Aluno vinculado:</span>
+                    <span className="font-mono font-semibold text-foreground">{user?.email || "aluno@nexus.com"}</span>
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[11px] font-medium text-muted-foreground">
-                    Opções de Parcelamento:
-                  </label>
-                  <select
-                    value={installments}
-                    onChange={(e) => setInstallments(e.target.value)}
-                    className="w-full rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-dash"
-                  >
-                    <option value="1">
-                      1x de R$ {finalChargeAmount.toFixed(2).replace(".", ",")} (à vista sem juros)
-                    </option>
-                    <option value="2">
-                      2x de R$ {(finalChargeAmount / 2).toFixed(2).replace(".", ",")} sem juros
-                    </option>
-                    <option value="3">
-                      3x de R$ {(finalChargeAmount / 3).toFixed(2).replace(".", ",")} sem juros
-                    </option>
-                    {currentCycle === "YEARLY" && (
-                      <>
-                        <option value="6">
-                          6x de R$ {(finalChargeAmount / 6).toFixed(2).replace(".", ",")} sem juros
-                        </option>
-                        <option value="12">
-                          12x de R$ {(finalChargeAmount / 12).toFixed(2).replace(".", ",")} sem juros
-                        </option>
-                      </>
-                    )}
-                  </select>
-                </div>
+                {(() => {
+                  const rawUrl = getKiwifyUrlForPlan(currentPlan.id, currentCycle);
+                  const userName = user?.email?.split("@")[0] || "Aluno Nexus";
+                  const checkoutUrl = rawUrl ? buildKiwifyCheckoutUrl(rawUrl, user?.email, userName) : "";
 
-                <div className="pt-2">
-                  <Button
-                    type="submit"
-                    disabled={processingCard}
-                    className="w-full bg-dash hover:bg-dash/90 text-white font-semibold text-xs gap-1.5 py-2.5"
-                  >
-                    {processingCard ? (
-                      "Processando Cartão com Segurança..."
-                    ) : (
-                      <>
-                        <Zap className="size-4" /> Pagar R${" "}
-                        {finalChargeAmount.toFixed(2).replace(".", ",")} no Cartão
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
+                  if (checkoutUrl) {
+                    return (
+                      <div className="space-y-3">
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Clique abaixo para abrir a página oficial da Kiwify. Seus dados já serão vinculados para liberação automática assim que o pagamento for aprovado.
+                        </p>
+                        <Button
+                          type="button"
+                          onClick={() => window.open(checkoutUrl, "_blank")}
+                          className="w-full bg-dash hover:bg-dash/90 text-white font-bold text-xs gap-2 py-3 shadow-md shadow-dash/20"
+                        >
+                          <CreditCard className="size-4" /> Finalizar Assinatura na Kiwify <ExternalLink className="size-3.5" />
+                        </Button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-3 space-y-2.5 text-xs text-foreground">
+                      <p className="leading-relaxed text-muted-foreground">
+                        O checkout com cartão via Kiwify está pronto. Se você é o administrador, configure o link da oferta no <strong>Painel Admin</strong>.
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPaymentMethod("PIX")}
+                          className="w-full text-xs font-semibold"
+                        >
+                          <QrCode className="size-3.5" /> Pagar via PIX Instantâneo
+                        </Button>
+                        {user?.email === "allysonr510@gmail.com" && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => {
+                              onClose();
+                              window.location.href = "/admin";
+                            }}
+                            className="w-full bg-dash text-white text-xs font-semibold"
+                          >
+                            Configurar Links no Admin
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             )}
 
             <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground pt-1">

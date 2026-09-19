@@ -12,7 +12,8 @@ import {
   RefreshCw,
   SlidersHorizontal,
   Bot,
-  Download
+  Download,
+  CreditCard,
 } from "lucide-react";
 import { downloadArchitecturePdf } from "@/lib/generateArchitecturePresentationPdf";
 import { AppShell } from "@/components/AppShell";
@@ -24,6 +25,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { useToast } from "@/contexts/ToastContext";
 import { api } from "@/lib/api";
 import { AdminModulesModal, type AdminUserModalData } from "@/components/AdminModulesModal";
+import { AdminKiwifyModal } from "@/components/AdminKiwifyModal";
 
 interface AdminUser {
   id: number;
@@ -54,6 +56,7 @@ export default function AdminPage() {
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("ALL");
 
   const [selectedUserForModal, setSelectedUserForModal] = useState<AdminUser | null>(null);
+  const [kiwifyModalOpen, setKiwifyModalOpen] = useState(false);
 
   const {
     data: users = [],
@@ -144,6 +147,14 @@ export default function AdminPage() {
       subtitle="Gerenciamento de Assinantes & Módulos"
       actions={
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setKiwifyModalOpen(true)}
+            className="gap-1.5 text-xs border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+          >
+            <CreditCard className="size-3.5" />
+            Vendas & Kiwify
+          </Button>
           <Button
             variant="outline"
             onClick={() => downloadArchitecturePdf()}
@@ -402,6 +413,11 @@ export default function AdminPage() {
         onSave={async (id, payload) => {
           await saveModulesMutation.mutateAsync({ id, payload });
         }}
+      />
+
+      <AdminKiwifyModal
+        isOpen={kiwifyModalOpen}
+        onClose={() => setKiwifyModalOpen(false)}
       />
     </AppShell>
   );
